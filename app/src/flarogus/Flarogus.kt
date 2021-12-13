@@ -18,21 +18,25 @@ suspend fun main(vararg args: String) {
 	}
 	val client = Kord(token)
 	
-	client.on<MessageCreateEvent> {
-		println("intercepted")
-		val args = message.content.split(" ").filter { !it.isEmpty() }
+	val prefix = "flarogus"
+	
+	client.events
+		.filterIsInstance<MessageCreateEvent>()
+		.filter { it.message.author?.isBot == false }
+		.filter { it.message.content.startsWith(prefix) }
+		.onEach { CommandHandler.handle(it.message.content.substring(prefix.length), it) }
+		.launchIn(client)
+	
+	CommandHandler.register("sus") {
+		val start = System.currentTimeMillis();
 		
-		when (args[1]) {
-			"sus" -> {
-				val start = System.currentTimeMillis();
-				println("sent reply")
-				
-				val reply = message.channel.createMessage { content = "sussificating..." }
-				reply.edit { content = "sussificated in ${System.currentTimeMillis() - start}ms" }
-				delay(50L)
-				message.delete()
+		launch {
+			val reply = message.channel.createMessage {
+				content = "sussificating..."
 			}
-			else -> message.channel.createMessage("no")
+			reply.edit { content = "sussificated in ${System.currentTimeMillis() - start}ms" }
+			delay(50L)
+			message.delete()
 		}
 	}
 	
