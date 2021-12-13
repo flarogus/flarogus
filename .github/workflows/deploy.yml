@@ -1,0 +1,28 @@
+name: Amogus
+
+on: [push]
+
+jobs:
+  goToSecurity:
+      name: 'Go to security'
+      runs-on: ubuntu-latest
+      
+      steps:
+        - name: Make others leave the security room
+          uses: styfle/cancel-workflow-action@0.9.0
+          with:
+            access_token: ${{ github.token }}
+  
+  emergencyMetting:
+    name: 'Get rid of the impostor'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Find the impostor via the security room
+        uses: actions/checkout@v2
+        
+      - name: Call the emergency meeting
+        run: chmod +x ./gradlew
+        
+      - name: Eject them from the ship!
+        run: ./gradlew deploy; java -jar ./build/app.jar ${{ secrets.TOKEN }}

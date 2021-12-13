@@ -1,0 +1,56 @@
+plugins {
+	id 'org.jetbrains.kotlin.jvm' version '1.6.0'
+	id 'application'
+}
+
+sourceSets {
+	main.kotlin.srcDirs = ['src/flarogus']
+	main.resources.srcDirs = ['resources']
+}
+
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation platform('org.jetbrains.kotlin:kotlin-bom')
+	implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+	implementation 'com.google.guava:guava:30.1.1-jre'
+	implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0-RC2'
+	implementation 'dev.kord:kord-core:0.8.0-M8'
+	
+	
+	//testImplementation 'org.jetbrains.kotlin:kotlin-test'
+	//testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
+}
+
+jar {
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	
+	manifest {
+		attributes 'Main-Class': 'flarogus.FlarogusKt'
+	}
+	
+	from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+}
+
+tasks.register('deploy', Copy) {
+	dependsOn "jar"
+	
+	from "build/libs/app.jar"
+	into "../build/"
+	
+	doLast {
+		delete "build/libs/app.jar"
+	}
+}
+
+application {
+	mainClass = 'flarogus.FlarogusKt'
+}
+
+//why
+tasks.withType(JavaExec.class) {
+	standardInput = System.in
+}
