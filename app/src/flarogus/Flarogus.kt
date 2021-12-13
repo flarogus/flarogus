@@ -27,15 +27,17 @@ suspend fun main(vararg args: String) {
 		.onEach { CommandHandler.handle(it.message.content.substring(prefix.length), it) }
 		.launchIn(client)
 	
-	CommandHandler.register("sus") suspend {
+	CommandHandler.register("sus") {
 		val start = System.currentTimeMillis();
 		
-		val reply = message.channel.createMessage {
-			content = "sussificating..."
+		launch {
+			val reply = message.channel.createMessage {
+				content = "sussificating..."
+			}
+			reply.edit { content = "sussificated in ${System.currentTimeMillis() - start}ms" }
+			delay(50L)
+			message.delete()
 		}
-		reply.edit { content = "sussificated in ${System.currentTimeMillis() - start}ms" }
-		delay(50L)
-		message.delete()
 	}
 	
 	println("initialized")

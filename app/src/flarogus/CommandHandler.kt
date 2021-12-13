@@ -16,8 +16,8 @@ object CommandHandler {
 		if (command == null) return@coroutineScope;
 		
 		val handler = commands.get(command)
-		launch {
-			if (handler == null) {
+		if (handler == null) {
+			launch {
 				val err = event.message.channel.createMessage {
 					content = "unknown command: $command\n(${event.message.author?.username}, you're so sussy)"
 					messageReference = event.message.id
@@ -26,9 +26,9 @@ object CommandHandler {
 				err.edit {
 					content = "unknown command: $command"
 				}
-			} else {
-				event.handler(args)
 			}
+		} else {
+			event.handler(args)
 		}
 	}
 	
