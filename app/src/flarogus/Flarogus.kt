@@ -42,9 +42,10 @@ suspend fun main(vararg args: String) {
 					field {
 						name = commandName
 						value = command.description ?: "no description"
+						inline = true
 						
 						val author = message.author
-						if (author == null || command.condition(author)) {
+						if (author == null || !command.condition(author)) {
 							value += " (you are not allowed to execute this command)"
 						}
 					}
