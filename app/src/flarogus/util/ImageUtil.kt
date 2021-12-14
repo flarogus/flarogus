@@ -18,7 +18,7 @@ object ImageUtil {
 				val r = ((sourcecol and 0x00ff0000) shr 16) * ((mulcol and 0x00ff0000) shr 16) / 255
 				val g = ((sourcecol and 0x0000ff00) shr 8) * ((mulcol and 0x0000ff00) shr 8) / 255
 				val b = (sourcecol and 0x000000ff) * (mulcol and 0x000000ff) / 255
-				val newcol = ((a and 0xff) shl 24) or ((r and 0xff) shl 16) or ((g 0xff) shl 8) or (b and 0xff)
+				val newcol = ((a and 0xff) shl 24) or ((r and 0xff) shl 16) or ((g and 0xff) shl 8) or (b and 0xff)
 				new.setRGB(x, y, newcol)
 			}
 		}
