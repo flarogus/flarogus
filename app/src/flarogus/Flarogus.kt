@@ -57,6 +57,7 @@ suspend fun main(vararg args: String) {
 		}
 		if (pfp == null) {
 			replyWith(message, "null avatar pfp")
+			return@register;
 		} else {
 			replyWith(message, "<$pfp>")
 		}
