@@ -14,10 +14,10 @@ object ImageUtil {
 			for (y in 0 until source.height) {
 				val sourcecol = source.getRGB(x, y)
 				val mulcol = multiplier.getRGB((x * xRatio).toInt(), (y * yRatio).toInt())
-				val a = 255//((sourcecol and 0x7f000000) shr 24) * ((mulcol and 0x7f000000) shr 24)
-				val r = ((sourcecol and 0x00ff0000) shr 16) * ((mulcol and 0x00ff0000) shr 16)
-				val g = ((sourcecol and 0x0000ff00) shr 8) * ((mulcol and 0x0000ff00) shr 8)
-				val b = (sourcecol and 0x000000ff) * (mulcol and 0x000000ff)
+				val a = 255//((sourcecol and 0x7f000000) shr 24) * ((mulcol and 0x7f000000) shr 24) / 255
+				val r = ((sourcecol and 0x00ff0000) shr 16) * ((mulcol and 0x00ff0000) shr 16) / 255
+				val g = ((sourcecol and 0x0000ff00) shr 8) * ((mulcol and 0x0000ff00) shr 8) / 255
+				val b = (sourcecol and 0x000000ff) * (mulcol and 0x000000ff) / 255
 				val newcol = ((a shl 24) and 0x7f000000) or ((r shl 16) and 0x00ff0000) or ((g shl 8) and 0x0000ff00) or (b and 0x000000ff)
 				new.setRGB(x, y, newcol)
 			}
