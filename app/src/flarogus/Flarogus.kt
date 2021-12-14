@@ -38,19 +38,16 @@ suspend fun main(vararg args: String) {
 		launch {
 			message.channel.createEmbed {
 				title = "Flarogus help"
-				description = buildString {
-					append("```\n")
-					for ((name, command) in CommandHandler.commands) {
-						append("• ")
-						append(name)
-						append(" — ")
-						append(command.description)
+				for ((commandName, command) in CommandHandler.commands) {
+					field {
+						name = commandName
+						value = command.description ?: "no description"
+						
 						val author = message.author
 						if (author == null || command.condition(author)) {
-							append(" (you are not allowed to execute this command)")
+							value += " (you are not allowed to execute this command)"
 						}
 					}
-					append("\n```")
 				}
 			}
 		}
