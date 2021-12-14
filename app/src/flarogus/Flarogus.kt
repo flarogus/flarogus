@@ -48,17 +48,23 @@ suspend fun main(vararg args: String) {
 	
 	CommandHandler.register("flaroficate") {
 		val userid = it.getOrNull(1)
-		var pfp: String = ""
+		var pfp: String? = null
 		if (userid == null) {
-			pfp = message.author?.avatar?.url ?: "";
+			pfp = message.author?.avatar?.url;
 		} else {
 			replyWith(message, "custom user selection is not yet implemented")
 			return@register;
 		}
+		if (pfp == null) {
+			replyWith(message, "null avatar pfp")
+		} else {
+			replyWith(message, "<$pfp>")
+		}
+		
 		launch {
 			try {
-				val image = ImageIO.read(URL(pfp))
-				val sussyImage = ImageUtil.multiply(image, flarsusBase)
+				val avatar = ImageIO.read(URL(pfp))
+				val sussyImage = ImageUtil.multiply(avatar, flarsusBase)
 				
 				ByteArrayOutputStream().use {
 					ImageIO.write(sussyImage, "png", it);
