@@ -46,13 +46,13 @@ suspend fun main(vararg args: String) {
 						
 						val author = message.author
 						if (author == null || !command.condition(author)) {
-							value += " (you are not allowed to execute this command)"
+							value += " ***(you are not allowed to execute this command)***"
 						}
 					}
 				}
 			}
 		}
-	}.setDescription("Shows help")
+	}.setDescription("Show the help message")
 	
 	CommandHandler.register("sus") {
 		val start = System.currentTimeMillis();
@@ -65,7 +65,7 @@ suspend fun main(vararg args: String) {
 			delay(50L)
 			message.delete()
 		}
-	}.setDescription("Prints the current connection latency")
+	}.setDescription("Print the current connection latency")
 	
 	CommandHandler.register("flaroficate") {
 		val userid = it.getOrNull(1)
@@ -95,7 +95,7 @@ suspend fun main(vararg args: String) {
 				replyWith(message, "Exception has occurred: ${e.stackTraceToString()}")
 			}
 		}
-	}.setDescription("Returns a flaroficated avatar of the owner of the providen user id. If there's no uid specified, uses the avatar of the caller")
+	}.setDescription("Return a flaroficated avatar of the user with the providen user id. If there's no uid specified, uses the avatar of the caller")
 	
 	CommandHandler.register("impostor") {
 		val name = userOrAuthor(it.getOrNull(1), this@register)?.username
