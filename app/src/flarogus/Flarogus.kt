@@ -24,7 +24,7 @@ suspend fun main(vararg args: String) {
 	val client = Kord(token)
 	val prefix = "flarogus"
 	
-	val flarsusBase = ImageIO.read(object {}::class.java.getResourceAsStream("flarsus.png"))
+	val flarsusBase = ImageIO.read({}::class.java.getResource("/flarsus.png") ?: throw RuntimeException("aaaaa le flar has escaped"))
 	
 	client.events
 		.filterIsInstance<MessageCreateEvent>()
