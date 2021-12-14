@@ -23,9 +23,7 @@ object CommandHandler {
 					messageReference = event.message.id
 				}
 				delay(5000L)
-				err.edit {
-					content = "unknown command: $command"
-				}
+				err.edit { content = "unknown command: $command" }
 			}
 		} else {
 			event.handler(args)

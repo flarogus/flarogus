@@ -1,14 +1,19 @@
 package flarogus
 
+import java.io.*;
+import java.net.*;
+import javax.imageio.*;
 import kotlinx.coroutines.*;
 import kotlinx.coroutines.flow.*;
 import dev.kord.core.*
 import dev.kord.core.event.*
 import dev.kord.core.event.message.*
+import dev.kord.core.entity.*;
 import dev.kord.common.entity.*
 import dev.kord.core.behavior.*
 import dev.kord.core.behavior.channel.*
-import dev.kord.core.behavior.channel.threads.edit
+import flarogus.*;
+import flarogus.util.*;
 
 suspend fun main(vararg args: String) {
 	val token = args.getOrNull(0)
@@ -17,8 +22,9 @@ suspend fun main(vararg args: String) {
 		return
 	}
 	val client = Kord(token)
-	
 	val prefix = "flarogus"
+	
+	val flarsusBase = ImageIO.read(object {}::class.java.getResourceAsStream("flarsus.png"))
 	
 	client.events
 		.filterIsInstance<MessageCreateEvent>()
@@ -40,6 +46,48 @@ suspend fun main(vararg args: String) {
 		}
 	}
 	
+	CommandHandler.register("flaroficate") {
+		val userid = it.getOrNull(1)
+		var pfp: String = ""
+		if (userid == null) {
+			pfp = message.author?.avatar?.url ?: "";
+		} else {
+			replyWith(message, "custom user selection is not yet implemented")
+			return@register;
+		}
+		launch {
+			try {
+				val image = ImageIO.read(URL(pfp))
+				val sussyImage = ImageUtil.multiply(image, flarsusBase)
+				
+				ByteArrayOutputStream().use {
+					ImageIO.write(sussyImage, "png", it);
+					ByteArrayInputStream(it.toByteArray()).use {
+						message.channel.createMessage {
+							content = "sus"
+							messageReference = message.id
+							addFile("SUSSUSUSUSUSUSUSUSU.png", it)
+						}
+					}
+				}
+			} catch (e: Exception) {
+				replyWith(message, "Exception has occurred: $e")
+			}
+		}
+		replyWith(message, "not implemented yet")
+	}
+	
 	println("initialized")
 	client.login()
+}
+
+fun CoroutineScope.replyWith(origin: Message, message: String, selfdestructIn: Long? = null) = launch {
+	val msg = origin.channel.createMessage {
+		content = message
+		messageReference = origin.id
+	}
+	if (selfdestructIn != null) {
+		delay(selfdestructIn)
+		msg.delete()
+	}
 }

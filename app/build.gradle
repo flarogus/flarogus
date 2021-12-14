@@ -20,7 +20,6 @@ dependencies {
 	implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0-RC2'
 	implementation 'dev.kord:kord-core:0.8.0-M8'
 	
-	
 	//testImplementation 'org.jetbrains.kotlin:kotlin-test'
 	//testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
 }
