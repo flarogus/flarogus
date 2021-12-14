@@ -71,10 +71,9 @@ suspend fun main(vararg args: String) {
 					}
 				}
 			} catch (e: Exception) {
-				replyWith(message, "Exception has occurred: $e")
+				replyWith(message, "Exception has occurred: ${e.stackTraceToString()}")
 			}
 		}
-		replyWith(message, "not implemented yet")
 	}
 	
 	println("initialized")
