@@ -67,6 +67,7 @@ suspend fun main(vararg args: String) {
 			}
 			
 			try {
+				//le pfp can be a .webp, which is RGB-encoded
 				val avatar = ImageIO.read(URL(pfp))
 				val sussyImage = ImageUtil.multiply(avatar, flarsusBase)
 				
