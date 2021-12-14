@@ -15,9 +15,9 @@ private val maxTiles = 2000 / 6 //one tile is ≈6 chars: ||cc|| where cc is a t
 
 val MinesweeperCommand = flarogus.commands.Command(
 	handler = {
-		val w = (it.getOrNull(1)?.toInt() ?: 12).coerceIn(5, 30)
-		val h = (it.getOrNull(2)?.toInt() ?: 12).coerceIn(5, 30)
-		val mines = (it.getOrNull(3)?.toInt() ?: 25).coerceIn(0, w * h - 8)
+		val w = (it.getOrNull(1)?.toIntOrNull() ?: 12).coerceIn(5, 30)
+		val h = (it.getOrNull(2)?.toIntOrNull() ?: 12).coerceIn(5, 30)
+		val mines = (it.getOrNull(3)?.toIntOrNull() ?: (w * h / 3)).coerceIn(0, w * h - 8)
 		
 		//position that will be opened at the start
 		val openX = Random.nextInt(1, w - 1)
@@ -47,7 +47,7 @@ val MinesweeperCommand = flarogus.commands.Command(
 			for (y in 0 until h) {
 				if (field[x][y] == -1) continue; //there's a bomb already
 				var count = 0
-				neighbours(x, y) { tx, ty -> if (field[tx][ty] == -1) count++ }
+				neighbours(x, y) { tx, ty -> if (field.getOrNull(tx)?.getOrNull(ty) == -1) count++ }
 				//check if the tile should be pre-open, add the "open" flag (0b10000) in that case
 				if ((Math.abs(x - openX) <= 1) && Math.abs(y - openY) <= 1) count = count or 0b10000
 				
