@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.*;
 import dev.kord.core.*
 import dev.kord.core.event.*
 import dev.kord.core.event.message.*
+import dev.kord.core.supplier.*;
 import dev.kord.core.entity.*;
 import dev.kord.common.entity.*
 import dev.kord.core.behavior.*
@@ -49,20 +50,22 @@ suspend fun main(vararg args: String) {
 	CommandHandler.register("flaroficate") {
 		val userid = it.getOrNull(1)
 		var pfp: String? = null
-		if (userid == null) {
-			pfp = message.author?.avatar?.url;
-		} else {
-			replyWith(message, "custom user selection is not yet implemented")
-			return@register;
-		}
-		if (pfp == null) {
-			replyWith(message, "null avatar pfp")
-			return@register;
-		} else {
-			replyWith(message, "<$pfp>")
-		}
-		
 		launch {
+			if (userid == null) {
+				pfp = message.author?.avatar?.url;
+			} else {
+				try {
+					pfp = supplier.getUser(Snowflake(userid.toULong())).avatar?.url;
+				} catch(e: Exception) {
+					replyWith(message, "failed to fetch the user: $e")
+					return@launch;
+				}
+			}
+			if (pfp == null) {
+				replyWith(message, "failed to process: null avatar url")
+				return@launch;
+			}
+			
 			try {
 				val avatar = ImageIO.read(URL(pfp))
 				val sussyImage = ImageUtil.multiply(avatar, flarsusBase)
