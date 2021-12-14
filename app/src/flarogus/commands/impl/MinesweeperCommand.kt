@@ -6,12 +6,13 @@ import dev.kord.core.entity.*;
 import dev.kord.core.event.message.*;
 import flarogus.*;
 
+private val bombEmoji = "💥"
 private val numbers = arrayOf("0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣")
-private val freeTiles = ArrayList<Int>(25 * 25) //each value represents both x and y component. assuming values won't exceed 255.
+private val freeTiles = ArrayList<Int>(25 * 25) //each value represents both x and y component. assuming these components won't exceed 255.
+private val builder = StringBuilder(2000)
 
 private val maxW = 30
 private val maxH = 30
-private val maxTiles = 2000 / 6 //one tile is ≈6 chars: ||cc|| where cc is a two-char unicode character
 
 val MinesweeperCommand = flarogus.commands.Command(
 	handler = {
@@ -33,7 +34,7 @@ val MinesweeperCommand = flarogus.commands.Command(
 			}
 		}
 		//remove tiles next to the opened tile
-		freeTiles.filter { Math.abs(unpackX(it) - openX) >= 1 || Math.abs(unpackY(it) - openY) >= 1 }
+		freeTiles.filter { Math.abs(unpackX(it) - openX) > 1 || Math.abs(unpackY(it) - openY) > 1 }
 		//second iteration: shuffle the list and put bombs on the field at the first ${mines} positions taken from the list
 		freeTiles.shuffle()
 		for (i in 0 until mines) {
@@ -54,38 +55,38 @@ val MinesweeperCommand = flarogus.commands.Command(
 				field[x][y] = count
 			}
 		}
+		
+		if (w * h * 6 > 2000) {
+			replyWith(message, "warning: too many tiles, the message will be split into multiple")
+		}
+		
 		//fourth iteration: construct the game field
-		val string = buildString {
-			for (x in 0 until w) {
-				for (y in 0 until h) {
+		builder.clear()
+		launch {
+			for (y in 0 until h) {
+				val nextLength = builder.length + w * 6
+				if (nextLength >= 2000) {
+					message.channel.createMessage(builder.toString())
+					builder.clear()
+				}
+				
+				for (x in 0 until w) {
 					val value = field[x][y]
 					
 					if (value == -1) {
-						append("||💥||")
+						builder.append("||").append(bombEmoji).append("||")
 					} else {
 						val emoji = numbers[value and 0b1111]
 						if (value and 0b10000 == 16) { //pre-open tile
-							append(emoji)
+							builder.append(emoji)
 						} else {
-							append("||").append(emoji).append("||")
+							builder.append("||").append(emoji).append("||")
 						}
 					}
 				}
-				append('\n')
+				builder.append('\n')
 			}
-		}
-		
-		if (w * h > maxTiles) {
-			replyWith(message, string)
-		} else {
-			launch {
-				replyWith(message, "warning: too many tiles, the message will be split into multiple")
-				val rows = Math.ceil((w * h) / maxTiles.toDouble()).toInt()
-				val charsPerRow = w * 6 * (h / rows)
-				for (i in 0 until rows) {
-					message.channel.createMessage(string.substring(charsPerRow * i, charsPerRow * (i + 1)));
-				}
-			}
+			message.channel.createMessage(builder.toString())
 		}
 	},
 	
