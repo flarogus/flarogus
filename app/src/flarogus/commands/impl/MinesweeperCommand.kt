@@ -11,11 +11,12 @@ private val freeTiles = ArrayList<Int>(25 * 25) //each value represents both x a
 
 private val maxW = 30
 private val maxH = 30
+private val maxTiles = 2000 / 6 //one tile is ≈6 chars: ||cc|| where cc is a two-char unicode character
 
 val MinesweeperCommand = flarogus.commands.Command(
 	handler = {
-		val w = (it.getOrNull(1)?.toInt() ?: 12).coerceIn(5, maxW)
-		val h = (it.getOrNull(2)?.toInt() ?: 12).coerceIn(5, maxH)
+		val w = (it.getOrNull(1)?.toInt() ?: 12).coerceIn(5, 30)
+		val h = (it.getOrNull(2)?.toInt() ?: 12).coerceIn(5, 30)
 		val mines = (it.getOrNull(3)?.toInt() ?: 25).coerceIn(0, w * h - 8)
 		
 		//position that will be opened at the start
@@ -46,7 +47,7 @@ val MinesweeperCommand = flarogus.commands.Command(
 			for (y in 0 until h) {
 				if (field[x][y] == -1) continue; //there's a bomb already
 				var count = 0
-				neighbours(x, y) { _, _ -> count++ }
+				neighbours(x, y) { tx, ty -> if (field[tx][ty] == -1) count++ }
 				//check if the tile should be pre-open, add the "open" flag (0b10000) in that case
 				if ((Math.abs(x - openX) <= 1) && Math.abs(y - openY) <= 1) count = count or 0b10000
 				
@@ -63,10 +64,10 @@ val MinesweeperCommand = flarogus.commands.Command(
 						append("||💥||")
 					} else {
 						val emoji = numbers[value and 0b1111]
-						if (value and 0b10000 == 1) { //pre-open tile
+						if (value and 0b10000 == 16) { //pre-open tile
 							append(emoji)
 						} else {
-							append("||$emoji||")
+							append("||").append(emoji).append("||")
 						}
 					}
 				}
@@ -74,7 +75,18 @@ val MinesweeperCommand = flarogus.commands.Command(
 			}
 		}
 		
-		replyWith(message, string)
+		if (w * h > maxTiles) {
+			replyWith(message, string)
+		} else {
+			launch {
+				replyWith(message, "warning: too many tiles, the message will be split into multiple")
+				val rows = Math.ceil((w * h) / maxTiles.toDouble()).toInt()
+				val charsPerRow = w * 6 * (h / rows)
+				for (i in 0 until rows) {
+					message.channel.createMessage(string.substring(charsPerRow * i, charsPerRow * (i + 1)));
+				}
+			}
+		}
 	},
 	
 	header = "width: Int?, height: Int?, mines: Int?",
