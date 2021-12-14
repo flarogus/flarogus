@@ -16,11 +16,11 @@ import dev.kord.core.behavior.channel.*
 import flarogus.util.*;
 import flarogus.commands.*;
 
-suspend fun main(vararg args: String) {
+suspend fun main(vararg args: String) = runBlocking {
 	val token = args.getOrNull(0)
 	if (token == null) {
 		println("[ERROR] no token specified")
-		return
+		return@runBlocking
 	}
 	val client = Kord(token)
 	val prefix = "flarogus"
@@ -31,7 +31,7 @@ suspend fun main(vararg args: String) {
 		.filterIsInstance<MessageCreateEvent>()
 		.filter { it.message.author?.isBot == false }
 		.filter { it.message.content.startsWith(prefix) }
-		.onEach { CommandHandler.handle(it.message.content.substring(prefix.length), it) }
+		.onEach { CommandHandler.handle(this, it.message.content.substring(prefix.length), it) }
 		.launchIn(client)
 	
 	CommandHandler.register("help") {
@@ -42,7 +42,9 @@ suspend fun main(vararg args: String) {
 					field {
 						name = commandName
 						value = command.description ?: "no description"
-						inline = true
+						`inline` = true
+						
+						if (command.header != null) name += " [" + command.header + "]"
 						
 						val author = message.author
 						if (author == null || !command.condition(author)) {
@@ -52,7 +54,8 @@ suspend fun main(vararg args: String) {
 				}
 			}
 		}
-	}.setDescription("Show the help message")
+	}
+	.setDescription("Show the help message")
 	
 	CommandHandler.register("sus") {
 		val start = System.currentTimeMillis();
@@ -65,7 +68,8 @@ suspend fun main(vararg args: String) {
 			delay(50L)
 			message.delete()
 		}
-	}.setDescription("Print the current connection latency")
+	}
+	.setDescription("Print the current connection latency")
 	
 	CommandHandler.register("flaroficate") {
 		val userid = it.getOrNull(1)
@@ -95,7 +99,9 @@ suspend fun main(vararg args: String) {
 				replyWith(message, "Exception has occurred: ${e.stackTraceToString()}")
 			}
 		}
-	}.setDescription("Return a flaroficated avatar of the user with the providen user id. If there's no uid specified, uses the avatar of the caller")
+	}
+	.setHeader("userID: String?")
+	.setDescription("Return a flaroficated avatar of the user with the providen user id. If there's no uid specified, uses the avatar of the caller")
 	
 	CommandHandler.register("impostor") {
 		val name = userOrAuthor(it.getOrNull(1), this@register)?.username
@@ -109,7 +115,11 @@ suspend fun main(vararg args: String) {
 		} else {
 			replyWith(message, "${name.substring(0, consonant + 1)}us")
 		}
-	}.setDescription("Returns an amogusificated name of the user with the providen id. If there's no id providen, amogusificates the name of the caller")
+	}
+	.setHeader("userID: String")
+	.setDescription("Returns an amogusificated name of the user with the providen id. If there's no id providen, amogusificates the name of the caller")
+	
+	CommandHandler.register("mines", flarogus.commands.impl.MinesweeperCommand);
 	
 	println("initialized")
 	client.login()

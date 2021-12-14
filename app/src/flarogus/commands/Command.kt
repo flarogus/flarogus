@@ -7,8 +7,14 @@ import dev.kord.core.event.message.*;
 data class Command(
 	val handler: suspend MessageCreateEvent.(List<String>) -> Unit,
 	var condition: (User) -> Boolean = { true },
+	var header: String? = null,
 	var description: String? = null
 ) {
+	fun setHeader(header: String): Command {
+		this.header = header
+		return this
+	}
+	
 	fun setDescription(description: String): Command {
 		this.description = description
 		return this

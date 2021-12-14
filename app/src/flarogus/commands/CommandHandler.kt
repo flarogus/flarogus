@@ -11,11 +11,11 @@ object CommandHandler {
 	
 	val commands = HashMap<String, FlarogusCommand>(50)
 	
-	suspend fun handle(message: String, event: MessageCreateEvent) = coroutineScope {
+	suspend fun handle(scope: CoroutineScope, message: String, event: MessageCreateEvent) = scope.launch {
 		val args = message.split(" ").filter { !it.isEmpty() }
 		
 		val commandName = args.getOrNull(0)
-		if (commandName == null || commandName == "") return@coroutineScope;
+		if (commandName == null || commandName == "") return@launch;
 		
 		val command = commands.get(commandName)
 		if (command == null) {
@@ -25,17 +25,22 @@ object CommandHandler {
 					messageReference = event.message.id
 				}
 				delay(5000L)
-				err.edit { content = "unknown command: $command" }
+				err.edit { content = "unknown command: $commandName" }
 			}
 		} else {
 			val author = event.message.author
-			if (command.condition != null || (author != null && command.condition(author))) {
+			if (author != null && command.condition(author)) {
 				val handler = command.handler;
 				event.handler(args)
 			} else {
 				replyWith(event.message, "You are not allowed to run $commandName.")
 			}
 		}
+	}
+	
+	fun register(name: String, command: FlarogusCommand): FlarogusCommand {
+		commands.put(name, command)
+		return command
 	}
 	
 	fun register(name: String, handler: suspend MessageCreateEvent.(List<String>) -> Unit): FlarogusCommand {
