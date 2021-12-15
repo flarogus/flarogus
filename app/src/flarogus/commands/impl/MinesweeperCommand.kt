@@ -16,8 +16,8 @@ private val maxH = 30
 
 val MinesweeperCommand = flarogus.commands.Command(
 	handler = {
-		val w = (it.getOrNull(1)?.toIntOrNull() ?: 12).coerceIn(5, 30)
-		val h = (it.getOrNull(2)?.toIntOrNull() ?: 12).coerceIn(5, 30)
+		val w = (it.getOrNull(1)?.toIntOrNull() ?: 12).coerceIn(5, maxW)
+		val h = (it.getOrNull(2)?.toIntOrNull() ?: 12).coerceIn(5, maxH)
 		val mines = (it.getOrNull(3)?.toIntOrNull() ?: (w * h / 3)).coerceIn(0, w * h - 8)
 		
 		//position that will be opened at the start
@@ -30,11 +30,11 @@ val MinesweeperCommand = flarogus.commands.Command(
 		freeTiles.clear()
 		for (x in 0 until w) {
 			for (y in 0 until h) {
-				freeTiles += packTile(x, y)
+				if (x - openX) > 1 || y - openY) > 1) {
+					freeTiles += packTile(x, y)
+				}
 			}
 		}
-		//remove tiles next to the opened tile
-		freeTiles.filter { Math.abs(unpackX(it) - openX) > 1 || Math.abs(unpackY(it) - openY) > 1 }
 		//second iteration: shuffle the list and put bombs on the field at the first ${mines} positions taken from the list
 		freeTiles.shuffle()
 		for (i in 0 until mines) {
@@ -64,6 +64,7 @@ val MinesweeperCommand = flarogus.commands.Command(
 		builder.clear()
 		launch {
 			for (y in 0 until h) {
+				//send the current part of the game field if adding another row to it would cause an overflow
 				val nextLength = builder.length + w * 6
 				if (nextLength >= 2000) {
 					message.channel.createMessage(builder.toString())
