@@ -33,8 +33,8 @@ object CommandHandler {
 				val handler = command.handler;
 				try {
 					event.handler(args)
-				catch (e: Throwable) { //no exceptions on my watch
-					replyWith(message, "Exception has occurred: ${e.stackTraceToString()}")
+				} catch (e: Throwable) { //no exceptions on my watch
+					replyWith(event.message, "Exception has occurred: ${e.stackTraceToString()}")
 				}
 			} else {
 				replyWith(event.message, "You are not allowed to run $commandName.")
