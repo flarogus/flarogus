@@ -18,7 +18,7 @@ val MinesweeperCommand = flarogus.commands.Command(
 	handler = {
 		val w = (it.getOrNull(1)?.toIntOrNull() ?: 12).coerceIn(5, maxW)
 		val h = (it.getOrNull(2)?.toIntOrNull() ?: 12).coerceIn(5, maxH)
-		val mines = (it.getOrNull(3)?.toIntOrNull() ?: (w * h / 3)).coerceIn(0, w * h - 8)
+		val mines = (it.getOrNull(3)?.toIntOrNull() ?: (w * h / 4)).coerceIn(0, w * h - 8)
 		
 		//position that will be opened at the start
 		val openX = Random.nextInt(1, w - 1)
@@ -37,7 +37,7 @@ val MinesweeperCommand = flarogus.commands.Command(
 		}
 		//second iteration: shuffle the list and put bombs on the field at the first ${mines} positions taken from the list
 		freeTiles.shuffle()
-		for (i in 0 until mines) {
+		for (i in 0 until Math.max(mines, freeTiles.size)) {
 			val tile = freeTiles.get(i)
 			val x = unpackX(tile)
 			val y = unpackY(tile)
