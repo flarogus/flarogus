@@ -4,7 +4,7 @@ import kotlin.random.*;
 import kotlinx.coroutines.*;
 import dev.kord.core.entity.*;
 import dev.kord.core.event.message.*;
-import flarogus.*;
+import flarogus.util.*;
 
 private val bombEmoji = "💥"
 private val numbers = arrayOf("0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣")

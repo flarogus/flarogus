@@ -10,9 +10,9 @@ import dev.kord.core.event.*
 import dev.kord.core.event.message.*
 import dev.kord.core.supplier.*;
 import dev.kord.core.entity.*;
-import dev.kord.common.entity.*
 import dev.kord.core.behavior.*
 import dev.kord.core.behavior.channel.*
+import dev.kord.common.entity.*
 import flarogus.util.*;
 import flarogus.commands.*;
 
@@ -59,15 +59,8 @@ suspend fun main(vararg args: String) = runBlocking {
 	
 	CommandHandler.register("sus") {
 		val start = System.currentTimeMillis();
-		
-		launch {
-			val reply = message.channel.createMessage {
-				content = "sussificating..."
-			}
-			reply.edit { content = "sussificated in ${System.currentTimeMillis() - start}ms" }
-			delay(50L)
-			message.delete()
-		}
+		sendEdited(message, "sussificating", 50L) { "sussificated in ${System.currentTimeMillis() - start}ms" }
+		message.delete()
 	}
 	.setDescription("Print the current connection latency")
 	
@@ -123,28 +116,6 @@ suspend fun main(vararg args: String) = runBlocking {
 	
 	println("initialized")
 	client.login()
-}
-
-fun CoroutineScope.replyWith(origin: Message, message: String, selfdestructIn: Long? = null) = launch {
-	val msg = origin.channel.createMessage {
-		content = message
-		messageReference = origin.id
-	}
-	if (selfdestructIn != null) {
-		delay(selfdestructIn)
-		msg.delete()
-	}
-}
-
-suspend fun userOrAuthor(uid: String?, event: MessageCreateEvent): User? {
-	if (uid == null || uid.isEmpty()) {
-		return event.message.author
-	}
-	try {
-		return event.supplier.getUser(Snowflake(uid.toULong()))
-	} catch (e: Exception) {
-		return event.message.author
-	}
 }
 
 private val vowels = listOf('a', 'e', 'i', 'o', 'u', 'y')
