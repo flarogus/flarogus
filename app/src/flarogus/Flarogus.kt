@@ -3,6 +3,7 @@ package flarogus
 import java.io.*;
 import java.net.*;
 import javax.imageio.*;
+import kotlin.random.*;
 import kotlinx.coroutines.*;
 import kotlinx.coroutines.flow.*;
 import dev.kord.core.*
@@ -16,6 +17,9 @@ import dev.kord.common.entity.*
 import flarogus.util.*;
 import flarogus.commands.*;
 
+val ownerId = 502871063223336990.toULong()
+val prefix = "flarogus"
+
 suspend fun main(vararg args: String) = runBlocking {
 	val token = args.getOrNull(0)
 	if (token == null) {
@@ -23,9 +27,10 @@ suspend fun main(vararg args: String) = runBlocking {
 		return@runBlocking
 	}
 	val client = Kord(token)
-	val prefix = "flarogus"
 	
 	val flarsusBase = ImageIO.read({}::class.java.getResource("/flarsus.png") ?: throw RuntimeException("aaaaa le flar has escaped"))
+	val ubid = Random.nextInt(0, 1000000000).toString()
+	val startedAt = System.currentTimeMillis()
 	
 	client.events
 		.filterIsInstance<MessageCreateEvent>()
@@ -34,24 +39,30 @@ suspend fun main(vararg args: String) = runBlocking {
 		.onEach { CommandHandler.handle(this, it.message.content.substring(prefix.length), it) }
 		.launchIn(client)
 	
+	CommandHandler.register("mines", flarogus.commands.impl.MinesweeperCommand);
+	
 	CommandHandler.register("help") {
 		launch {
 			message.channel.createEmbed {
 				title = "Flarogus help"
+				
+				var hidden = 0
+				val author = message.author
 				for ((commandName, command) in CommandHandler.commands) {
+					if (author == null || !command.condition(author)) {
+						hidden++
+						continue;
+					}
 					field {
 						name = commandName
 						value = command.description ?: "no description"
 						`inline` = true
 						
 						if (command.header != null) name += " [" + command.header + "]"
-						
-						val author = message.author
-						if (author == null || !command.condition(author)) {
-							value += " ***(you are not allowed to execute this command)***"
-						}
 					}
 				}
+				
+				footer { text = "there's ***$hidden*** commands you are not allowed to run" }
 			}
 		}
 	}
@@ -112,7 +123,22 @@ suspend fun main(vararg args: String) = runBlocking {
 	.setHeader("userID: String?")
 	.setDescription("Returns an amogusificated name of the user with the providen id. If there's no id providen, amogusificates the name of the caller")
 	
-	CommandHandler.register("mines", flarogus.commands.impl.MinesweeperCommand);
+	CommandHandler.register("ubid") {
+		sendMessage(message, "$ubid — running for ${formatTime(System.currentTimeMillis() - startedAt)}")
+	}
+	.setDescription("print current instance uid and the time this instance had been running for")
+	
+	CommandHandler.register("shutdown") {
+		val target = it.getOrNull(1)
+		if (target == null) {
+			replyWith(message, "no unique bot id specified")
+			return@register
+		}
+		if (target == ubid) client.shutdown()
+	}
+	.setCondition { it.id.value == ownerId }
+	.setHeader("ubid: Int")
+	.setDescription("shut down an instance by ubid. May not work from the first attempt since there's 4 consequent jobs in the workflow")
 	
 	println("initialized")
 	client.login()
@@ -124,4 +150,9 @@ fun String.lastConsonantIndex(): Int {
 		if (!vowels.contains(get(i))) return i
 	}
 	return -1
+}
+
+fun formatTime(millis: Long): String {
+	val time: Long = millis / 1000L;
+	return "${(time % 86400) / 3600} hours, ${(time % 3600) / 60} minutes, ${time % 60} seconds";
 }
