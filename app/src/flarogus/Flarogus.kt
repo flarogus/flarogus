@@ -72,18 +72,18 @@ suspend fun main(vararg args: String) = runBlocking {
 	.setDescription("Print the current connection latency")
 	
 	CommandHandler.register("flaroficate") {
-		val userid = it.getOrNull(1)
 		launch {
-			val pfp = userOrAuthor(userid, this@register)?.avatar?.url
-			if (pfp == null) {
-				replyWith(message, "failed to process: null avatar url")
+			val userid = it.getOrNull(1)
+			val image = userOrAuthor(userid, this@register)?.avatar?.url
+			if (image == null) {
+				replyWith(message, "failed to process: null image url")
 				return@launch;
 			}
 			
 			try {
 				//le pfp can be a .webp, which is RGB-encoded
-				val avatar = ImageIO.read(URL(pfp))
-				val sussyImage = ImageUtil.multiply(avatar, flarsusBase)
+				val origin = ImageIO.read(URL(image))
+				val sussyImage = ImageUtil.multiply(origin, flarsusBase)
 				
 				ByteArrayOutputStream().use {
 					ImageIO.write(sussyImage, "png", it);
@@ -100,7 +100,7 @@ suspend fun main(vararg args: String) = runBlocking {
 			}
 		}
 	}
-	.setHeader("userID: String?")
+	.setHeader("userID: String? (or attached file)")
 	.setDescription("Return a flaroficated avatar of the user with the providen user id. If there's no uid specified, uses the avatar of the caller")
 	
 	CommandHandler.register("impostor") {
@@ -116,7 +116,7 @@ suspend fun main(vararg args: String) = runBlocking {
 			replyWith(message, "${name.substring(0, consonant + 1)}us")
 		}
 	}
-	.setHeader("userID: String")
+	.setHeader("userID: String?")
 	.setDescription("Returns an amogusificated name of the user with the providen id. If there's no id providen, amogusificates the name of the caller")
 	
 	CommandHandler.register("mines", flarogus.commands.impl.MinesweeperCommand);
