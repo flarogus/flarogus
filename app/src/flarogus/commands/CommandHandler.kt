@@ -34,7 +34,7 @@ object CommandHandler {
 				try {
 					event.handler(args)
 				} catch (e: Throwable) { //no exceptions on my watch
-					replyWith(event.message, "Exception has occurred: ${e.stackTraceToString()}")
+					replyWith(event.message, "An exception has occurred: ${e.stackTraceToString()}")
 				}
 			} else {
 				replyWith(event.message, "You are not allowed to run $commandName.")

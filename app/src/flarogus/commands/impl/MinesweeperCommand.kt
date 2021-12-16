@@ -93,7 +93,7 @@ val MinesweeperCommand = flarogus.commands.Command(
 	
 	header = "width: Int?, height: Int?, mines: Int?",
 	
-	description = "Allows you to play minesweeper in discord. The maximum field size is ${maxW}x${maxH}"
+	description = "Allows you to play minesweeper in discord. The maximum field size is ${maxW}x${maxH}, a 3x3 square in a random place is always opened"
 );
 
 private fun packTile(x: Int, y: Int): Int = ((x and 0xff) shl 8) or (y and 0xff);

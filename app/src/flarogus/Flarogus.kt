@@ -62,7 +62,7 @@ suspend fun main(vararg args: String) = runBlocking {
 					}
 				}
 				
-				footer { text = "there's ***$hidden*** commands you are not allowed to run" }
+				footer { text = "there's [$hidden] commands you are not allowed to run" }
 			}
 		}
 	}
@@ -70,22 +70,28 @@ suspend fun main(vararg args: String) = runBlocking {
 	
 	CommandHandler.register("sus") {
 		val start = System.currentTimeMillis();
-		sendEdited(message, "sussificating", 50L) { "sussificated in ${System.currentTimeMillis() - start}ms" }
+		sendEdited(message, "sussificating", 50L) { 
+			"$ubid — running for ${formatTime(System.currentTimeMillis() - startedAt)}. sussification time: ${System.currentTimeMillis() - start}ms."
+		}
 		message.delete()
 	}
-	.setDescription("Print the current connection latency")
+	.setDescription("Print the bot status")
 	
 	CommandHandler.register("flaroficate") {
 		launch {
 			val userid = it.getOrNull(1)
-			val image = userOrAuthor(userid, this@register)?.avatar?.url
+			val image = if (message.attachments.size == 0) {
+				userOrAuthor(userid, this@register)?.avatar?.url
+			} else {
+				message.attachments.find { it.isImage && it.width!! < 2000 && it.height!! < 2000 }?.url
+				
+			}
 			if (image == null) {
-				replyWith(message, "failed to process: null image url")
+				replyWith(message, "failed to process: unable to retrieve image url. this can be caused by non-image files attached to the message.")
 				return@launch;
 			}
 			
 			try {
-				//le pfp can be a .webp, which is RGB-encoded
 				val origin = ImageIO.read(URL(image))
 				val sussyImage = ImageUtil.multiply(origin, flarsusBase)
 				
@@ -105,12 +111,13 @@ suspend fun main(vararg args: String) = runBlocking {
 		}
 	}
 	.setHeader("userID: String? (or attached file)")
-	.setDescription("Return a flaroficated avatar of the user with the providen user id. If there's no uid specified, uses the avatar of the caller")
+	.setDescription("If the argument is a user id, return a flaroficated avatar of the user with the providen id. If there's no argument specified, uses the attached image or, if there's none, the avatar of the caller")
 	
 	CommandHandler.register("impostor") {
-		val name = userOrAuthor(it.getOrNull(1), this@register)?.username
+		val arg = it.getOrNull(1)
+		val name = if (arg == null || arg.isEmpty() || arg[0].isDigit()) userOrAuthor(arg, this@register)?.username; else arg;
 		if (name == null) {
-			replyWith(message, "you have no name :pensive:")
+			replyWith(message, "the amogus has escaped, I couldn't do anything :pensive:")
 			return@register
 		}
 		val consonant = name.lastConsonantIndex()
@@ -120,13 +127,8 @@ suspend fun main(vararg args: String) = runBlocking {
 			replyWith(message, "${name.substring(0, consonant + 1)}us")
 		}
 	}
-	.setHeader("userID: String?")
-	.setDescription("Returns an amogusificated name of the user with the providen id. If there's no id providen, amogusificates the name of the caller")
-	
-	CommandHandler.register("ubid") {
-		sendMessage(message, "$ubid — running for ${formatTime(System.currentTimeMillis() - startedAt)}")
-	}
-	.setDescription("print current instance uid and the time this instance had been running for")
+	.setHeader("name/userID: String?")
+	.setDescription("If the providen argument is a string, amogusificates it. If it's a user id, amogusifactes the name of the user with this id. Otherwise amogusificates the author's name.")
 	
 	CommandHandler.register("shutdown") {
 		val target = it.getOrNull(1)
