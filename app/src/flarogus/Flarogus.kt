@@ -161,7 +161,7 @@ suspend fun main(vararg args: String) = runBlocking {
 	}
 	.setCondition { it.id.value == ownerId }
 	.setHeader("ubid: Int")
-	.setDescription("shut down an instance by ubid. May not work from the first attempt since there's 4 consequent jobs in the workflow")
+	.setDescription("shut down an instance by ubid.")
 	
 	println("initialized")
 	client.login()
