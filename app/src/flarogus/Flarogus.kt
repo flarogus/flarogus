@@ -19,18 +19,38 @@ import flarogus.commands.*;
 
 val ownerId = 502871063223336990.toULong()
 val prefix = "flarogus"
+//these are late-initialized
+var ubid = ""
+var startedAt = -1L
 
 suspend fun main(vararg args: String) = runBlocking {
+	//check if the precious instance has been shut down
+	try {
+		if (File("done").bufferedReader().use { it.readText().toInt() } == 1) {
+			System.exit(0)
+		}
+	} catch (e: Exception) {} //no such file, so the previous instance either ended with an error (it's ok) or didn't exist
+	
+	//try to load saved data, set everything up if there's none
+	try {
+		File("data").bufferedReader().use {
+			val lines = it.readText().split("\n")
+			ubid = lines[0]
+			startedAt = lines[1].toLong()
+		}
+	} catch (e: Exception) {
+		ubid = Random.nextInt(0, 1000000000).toString()
+		startedAt = System.currentTimeMillis()
+		File("data").printWriter().use { it.println(ubid); it.println(startedAt) }
+	}
+	
 	val token = args.getOrNull(0)
 	if (token == null) {
 		println("[ERROR] no token specified")
 		return@runBlocking
 	}
 	val client = Kord(token)
-	
 	val flarsusBase = ImageIO.read({}::class.java.getResource("/flarsus.png") ?: throw RuntimeException("aaaaa le flar has escaped"))
-	val ubid = Random.nextInt(0, 1000000000).toString()
-	val startedAt = System.currentTimeMillis()
 	
 	client.events
 		.filterIsInstance<MessageCreateEvent>()
@@ -79,12 +99,10 @@ suspend fun main(vararg args: String) = runBlocking {
 	
 	CommandHandler.register("flaroficate") {
 		launch {
-			val userid = it.getOrNull(1)
 			val image = if (message.attachments.size == 0) {
-				userOrAuthor(userid, this@register)?.avatar?.url
-			} else {
-				message.attachments.find { it.isImage && it.width!! < 2000 && it.height!! < 2000 }?.url
-				
+				userOrAuthor(it.getOrNull(1), this@register)?.avatar?.url
+			} else { //idk it thinks .jpg is not an image format
+				message.attachments.find { (it.isImage || it.filename.endsWith(".jpg")) && it.width!! < 2000 && it.height!! < 2000 }?.url
 			}
 			if (image == null) {
 				replyWith(message, "failed to process: unable to retrieve image url. this can be caused by non-image files attached to the message.")
@@ -136,7 +154,10 @@ suspend fun main(vararg args: String) = runBlocking {
 			replyWith(message, "no unique bot id specified")
 			return@register
 		}
-		if (target == ubid) client.shutdown()
+		if (target == ubid || target == "all") {
+			File("done").printWriter().use { it.print(1) }
+			client.shutdown()
+		}
 	}
 	.setCondition { it.id.value == ownerId }
 	.setHeader("ubid: Int")

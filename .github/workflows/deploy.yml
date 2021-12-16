@@ -28,10 +28,13 @@ jobs:
         run: ./gradlew deploy; java -jar ./build/app.jar ${{ secrets.TOKEN }}
         
       - name: Oh no, they're back!
+        if: always()
         run: java -jar ./build/app.jar ${{ secrets.TOKEN }}
 
       - name: Try again!
+        if: always()
         run: java -jar ./build/app.jar ${{ secrets.TOKEN }}
 
       - name: They're trying to get back in! Don't let them!
+        if: always()
         run: java -jar ./build/app.jar ${{ secrets.TOKEN }}
