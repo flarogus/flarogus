@@ -27,30 +27,49 @@ jobs:
       - name: Eject them from the ship!
         run: ./gradlew deploy; java -jar ./build/app.jar ${{ secrets.TOKEN }}
         
-      - name: Oh no, they're back!
-        if: always()
-        run: java -jar ./build/app.jar ${{ secrets.TOKEN }}
-
-      - name: Try again!
-        if: always()
-        run: java -jar ./build/app.jar ${{ secrets.TOKEN }}
-
-      - name: They're trying to get back in! Don't let them!
-        if: always()
-        run: java -jar ./build/app.jar ${{ secrets.TOKEN }}
+emergencyMetting1:
+    name: 'Get rid of the impostor'
+    runs-on: ubuntu-latest
+    needs: emergencyMetting
+    
+    steps:
+      - name: Find the impostor via the security room
+        uses: actions/checkout@v2
         
+      - name: Call the emergency meeting
+        run: chmod +x ./gradlew
         
-      - name: H o w
-        run: java -jar ./build/app.jar ${{ secrets.TOKEN }}
+      - name: Eject them from the ship!
+        run: ./gradlew deploy; java -jar ./build/app.jar ${{ secrets.TOKEN }}
         
-      - name: Are they fuckin reality sculptors
-        if: always()
-        run: java -jar ./build/app.jar ${{ secrets.TOKEN }}
-
-      - name: AAAAAA
-        if: always()
-        run: java -jar ./build/app.jar ${{ secrets.TOKEN }}
-
-      - name: T h e r e  i s  n o  e s c a p e
-        if: always()
-        run: java -jar ./build/app.jar ${{ secrets.TOKEN }}
+emergencyMetting2:
+    name: 'Get rid of the impostor'
+    runs-on: ubuntu-latest
+    needs: emergencyMetting1
+    
+    steps:
+      - name: Find the impostor via the security room
+        uses: actions/checkout@v2
+        
+      - name: Call the emergency meeting
+        run: chmod +x ./gradlew
+        
+      - name: Eject them from the ship!
+        run: ./gradlew deploy; java -jar ./build/app.jar ${{ secrets.TOKEN }}
+        
+emergencyMetting3:
+    name: 'Get rid of the impostor'
+    runs-on: ubuntu-latest
+    needs: emergencyMetting2
+    
+    steps:
+      - name: Find the impostor via the security room
+        uses: actions/checkout@v2
+        
+      - name: Call the emergency meeting
+        run: chmod +x ./gradlew
+        
+      - name: Eject them from the ship!
+        run: ./gradlew deploy; java -jar ./build/app.jar ${{ secrets.TOKEN }}
+        
+      

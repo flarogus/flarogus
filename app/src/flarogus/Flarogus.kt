@@ -19,31 +19,8 @@ import flarogus.commands.*;
 
 val ownerId = 502871063223336990.toULong()
 val prefix = "flarogus"
-//these are late-initialized
-var ubid = ""
-var startedAt = -1L
 
 suspend fun main(vararg args: String) = runBlocking {
-	//check if the precious instance has been shut down
-	try {
-		if (File("done").bufferedReader().use { it.readText().toInt() } == 1) {
-			System.exit(0)
-		}
-	} catch (e: Exception) {} //no such file, so the previous instance either ended with an error (it's ok) or didn't exist
-	
-	//try to load saved data, set everything up if there's none
-	try {
-		File("data").bufferedReader().use {
-			val lines = it.readText().split("\n")
-			ubid = lines[0]
-			startedAt = lines[1].toLong()
-		}
-	} catch (e: Exception) {
-		ubid = Random.nextInt(0, 1000000000).toString()
-		startedAt = System.currentTimeMillis()
-		File("data").printWriter().use { it.println(ubid); it.println(startedAt) }
-	}
-	
 	val token = args.getOrNull(0)
 	if (token == null) {
 		println("[ERROR] no token specified")
@@ -51,6 +28,8 @@ suspend fun main(vararg args: String) = runBlocking {
 	}
 	val client = Kord(token)
 	val flarsusBase = ImageIO.read({}::class.java.getResource("/flarsus.png") ?: throw RuntimeException("aaaaa le flar has escaped"))
+	val ubid = Random.nextInt(0, 10.pow(9))
+	val startedAt = System.currentTimeMillis()
 	
 	client.events
 		.filterIsInstance<MessageCreateEvent>()
@@ -161,13 +140,9 @@ suspend fun main(vararg args: String) = runBlocking {
 	}
 	.setCondition { it.id.value == ownerId }
 	.setHeader("ubid: Int")
-	.setDescription("shut down an instance by ubid.")
+	.setDescription("shut down an instance by ubid. May not work from the first attempt.")
 	
-	println("initialized")
-	launch {
-		delay(1000 * 60 * 60 * 5L) //shut down after 5 hours
-		client.shutdown()
-	}
+	println("initialized");
 	client.login()
 }
 
