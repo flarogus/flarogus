@@ -165,7 +165,7 @@ suspend fun main(vararg args: String) = runBlocking {
 	
 	println("initialized")
 	launch {
-		delay(1000 * 60 * 60 * 5) //shut down after 5 hours
+		delay(1000 * 60 * 60 * 5L) //shut down after 5 hours
 		client.shutdown()
 	}
 	client.login()
