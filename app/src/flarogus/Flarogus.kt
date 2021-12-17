@@ -128,7 +128,7 @@ suspend fun main(vararg args: String) = runBlocking {
 			}
 		}
 	}
-	.setHeader("userID: String? (or attached file)")
+	.setHeader("userID: String? / attachment: Image")
 	.setDescription("If the argument is a user id, return a flaroficated avatar of the user with the providen id. If there's no argument specified, uses the attached image or, if there's none, the avatar of the caller")
 	
 	CommandHandler.register("impostor") {
@@ -145,7 +145,7 @@ suspend fun main(vararg args: String) = runBlocking {
 			replyWith(message, "${name.substring(0, consonant + 1)}us")
 		}
 	}
-	.setHeader("name/userID: String?")
+	.setHeader("string/userID: String?")
 	.setDescription("If the providen argument is a string, amogusificates it. If it's a user id, amogusifactes the name of the user with this id. Otherwise amogusificates the author's name.")
 	
 	CommandHandler.register("shutdown") {
@@ -164,6 +164,10 @@ suspend fun main(vararg args: String) = runBlocking {
 	.setDescription("shut down an instance by ubid.")
 	
 	println("initialized")
+	launch {
+		delay(1000 * 60 * 60 * 5) //shut down after 5 hours
+		client.shutdown()
+	}
 	client.login()
 }
 
