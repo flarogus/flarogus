@@ -28,7 +28,7 @@ suspend fun main(vararg args: String) = runBlocking {
 	}
 	val client = Kord(token)
 	val flarsusBase = ImageIO.read({}::class.java.getResource("/flarsus.png") ?: throw RuntimeException("aaaaa le flar has escaped"))
-	val ubid = Random.nextInt(0, 10.pow(9))
+	val ubid = Random.nextInt(0, 1000000000).toString()
 	val startedAt = System.currentTimeMillis()
 	
 	client.events
