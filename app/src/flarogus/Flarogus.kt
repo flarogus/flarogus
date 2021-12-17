@@ -136,11 +136,17 @@ suspend fun main(vararg args: String) = runBlocking {
 		if (target == ubid || target == "all") {
 			File("done").printWriter().use { it.print(1) }
 			client.shutdown()
+			throw RuntimeException("the process has been stopped")
 		}
 	}
 	.setCondition { it.id.value == ownerId }
 	.setHeader("ubid: Int")
 	.setDescription("shut down an instance by ubid. May not work from the first attempt.")
+	
+	launch {
+		delay(1000 * 60 * 60 * 5L);
+		client.shutdown();
+	}
 	
 	println("initialized");
 	client.login()
