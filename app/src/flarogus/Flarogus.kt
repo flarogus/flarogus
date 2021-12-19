@@ -119,7 +119,7 @@ suspend fun main(vararg args: String) = runBlocking {
 			replyWith(message, "the amogus has escaped, I couldn't do anything :pensive:")
 			return@register
 		}
-		replyWity(message, buildString {
+		replyWith(message, buildString {
 			var usAdded = false
 			for (i in name.length - 1 downTo 0) {
 				val char = name[i]
