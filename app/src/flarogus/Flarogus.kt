@@ -17,6 +17,8 @@ import dev.kord.common.entity.*
 import flarogus.util.*;
 import flarogus.commands.*;
 
+private val vowels = listOf('a', 'e', 'i', 'o', 'u', 'y')
+
 val ownerId = 502871063223336990.toULong()
 val prefix = "flarogus"
 
@@ -117,12 +119,19 @@ suspend fun main(vararg args: String) = runBlocking {
 			replyWith(message, "the amogus has escaped, I couldn't do anything :pensive:")
 			return@register
 		}
-		val consonant = name.lastConsonantIndex()
-		if (consonant == -1) {
-			replyWith(message, "${name}gus")
-		} else {
-			replyWith(message, "${name.substring(0, consonant + 1)}us")
-		}
+		replyWity(message, buildString {
+			var usAdded = false
+			for (i in name.length - 1 downTo 0) {
+				val char = name[i]
+				if (!usAdded && char.isLetter() && char !in vowels) {
+					insert(0, "us")
+					insert(0, char)
+					usAdded = true
+				} else if (usAdded || char !in vowels) {
+					insert(0, char)
+				}
+			}
+		})
 	}
 	.setHeader("string/userID: String?")
 	.setDescription("If the providen argument is a string, amogusificates it. If it's a user id, amogusifactes the name of the user with this id. Otherwise amogusificates the author's name.")
@@ -150,14 +159,6 @@ suspend fun main(vararg args: String) = runBlocking {
 	
 	println("initialized");
 	client.login()
-}
-
-private val vowels = listOf('a', 'e', 'i', 'o', 'u', 'y')
-fun String.lastConsonantIndex(): Int {
-	for (i in length - 1 downTo 0) {
-		if (!vowels.contains(get(i))) return i
-	}
-	return -1
 }
 
 fun formatTime(millis: Long): String {
