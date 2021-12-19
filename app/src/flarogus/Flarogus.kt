@@ -17,7 +17,7 @@ import dev.kord.common.entity.*
 import flarogus.util.*;
 import flarogus.commands.*;
 
-private val vowels = listOf('a', 'e', 'i', 'o', 'u', 'y')
+private val vowels = listOf('a', 'A', 'e', 'E', 'i', 'I', 'o', 'O', 'u', 'U', 'y', 'Y')
 
 val ownerId = 502871063223336990.toULong()
 val prefix = "flarogus"
