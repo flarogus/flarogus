@@ -83,7 +83,7 @@ suspend fun main(vararg args: String) = runBlocking {
 	CommandHandler.register("flaroficate") {
 		launch {
 			val image = if (message.attachments.size == 0) {
-				userOrAuthor(it.getOrNull(1), this@register)?.getRealAvatar()?.url
+				userOrAuthor(it.getOrNull(1), this@register)?.getAvatarUrl()
 			} else { //idk it thinks .jpg is not an image format
 				message.attachments.find { (it.isImage || it.filename.endsWith(".jpg")) && it.width!! < 2000 && it.height!! < 2000 }?.url
 			}

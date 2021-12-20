@@ -57,4 +57,4 @@ suspend fun userOrAuthor(uid: String?, event: MessageCreateEvent): User? {
 	}
 }
 
-fun User.getRealAvatar() = this.avatar ?: this.defaultAvatar
+fun User.getAvatarUrl() = avatar?.url ?: "https://cdn.discordapp.com/embed/avatars/${discriminator.toInt() % 5}.png"
