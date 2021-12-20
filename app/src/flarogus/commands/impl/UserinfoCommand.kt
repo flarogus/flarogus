@@ -16,7 +16,7 @@ import dev.kord.common.entity.*;
 import flarogus.util.*;
 
 private val avatarFrame = ImageIO.read({}::class.java.getResource("/frame.png") ?: throw RuntimeException("no avatar frame exist"))
-private val dateFormatter = DateTimeFormatter.ofPattern("yyyy.mm.dd at HH:mm")
+private val dateFormatter = DateTimeFormatter.ofPattern("yyyy.mm.dd HH:mm")
 private val background = Color(30, 10, 40)
 private val padding = 10;
 
