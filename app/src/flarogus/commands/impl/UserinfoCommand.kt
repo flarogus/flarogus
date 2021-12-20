@@ -42,7 +42,7 @@ val UserinfoCommand = flarogus.commands.Command(
 			add("impostor: " + if (user.discriminator.toInt() % 7 == 0) "yes" else "no")
 			add("user id: ${user.id}")
 			//i wasted 3 hours of my life trying to figure out how to do these two. i utterly failed. fuck instant and other stuff.
-			add("age: ${formatTime(System.currentTimeMillis() - user.id.timeMark.elapsedNow().toLong(DurationUnit.MILLISECONDS))}")
+			add("age: ${formatTime(user.id.timeMark.elapsedNow().toLong(DurationUnit.MILLISECONDS))}")
 			//add("registered at ${dateFormatter.format(user.id.timestamp as java.time.temporal.TemporalAccessor)} UTC")
 		}
 		
