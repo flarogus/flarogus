@@ -30,7 +30,7 @@ val MinesweeperCommand = flarogus.commands.Command(
 		freeTiles.clear()
 		for (x in 0 until w) {
 			for (y in 0 until h) {
-				if (Math.abs(x - openX) > 1 || Math.abs(y - openY > 1)) {
+				if (Math.abs(x - openX) > 1 || Math.abs(y - openY) > 1) {
 					freeTiles += packTile(x, y)
 				}
 			}
