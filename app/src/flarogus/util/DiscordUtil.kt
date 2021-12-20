@@ -71,42 +71,42 @@ fun formatTime(millis: Long): String {
 		if (time >= year) {
 			val c = time / year
 			append(c)
-			append("year")
+			append(" year")
 			if (c != 1L) append('s')
 			append(", ")
 		}
 		if (time >= month) {
 			val c = (time % year) / month
 			append(c)
-			append("month")
+			append(" month")
 			if (c != 1L) append('s')
 			append(", ")
 		}
 		if (time >= day) {
 			val c = (time % month) / day
 			append(c)
-			append("day")
+			append(" day")
 			if (c != 1L) append('s')
 			append(", ")
 		}
 		if (time >= hour) {
 			val c = (time % day) / hour
 			append(c)
-			append("hour")
+			append(" hour")
 			if (c != 1L) append('s')
 			append(", ")
 		}
 		if (time >= minute) {
 			val c = (time % hour) / minute
 			append(c)
-			append("minute")
+			append(" minute")
 			if (c != 1L) append('s')
 			append(", ")
 		}
 		
 		val c = time % 60
 		append(c)
-		append("second")
+		append(" second")
 		if (c != 1L) append('s')
 	}
 }

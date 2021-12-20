@@ -64,8 +64,8 @@ val UserinfoCommand = flarogus.commands.Command(
 		
 		val newImage = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
 		graphics = newImage.createGraphics()
+		graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 		graphics.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
-
 		
 		graphics.setPaint(background)
 		graphics.fillRect(0, 0, newImage.width, newImage.height)
