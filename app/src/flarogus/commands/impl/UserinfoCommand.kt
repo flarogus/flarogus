@@ -23,9 +23,8 @@ val lines = ArrayList<String>(15)
 val UserinfoCommand = flarogus.commands.Command(
 	handler = {
 		val user = userOrAuthor(it.getOrNull(1), this)
-		replyWith(message, "not implemented")
 		
-		val userpfp = ImageIO.read(URL(user?.avatar?.url ?: throw CommandException("userinfo", "could not retreive user avatar")))
+		val userpfp = ImageIO.read(URL(user?.getRealAvatar()?.url ?: throw CommandException("userinfo", "could not retreive user avatar")))
 		val cropped = ImageUtil.multiply(avatarFrame, userpfp);
 		
 		lines.clear()

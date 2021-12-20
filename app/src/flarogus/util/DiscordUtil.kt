@@ -56,3 +56,5 @@ suspend fun userOrAuthor(uid: String?, event: MessageCreateEvent): User? {
 		return event.message.author
 	}
 }
+
+fun User.getRealAvatar() = this.avatar ?: this.defaultAvatar
