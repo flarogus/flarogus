@@ -53,6 +53,7 @@ val UserinfoCommand = flarogus.commands.Command(
 		graphics.fillRect(0, 0, newImage.width, newImage.height)
 		graphics.drawImage(cropped, padding, padding, null)
 		
+		graphics.setPaint(Color.WHITE)
 		for (i in 0 until lines.size) {
 			graphics.drawString(lines[i], padding * 3 + cropped.width, padding + perLine * (i + 1))
 		}
@@ -66,6 +67,8 @@ val UserinfoCommand = flarogus.commands.Command(
 				}
 			}
 		}
+		
+		graphics.dispose()
 	},
 	
 	header = "userid: String?",

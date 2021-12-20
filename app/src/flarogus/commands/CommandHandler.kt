@@ -31,7 +31,7 @@ object CommandHandler {
 				val handler = command.handler;
 				try {
 					event.handler(args)
-				} catch (e: Throwable) { //no exceptions on my watch
+				} catch (e: Exception) { //no exceptions on my watch
 					replyWith(event.message, e.toString())
 				}
 			} else {

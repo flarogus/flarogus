@@ -87,10 +87,7 @@ suspend fun main(vararg args: String) = runBlocking {
 			} else { //idk it thinks .jpg is not an image format
 				message.attachments.find { (it.isImage || it.filename.endsWith(".jpg")) && it.width!! < 2000 && it.height!! < 2000 }?.url
 			}
-			if (image == null) {
-				replyWith(message, "failed to process: unable to retrieve image url. this can be caused by non-image files attached to the message.")
-				return@launch;
-			}
+			if (image == null) throw CommandException("flaroficate", "failed to process: unable to retrieve image url. this can be caused by non-image files attached to the message.")
 			
 			try {
 				val origin = ImageIO.read(URL(image))
@@ -147,7 +144,7 @@ suspend fun main(vararg args: String) = runBlocking {
 		if (target == ubid || target == "all") {
 			File("done").printWriter().use { it.print(1) }
 			client.shutdown()
-			throw RuntimeException("the process has been stopped")
+			throw Error("shutting down...")
 		}
 	}
 	.setCondition { it.id.value == ownerId }
