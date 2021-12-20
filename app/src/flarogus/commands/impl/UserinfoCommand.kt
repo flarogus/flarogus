@@ -2,7 +2,6 @@ package flarogus.commands.impl
 
 import java.io.*;
 import java.net.*;
-import java.util.*;
 import java.time.format.*;
 import java.awt.*;
 import java.awt.image.*;
@@ -16,6 +15,7 @@ import dev.kord.common.entity.*;
 import flarogus.util.*;
 
 private val avatarFrame = ImageIO.read({}::class.java.getResource("/frame.png") ?: throw RuntimeException("no avatar frame exist"))
+private val infoFont = Font("Courier New", Font.PLAIN, 15);
 private val dateFormatter = DateTimeFormatter.ofPattern("yyyy.mm.dd HH:mm")
 private val background = Color(30, 10, 40)
 private val padding = 10;
@@ -47,7 +47,7 @@ val UserinfoCommand = flarogus.commands.Command(
 		}
 		
 		var graphics = cropped.createGraphics();
-		val metrics = graphics.fontMetrics;
+		val metrics = graphics.getFontMetrics(infoFont);
 		
 		val perLine = metrics.height + padding;
 		var width = 0;
@@ -70,6 +70,7 @@ val UserinfoCommand = flarogus.commands.Command(
 		graphics.drawImage(cropped, padding, padding, null)
 		
 		graphics.setPaint(Color.WHITE)
+		graphics.setFont(infoFont)
 		for (i in 0 until lines.size) {
 			var x = padding
 			val y = perLine * (i + 1)
