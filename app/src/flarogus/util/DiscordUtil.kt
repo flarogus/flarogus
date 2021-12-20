@@ -15,7 +15,7 @@ fun CoroutineScope.sendEdited(origin: Message, message: String, delayMs: Long = 
 		val msg = origin.channel.createMessage(message)
 		if (delayMs > 0) delay(delayMs)
 		msg.edit { content = newMessage(message) }
-	} catch (e: Throwable) {
+	} catch (e: Exception) {
 		println(e)
 	}
 }
@@ -31,7 +31,7 @@ fun CoroutineScope.replyWith(origin: Message, message: String, selfdestructIn: L
 			delay(selfdestructIn)
 			msg.delete()
 		}
-	} catch (e: Throwable) {
+	} catch (e: Exception) {
 		println(e)
 	}
 }
@@ -40,7 +40,7 @@ fun CoroutineScope.replyWith(origin: Message, message: String, selfdestructIn: L
 suspend fun CoroutineScope.sendMessage(to: Message, content: String) = launch {
 	try {
 		to.channel.createMessage(content)
-	} catch (e: Throwable) {
+	} catch (e: Exception) {
 		println(e)
 	}
 }
@@ -58,3 +58,55 @@ suspend fun userOrAuthor(uid: String?, event: MessageCreateEvent): User? {
 }
 
 fun User.getAvatarUrl() = avatar?.url ?: "https://cdn.discordapp.com/embed/avatars/${discriminator.toInt() % 5}.png"
+
+const val minute = 60L
+const val hour = 60L * minute
+const val day = 24L * hour
+const val month = 30L * day
+const val year = 12L * month
+
+fun formatTime(millis: Long): String {
+	val time: Long = millis / 1000L;
+	return buildString {
+		if (time >= year) {
+			val c = time / year
+			append(c)
+			append("year")
+			if (c != 1L) append('s')
+			append(", ")
+		}
+		if (time >= month) {
+			val c = (time % year) / month
+			append(c)
+			append("month")
+			if (c != 1L) append('s')
+			append(", ")
+		}
+		if (time >= day) {
+			val c = (time % month) / day
+			append(c)
+			append("day")
+			if (c != 1L) append('s')
+			append(", ")
+		}
+		if (time >= hour) {
+			val c = (time % day) / hour
+			append(c)
+			append("hour")
+			if (c != 1L) append('s')
+			append(", ")
+		}
+		if (time >= minute) {
+			val c = (time % hour) / minute
+			append(c)
+			append("minute")
+			if (c != 1L) append('s')
+			append(", ")
+		}
+		
+		val c = time % 60
+		append(c)
+		append("second")
+		if (c != 1L) append('s')
+	}
+}

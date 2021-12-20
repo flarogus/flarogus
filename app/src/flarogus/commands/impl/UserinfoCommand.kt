@@ -2,26 +2,32 @@ package flarogus.commands.impl
 
 import java.io.*;
 import java.net.*;
+import java.util.*;
+import java.time.format.*;
 import java.awt.*;
 import java.awt.image.*;
 import javax.imageio.*;
+import kotlin.time.*;
 import kotlinx.coroutines.*;
 import dev.kord.core.behavior.channel.*;
 import dev.kord.core.entity.*;
 import dev.kord.core.event.message.*;
+import dev.kord.common.entity.*;
 import flarogus.util.*;
 
-val avatarFrame = ImageIO.read({}::class.java.getResource("/frame.png") ?: throw RuntimeException("no avatar frame exist"))
-val background = Color(30, 10, 40)
-val padding = 10;
+private val avatarFrame = ImageIO.read({}::class.java.getResource("/frame.png") ?: throw RuntimeException("no avatar frame exist"))
+private val dateFormatter = DateTimeFormatter.ofPattern("yyyy.mm.dd at HH:mm")
+private val background = Color(30, 10, 40)
+private val padding = 10;
 
-val lines = ArrayList<String>(15)
+private val lines = ArrayList<String>(15)
 
 /** result:
 /------\ impostor#3661
 |avatar| impostor: yes
 \------/
 */
+@OptIn(kotlin.time.ExperimentalTime::class)
 val UserinfoCommand = flarogus.commands.Command(
 	handler = {
 		val user = userOrAuthor(it.getOrNull(1), this)
@@ -29,21 +35,31 @@ val UserinfoCommand = flarogus.commands.Command(
 		val userpfp = ImageIO.read(URL(user?.getAvatarUrl() ?: throw CommandException("userinfo", "could not retreive user avatar")))
 		val cropped = ImageUtil.multiply(avatarFrame, userpfp);
 		
-		lines.clear()
-		lines.add((if (user.isBot) "bot" else "user") + " info")
-		lines.add(user.tag)
-		lines.add("impostor: " + if (user.discriminator.toInt() % 7 == 0) "yes" else "no")
+		lines.apply {
+			clear()
+			add((if (user.isBot) "bot" else "user") + " info")
+			add(user.tag)
+			add("impostor: " + if (user.discriminator.toInt() % 7 == 0) "yes" else "no")
+			add("user id: ${user.id}")
+			//i wasted 3 hours of my life trying to figure out how to do these two. i utterly failed. fuck instant and other stuff.
+			add("age: ${formatTime(System.currentTimeMillis() - user.id.timeMark.elapsedNow().toLong(DurationUnit.MILLISECONDS))}")
+			//add("registered at ${dateFormatter.format(user.id.timestamp as java.time.temporal.TemporalAccessor)} UTC")
+		}
 		
-		var graphics = cropped.createGraphics()
+		var graphics = cropped.createGraphics();
 		val metrics = graphics.fontMetrics;
 		
-		val perLine = metrics.height + padding
+		val perLine = metrics.height + padding;
 		var width = 0;
-		var height = padding * 2 + cropped.height
+		var height = 0;
 		lines.forEach {
-			width = Math.max(width, padding + cropped.width + padding * 2 + metrics.stringWidth(it) + padding)
+			var w = padding + metrics.stringWidth(it) + padding
+			if (height <= cropped.height + padding * 2) w += cropped.width + padding * 2 
+			
+			width = Math.max(width, w)
 			height += perLine
 		}
+		height = Math.max(padding * 2 + cropped.height, height)
 		graphics.dispose()
 		
 		val newImage = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
@@ -55,7 +71,11 @@ val UserinfoCommand = flarogus.commands.Command(
 		
 		graphics.setPaint(Color.WHITE)
 		for (i in 0 until lines.size) {
-			graphics.drawString(lines[i], padding * 3 + cropped.width, padding + perLine * (i + 1))
+			var x = padding
+			val y = perLine * (i + 1)
+			if (y <= cropped.height + padding * 2) x += cropped.width + padding * 2
+			
+			graphics.drawString(lines[i], x, y)
 		}
 		
 		ByteArrayOutputStream().use {

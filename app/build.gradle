@@ -1,5 +1,5 @@
 plugins {
-	id 'org.jetbrains.kotlin.jvm' version '1.6.0'
+	id 'org.jetbrains.kotlin.jvm' version '1.6.10'
 	id 'application'
 }
 
@@ -14,15 +14,22 @@ repositories {
 }
 
 dependencies {
-	implementation platform('org.jetbrains.kotlin:kotlin-bom')
-	implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
-	implementation 'com.google.guava:guava:30.1.1-jre'
+	//implementation platform('org.jetbrains.kotlin:kotlin-bom')
+	//implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+	//implementation 'com.google.guava:guava:30.1.1-jre'
 	implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0-RC2'
 	implementation 'dev.kord:kord-core:0.8.0-M8'
 	implementation 'org.sejda.webp-imageio:webp-imageio-sejda:0.1.0'
 	
 	//testImplementation 'org.jetbrains.kotlin:kotlin-test'
 	//testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
+}
+
+compileKotlin {
+	kotlinOptions {
+		sourceCompatibility = "11"
+		jvmTarget = "11"
+	}
 }
 
 jar {

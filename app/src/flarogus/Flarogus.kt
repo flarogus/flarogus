@@ -160,7 +160,3 @@ suspend fun main(vararg args: String) = runBlocking {
 	client.login()
 }
 
-fun formatTime(millis: Long): String {
-	val time: Long = millis / 1000L;
-	return "${(time % 86400) / 3600} hours, ${(time % 3600) / 60} minutes, ${time % 60} seconds";
-}
