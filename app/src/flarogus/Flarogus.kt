@@ -18,6 +18,7 @@ import flarogus.util.*;
 import flarogus.commands.*;
 
 private val vowels = listOf('a', 'A', 'e', 'E', 'i', 'I', 'o', 'O', 'u', 'U', 'y', 'Y')
+val flarsusBase = ImageIO.read({}::class.java.getResource("/flarsus.png") ?: throw RuntimeException("aaaaa le flar has escaped"))
 
 val ownerId = 502871063223336990.toULong()
 val prefix = "flarogus"
@@ -29,7 +30,6 @@ suspend fun main(vararg args: String) = runBlocking {
 		return@runBlocking
 	}
 	val client = Kord(token)
-	val flarsusBase = ImageIO.read({}::class.java.getResource("/flarsus.png") ?: throw RuntimeException("aaaaa le flar has escaped"))
 	val ubid = Random.nextInt(0, 1000000000).toString()
 	val startedAt = System.currentTimeMillis()
 	
@@ -41,6 +41,8 @@ suspend fun main(vararg args: String) = runBlocking {
 		.launchIn(client)
 	
 	CommandHandler.register("mines", flarogus.commands.impl.MinesweeperCommand);
+	
+	CommandHandler.register("userinfo", flarogus.commands.impl.UserinfoCommand);
 	
 	CommandHandler.register("help") {
 		launch {

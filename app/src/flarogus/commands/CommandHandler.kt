@@ -19,14 +19,12 @@ object CommandHandler {
 		
 		val command = commands.get(commandName)
 		if (command == null) {
-			launch {
-				val err = event.message.channel.createMessage {
-					content = "unknown command: $command\n(${event.message.author?.username}, you're so sussy)"
-					messageReference = event.message.id
-				}
-				delay(5000L)
-				err.edit { content = "unknown command: $commandName" }
+			val err = event.message.channel.createMessage {
+				content = "unknown command: $command\n(${event.message.author?.username}, you're so sussy)"
+				messageReference = event.message.id
 			}
+			delay(5000L)
+			err.edit { content = "unknown command: $commandName" }
 		} else {
 			val author = event.message.author
 			if (author != null && command.condition(author)) {
@@ -34,7 +32,7 @@ object CommandHandler {
 				try {
 					event.handler(args)
 				} catch (e: Throwable) { //no exceptions on my watch
-					replyWith(event.message, "An exception has occurred: ${e.stackTraceToString()}")
+					replyWith(event.message, e.toString())
 				}
 			} else {
 				replyWith(event.message, "You are not allowed to run $commandName.")
