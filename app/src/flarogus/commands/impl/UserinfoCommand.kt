@@ -15,7 +15,7 @@ import dev.kord.common.entity.*;
 import flarogus.util.*;
 
 private val avatarFrame = ImageIO.read({}::class.java.getResource("/frame.png") ?: throw RuntimeException("no avatar frame exist"))
-private val infoFont = Font("Courier New", Font.PLAIN, 15);
+private val infoFont = Font("Courier New", Font.PLAIN, 17);
 private val dateFormatter = DateTimeFormatter.ofPattern("yyyy.mm.dd HH:mm")
 private val background = Color(30, 10, 40)
 private val padding = 10;
@@ -64,6 +64,8 @@ val UserinfoCommand = flarogus.commands.Command(
 		
 		val newImage = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
 		graphics = newImage.createGraphics()
+		g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+
 		
 		graphics.setPaint(background)
 		graphics.fillRect(0, 0, newImage.width, newImage.height)
