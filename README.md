@@ -1,2 +1,4 @@
 # Flarogus bot
-Spare me
+Github-hosted discord bot. Mogus.
+
+Written in kotlin, uses Kord.

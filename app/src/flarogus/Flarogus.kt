@@ -65,7 +65,9 @@ suspend fun main(vararg args: String) = runBlocking {
 					}
 				}
 				
-				footer { text = "there's [$hidden] commands you are not allowed to run" }
+				if (hidden > 0) {
+					footer { text = "there's [$hidden] commands you are not allowed to run" }
+				}
 			}
 		}
 	}
@@ -104,7 +106,7 @@ suspend fun main(vararg args: String) = runBlocking {
 					}
 				}
 			} catch (e: Exception) {
-				replyWith(message, "Exception has occurred: ${e.stackTraceToString()}")
+				throw CommandException("flaroficate", e.stackTraceToString())
 			}
 		}
 	}
@@ -114,10 +116,8 @@ suspend fun main(vararg args: String) = runBlocking {
 	CommandHandler.register("impostor") {
 		val arg = it.getOrNull(1)
 		val name = if (arg == null || arg.isEmpty() || arg[0].isDigit()) userOrAuthor(arg, this@register)?.username; else arg;
-		if (name == null) {
-			replyWith(message, "the amogus has escaped, I couldn't do anything :pensive:")
-			return@register
-		}
+		if (name == null) throw CommandException("impostor", "the amogus has escaped, I couldn't do anything :pensive:")
+		
 		replyWith(message, buildString {
 			var usAdded = false
 			for (i in name.length - 1 downTo 0) {
@@ -137,14 +137,12 @@ suspend fun main(vararg args: String) = runBlocking {
 	
 	CommandHandler.register("shutdown") {
 		val target = it.getOrNull(1)
-		if (target == null) {
-			replyWith(message, "no unique bot id specified")
-			return@register
-		}
+		if (target == null) throw CommandException("shutdown", "no unique bot id specified")
+		
 		if (target == ubid || target == "all") {
 			File("done").printWriter().use { it.print(1) }
 			client.shutdown()
-			throw Error("shutting down...")
+			throw Error("shutting down...") //Error won't be caught, will crash the application and make the workflow stop
 		}
 	}
 	.setCondition { it.id.value == ownerId }
