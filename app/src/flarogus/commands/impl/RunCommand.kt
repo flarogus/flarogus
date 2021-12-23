@@ -70,6 +70,7 @@ val RunCommand = flarogus.commands.Command(
 			}
 		}
 		
+		print(". starting the thread...")
 		val thread = object : Thread() {
 			override fun run() {
 				runBlocking {
@@ -89,6 +90,7 @@ val RunCommand = flarogus.commands.Command(
 			val stop = Thread::class.java.getDeclaredMethod("stop0", Any::class.java);
 			stop.setAccessible(true)
 			delay(stopAfter)
+			println("killing the script thread")
 			stop.invoke(thread, ThreadDeath());
 		}
 	},
