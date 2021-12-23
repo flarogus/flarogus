@@ -82,8 +82,9 @@ val RunCommand = flarogus.commands.Command(
 						val result = engine.eval(script)?.toString() ?: "null"
 						replyWith(message, result)
 					} catch (e: Exception) { 
-						//commands MUST NOT create any uncaught exceptions. Exceptions in this thread wouldn't be caught.
-						replyWith(message, "exception during execution:\n```\n${e.cause?.stackTraceToString() ?: e.stackTraceToString()}\n```")
+						val trace = if (e is ScriptException) e.toString() else e.cause?.stackTraceToString() ?: e.stackTraceToString()
+						
+						replyWith(message, "exception during execution:\n```\n${trace}\n```")
 						e.printStackTrace()
 					}
 				}

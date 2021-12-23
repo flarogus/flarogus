@@ -18,9 +18,6 @@ import flarogus.util.*;
 import flarogus.commands.*;
 
 suspend fun main(vararg args: String) = runBlocking {
-	//javax.script.ScriptEngineManager().engineFactories.forEach { println(it.extensions); println(it.engineName) }
-	//javax.script.ScriptEngineManager(Thread.currentThread().contextClassLoader).engineFactories.find { "kts" in it.extensions }!!.scriptEngine.eval("6 + 8")
-	
 	val token = args.getOrNull(0)
 	if (token == null) {
 		println("[ERROR] no token specified")
