@@ -74,6 +74,12 @@ val RunCommand = flarogus.commands.Command(
 			coroutineScope {
 				var hasFinished = false
 				launch {
+					delay(stopAfter)
+					if (!hasFinished) {
+						throw TimeoutException("[WARNING] The coroutine has been stopped due to exceeding the maximum execution time ($stopAfter ms)")
+					}
+				}
+				launch {
 					try {
 						val result = engine.eval(script)?.toString() ?: "null"
 						replyWith(message, result)
@@ -84,12 +90,6 @@ val RunCommand = flarogus.commands.Command(
 						e.printStackTrace()
 					}
 					hasFinished = true
-				}
-				launch {
-					delay(stopAfter)
-					if (!hasFinished) {
-						throw TimeoutException("[WARNING] The coroutine has been stopped due to exceeding the maximum execution time ($stopAfter ms)")
-					}
 				}
 			}
 		} catch (timeout: TimeoutException) {
