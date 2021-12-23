@@ -17,32 +17,28 @@ import dev.kord.common.entity.*
 import flarogus.util.*;
 import flarogus.commands.*;
 
-private val vowels = listOf('a', 'A', 'e', 'E', 'i', 'I', 'o', 'O', 'u', 'U', 'y', 'Y')
-val flarsusBase = ImageIO.read({}::class.java.getResource("/flarsus.png") ?: throw RuntimeException("aaaaa le flar has escaped"))
-
-val ownerId = 502871063223336990.toULong()
-val prefix = "flarogus"
-
 suspend fun main(vararg args: String) = runBlocking {
 	val token = args.getOrNull(0)
 	if (token == null) {
 		println("[ERROR] no token specified")
 		return@runBlocking
 	}
-	val client = Kord(token)
-	val ubid = Random.nextInt(0, 1000000000).toString()
-	val startedAt = System.currentTimeMillis()
+	Vars.client = Kord(token)
+	Vars.ubid = Random.nextInt(0, 1000000000).toString()
+	Vars.startedAt = System.currentTimeMillis()
 	
-	client.events
+	Vars.client.events
 		.filterIsInstance<MessageCreateEvent>()
 		.filter { it.message.author?.isBot == false }
-		.filter { it.message.content.startsWith(prefix) }
-		.onEach { CommandHandler.handle(this, it.message.content.substring(prefix.length), it) }
-		.launchIn(client)
+		.filter { it.message.content.startsWith(Vars.prefix) }
+		.onEach { CommandHandler.handle(this, it.message.content.substring(Vars.prefix.length), it) }
+		.launchIn(Vars.client)
 	
 	CommandHandler.register("mines", flarogus.commands.impl.MinesweeperCommand);
 	
 	CommandHandler.register("userinfo", flarogus.commands.impl.UserinfoCommand);
+	
+	CommandHandler.register("run", flarogus.commands.impl.RunCommand)
 	
 	CommandHandler.register("help") {
 		launch {
@@ -76,12 +72,13 @@ suspend fun main(vararg args: String) = runBlocking {
 	CommandHandler.register("sus") {
 		val start = System.currentTimeMillis();
 		sendEdited(message, "sussificating", 50L) { 
-			"$ubid — running for ${formatTime(System.currentTimeMillis() - startedAt)}. sussification time: ${System.currentTimeMillis() - start}ms."
+			"${Vars.ubid} — running for ${formatTime(System.currentTimeMillis() - Vars.startedAt)}. sussification time: ${System.currentTimeMillis() - start}ms."
 		}
 		message.delete()
 	}
 	.setDescription("Show the bot status")
 	
+	val flarsusBase = ImageIO.read({}::class.java.getResource("/flarsus.png") ?: throw RuntimeException("aaaaa le flar has escaped"))
 	CommandHandler.register("flaroficate") {
 		launch {
 			val image = if (message.attachments.size == 0) {
@@ -113,6 +110,7 @@ suspend fun main(vararg args: String) = runBlocking {
 	.setHeader("user: User? / attachment: Image")
 	.setDescription("Flaroficate the providen image, avatar of the providen user or, if neither are present, avatar of the caller")
 	
+	val vowels = listOf('a', 'A', 'e', 'E', 'i', 'I', 'o', 'O', 'u', 'U', 'y', 'Y')
 	CommandHandler.register("impostor") {
 		val arg = it.getOrNull(1)
 		val name = if (arg == null || arg.isEmpty() || arg[0].isDigit() || arg.startsWith("<@")) { //todo: find a better way?
@@ -143,22 +141,22 @@ suspend fun main(vararg args: String) = runBlocking {
 		val target = it.getOrNull(1)
 		if (target == null) throw CommandException("shutdown", "no unique bot id specified")
 		
-		if (target == ubid || target == "all") {
+		if (target == Vars.ubid || target == "all") {
 			File("done").printWriter().use { it.print(1) }
-			client.shutdown()
+			Vars.client.shutdown()
 			throw Error("shutting down...") //Error won't be caught, will crash the application and make the workflow stop
 		}
 	}
-	.setCondition { it.id.value == ownerId }
+	.setCondition { it.id.value == Vars.ownerId }
 	.setHeader("ubid: Int")
 	.setDescription("shut down an instance by ubid.")
 	
 	launch {
 		delay(1000 * 60 * 60 * 5L);
-		client.shutdown();
+		Vars.client.shutdown();
 	}
 	
 	println("initialized");
-	client.login()
+	Vars.client.login()
 }
 

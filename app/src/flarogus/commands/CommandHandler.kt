@@ -11,13 +11,16 @@ object CommandHandler {
 	
 	val commands = HashMap<String, FlarogusCommand>(50)
 	
+	/** Invokes the command handler associated with the first word (command name) in the message.
+	 *  Provides an array or arguments to the handler, 0th element is the source message without the command name */
 	suspend fun handle(scope: CoroutineScope, message: String, event: MessageCreateEvent) = scope.launch {
-		val args = message.split(" ").filter { !it.isEmpty() }
+		val args = message.split(" ").filter { !it.isEmpty() }.toMutableList()
 		
 		val commandName = args.getOrNull(0)
 		if (commandName == null || commandName == "") return@launch;
+		args[0] = message.substring(commandName.length + 1)
 		
-		println("""[INFO] ${event.message.author?.username}: $commandName ${args.joinToString(", ")}""")
+		println("[INFO] ${event.message.author?.username}: $message")
 		
 		val command = commands.get(commandName)
 		if (command == null) {
