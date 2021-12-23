@@ -12,9 +12,9 @@ import dev.kord.common.entity.*
 /** Sends a message, waits delayMs, edits it to the output of the lambda */
 fun CoroutineScope.sendEdited(origin: Message, message: String, delayMs: Long = 0, newMessage: (String) -> String) = launch {
 	try {
-		val msg = origin.channel.createMessage(message)
+		val msg = origin.channel.createMessage(message.take(1999))
 		if (delayMs > 0) delay(delayMs)
-		msg.edit { content = newMessage(message) }
+		msg.edit { content = newMessage(message).take(1999) }
 	} catch (e: Exception) {
 		println(e)
 	}
@@ -24,7 +24,7 @@ fun CoroutineScope.sendEdited(origin: Message, message: String, delayMs: Long = 
 fun CoroutineScope.replyWith(origin: Message, message: String, selfdestructIn: Long? = null) = launch {
 	try {
 		val msg = origin.channel.createMessage {
-			content = message
+			content = message.take(1999)
 			messageReference = origin.id
 		}
 		if (selfdestructIn != null) {
@@ -39,7 +39,7 @@ fun CoroutineScope.replyWith(origin: Message, message: String, selfdestructIn: L
 /** Sends the message into the same channel the original message was sent into */
 suspend fun CoroutineScope.sendMessage(to: Message, content: String) = launch {
 	try {
-		to.channel.createMessage(content)
+		to.channel.createMessage(content.take(1999))
 	} catch (e: Exception) {
 		println(e)
 	}

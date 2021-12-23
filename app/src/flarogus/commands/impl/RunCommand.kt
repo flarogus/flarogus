@@ -1,7 +1,7 @@
 package flarogus.commands.impl
-//load
+
+import javax.script.*
 import kotlinx.coroutines.*;
-import de.swirtz.ktsrunner.objectloader.*
 import flarogus.*
 import flarogus.util.*
 
@@ -63,23 +63,27 @@ val RunCommand = flarogus.commands.Command(
 			illegal("Class", "KClass", "::class", ".getClass", "ClassLoader")
 			illegal("dev.kord")
 			illegal("KtsObjectLoader", "ScriptEngine")
+			illegal("flarogus.")
 			//todo: ?
 			
 			if (errCount > 0) {
-				throw CommandException("run", "$errCount errors:\n```\n${errors.substring(0, 1500)}\n```")
+				throw CommandException("run", "$errCount errors:\n```\n${errors.take(1500)}\n```")
 			}
 		}
+		
+		val engine = ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts");
 		
 		print("starting the thread...")
 		val thread = object : Thread() {
 			override fun run() {
 				runBlocking {
 					try {
-						val result = KtsObjectLoader().load<Any>(script).toString()
+						val result = engine.eval(script).toString()
 						replyWith(message, result.toString())
 					} catch (e: Exception) { 
 						//commands MUST NOT create any uncaught exceptions. Exceptions in this thread wouldn't be caught.
-						replyWith(message, "```\n${e.stackTraceToString()}\n```")
+						replyWith(message, "```\n${e.cause?.stackTraceToString()}\n```")
+						e.printStackTrace()
 					}
 				}
 			}
@@ -91,8 +95,12 @@ val RunCommand = flarogus.commands.Command(
 			val stop = Thread::class.java.getDeclaredMethod("stop0", Any::class.java);
 			stop.setAccessible(true)
 			delay(stopAfter)
-			println("killing the script thread")
-			stop.invoke(thread, ThreadDeath());
+			
+			if (thread.isAlive) {
+				println("killing the script thread")
+				stop.invoke(thread, ThreadDeath());
+				replyWith(message, "[WARNING] the script thread has been killed due to exceeding the maximum execution time ($stopAfter ms)")
+			}
 		}
 	},
 	
