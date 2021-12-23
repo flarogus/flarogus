@@ -21,6 +21,7 @@ val RunCommand = flarogus.commands.Command(
 			command.substring(begin + 2)
 		}
 		
+		println(command.substring(0, begin - 1))
 		println("executing a script with arguments:")
 		
 		var isAdmin = false
@@ -29,7 +30,7 @@ val RunCommand = flarogus.commands.Command(
 		val regex = "-([a-zA-Z0-9=]*)[\\s<]".toRegex()
 		var argument = regex.find(command.substring(0, begin - 1))
 		while (argument != null) {
-			val arg = argument?.groupValues?.getOrNull(1) ?: break
+			val arg = argument.groupValues?.getOrNull(1) ?: break
 			print(" $arg,")
 			
 			when (arg) {
@@ -38,13 +39,13 @@ val RunCommand = flarogus.commands.Command(
 					isAdmin = true
 				}
 				"long" -> {
-					if (!isAdmin) throw IllegalAccessException("'-long' can only be used after '-admin'!")
+					if (message.author?.id?.value != Vars.ownerId) throw IllegalAccessException("you're not allowed to use argument '-long'!")
 					stopAfter = 300000L
 				}
 				else -> throw CommandException("run", "unknown argument: $arg")
 			}
 			
-			argument = argument?.next()
+			argument = argument.next()
 		}
 		
 		if (!isAdmin) {
@@ -82,7 +83,7 @@ val RunCommand = flarogus.commands.Command(
 						replyWith(message, result)
 					} catch (e: Exception) { 
 						//commands MUST NOT create any uncaught exceptions. Exceptions in this thread wouldn't be caught.
-						replyWith(message, "```\n${e.cause?.stackTraceToString()}\n```")
+						replyWith(message, "exception during execution:\n```\n${e.cause?.stackTraceToString() ?: e.stackTraceToString()}\n```")
 						e.printStackTrace()
 					}
 				}
