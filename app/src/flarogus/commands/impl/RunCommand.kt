@@ -74,6 +74,7 @@ val RunCommand = flarogus.commands.Command(
 		try {
 			launch {
 				var hasFinished = false
+				//todo: doesn't work
 				launch {
 					delay(stopAfter)
 					if (!hasFinished) {
