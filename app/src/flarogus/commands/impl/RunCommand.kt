@@ -21,17 +21,13 @@ val RunCommand = flarogus.commands.Command(
 			command.substring(begin + 2)
 		}
 		
-		println(command.substring(0, begin - 1))
-		println("executing a script with arguments:")
-		
 		var isAdmin = false
 		var stopAfter = 3000L
 		
 		val regex = "-([a-zA-Z0-9=]*)[\\s<]?".toRegex()
 		var argument = regex.find(command.substring(0, begin - 1))
 		while (argument != null) {
-			val arg = argument.groupValues?.getOrNull(1) ?: break
-			print(" $arg,")
+			val arg = argument.groupValues.getOrNull(1) ?: break
 			
 			when (arg) {
 				"admin" -> {
@@ -74,10 +70,10 @@ val RunCommand = flarogus.commands.Command(
 		
 		val engine = ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts");
 		
-		print("starting the thread...")
-		val thread = object : Thread() {
-			override fun run() {
-				runBlocking {
+		try {
+			coroutineScope {
+				var hasFinished = false
+				launch {
 					try {
 						val result = engine.eval(script)?.toString() ?: "null"
 						replyWith(message, result)
@@ -87,22 +83,18 @@ val RunCommand = flarogus.commands.Command(
 						replyWith(message, "exception during execution:\n```\n${trace}\n```")
 						e.printStackTrace()
 					}
+					hasFinished = true
+				}
+				launch {
+					delay(stopAfter)
+					if (!hasFinished) {
+						throw TimeoutException("[WARNING] The coroutine has been stopped due to exceeding the maximum execution time ($stopAfter ms)")
+					}
 				}
 			}
-		}
-		thread.start()
-		
-		//the thread MUST be killed. no matter what.
-		launch {
-			val stop = Thread::class.java.getDeclaredMethod("stop0", Any::class.java);
-			stop.setAccessible(true)
-			delay(stopAfter)
-			
-			if (thread.isAlive) {
-				println("killing the script thread")
-				stop.invoke(thread, ThreadDeath());
-				replyWith(message, "[WARNING] the script thread has been killed due to exceeding the maximum execution time ($stopAfter ms)")
-			}
+		} catch (timeout: TimeoutException) {
+			println("killing the script coroutine")
+			replyWith(message, timeout.toString())
 		}
 	},
 	
@@ -112,3 +104,5 @@ val RunCommand = flarogus.commands.Command(
 	
 	description = "Execute an arbitrary kotlin script (kts) and print it's result. Unless used with '-long' (admin-only) argument, the execution time is limited to 3 seconds"
 )
+
+private class TimeoutException(message: String) : RuntimeException(message);
