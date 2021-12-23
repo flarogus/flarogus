@@ -25,7 +25,7 @@ jobs:
         run: chmod +x ./gradlew
         
       - name: Eject them from the ship!
-        run: ./gradlew deploy; java -jar ./build/app.jar ${{ secrets.TOKEN }}
+        run: ./gradlew deploy; java -jar -Dkotlin.script.classpath=./build/app.jar ./build/app.jar ${{ secrets.TOKEN }}
         
   emergencyMetting1:
     name: 'Get rid of the impostor'
@@ -40,7 +40,7 @@ jobs:
         run: chmod +x ./gradlew
         
       - name: Eject them from the ship!
-        run: ./gradlew deploy; java -jar ./build/app.jar ${{ secrets.TOKEN }}
+        run: ./gradlew deploy; java -jar -Dkotlin.script.classpath=./build/app.jar ./build/app.jar ${{ secrets.TOKEN }}
         
   emergencyMetting2:
     name: 'Get rid of the impostor'
@@ -55,7 +55,7 @@ jobs:
         run: chmod +x ./gradlew
         
       - name: Eject them from the ship!
-        run: ./gradlew deploy; java -jar ./build/app.jar ${{ secrets.TOKEN }}
+        run: ./gradlew deploy; java -jar -Dkotlin.script.classpath=./build/app.jar ./build/app.jar ${{ secrets.TOKEN }}
         
   emergencyMetting3:
     name: 'Get rid of the impostor'
@@ -70,7 +70,7 @@ jobs:
         run: chmod +x ./gradlew
         
       - name: Eject them from the ship!
-        run: ./gradlew deploy; java -jar ./build/app.jar ${{ secrets.TOKEN }}
+        run: ./gradlew deploy; java -jar -Dkotlin.script.classpath=./build/app.jar ./build/app.jar ${{ secrets.TOKEN }}
         
   emergencyMetting4:
     name: 'Get rid of the impostor'
@@ -85,7 +85,7 @@ jobs:
         run: chmod +x ./gradlew
         
       - name: Eject them from the ship!
-        run: ./gradlew deploy; java -jar ./build/app.jar ${{ secrets.TOKEN }}
+        run: ./gradlew deploy; java -jar -Dkotlin.script.classpath=./build/app.jar ./build/app.jar ${{ secrets.TOKEN }}
         
   emergencyMetting5:
     name: 'Get rid of the impostor'
@@ -100,7 +100,7 @@ jobs:
         run: chmod +x ./gradlew
         
       - name: Eject them from the ship!
-        run: ./gradlew deploy; java -jar ./build/app.jar ${{ secrets.TOKEN }}
+        run: ./gradlew deploy; java -jar -Dkotlin.script.classpath=./build/app.jar ./build/app.jar ${{ secrets.TOKEN }}
         
   emergencyMetting6:
     name: 'Get rid of the impostor'
@@ -115,7 +115,7 @@ jobs:
         run: chmod +x ./gradlew
         
       - name: Eject them from the ship!
-        run: ./gradlew deploy; java -jar ./build/app.jar ${{ secrets.TOKEN }}
+        run: ./gradlew deploy; java -jar -Dkotlin.script.classpath=./build/app.jar ./build/app.jar ${{ secrets.TOKEN }}
         
   emergencyMetting7:
     name: 'Get rid of the impostor'
@@ -130,6 +130,6 @@ jobs:
         run: chmod +x ./gradlew
         
       - name: Eject them from the ship!
-        run: ./gradlew deploy; java -jar ./build/app.jar ${{ secrets.TOKEN }}
+        run: ./gradlew deploy; java -jar -Dkotlin.script.classpath=./build/app.jar ./build/app.jar ${{ secrets.TOKEN }}
         
       
