@@ -25,7 +25,7 @@ object CommandHandler {
 		val command = commands.get(commandName)
 		if (command == null) {
 			val err = event.message.channel.createMessage {
-				content = "unknown command: $command\n(${event.message.author?.username}, you're so sussy)"
+				content = "unknown command: $commandName\n(${event.message.author?.username}, you're so sussy)"
 				messageReference = event.message.id
 			}
 			delay(5000L)

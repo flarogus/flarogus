@@ -44,34 +44,35 @@ val RunCommand = flarogus.commands.Command(
 			argument = argument.next()
 		}
 		
-		if (!isAdmin) {
-			var errCount = 0
-			var errors = ""
-			fun illegal(vararg illegals: String) {
-				for (illegal in illegals) {
-					if (script.contains(illegal)) {
-						errCount++
-						errors += "[ERROR]: '$illegal' can only be used in conjunction with argument '-admin'!\n";
-					}
+		//check for errors
+		var errCount = 0
+		var errors = ""
+		fun illegal(cause: String, vararg illegals: String) {
+			for (illegal in illegals) {
+				if (script.contains(illegal)) {
+					errCount++
+					errors += "[ERROR]: '$illegal' $cause";
 				}
 			}
-			
-			illegal("Thread", "System", "java.lang.Thread", "java.lang.System")
-			illegal("Class", "KClass", "::class", ".getClass", "ClassLoader")
-			illegal("dev.kord")
-			illegal("KtsObjectLoader", "ScriptEngine")
-			illegal("flarogus.")
-			//todo: ?
-			
-			if (errCount > 0) {
-				throw CommandException("run", "$errCount errors:\n```\n${errors.take(1500)}\n```")
-			}
+		}
+		//illegal(cause = "should not be used at all. It blocks the thread completely.", "runBlocking")
+		if (!isAdmin) {
+			illegal(
+				cause = "can only be used in conjunction with argument '-admin'!\n",
+				
+				"Thread", "System", "java.lang.Thread", "java.lang.System",
+				"Class", "KClass", "::class", ".getClass", "ClassLoader",
+				"dev.kord", "KtsObjectLoader", "ScriptEngine", "flarogus."
+			)
+		}
+		if (errCount > 0) {
+			throw CommandException("run", "$errCount errors:\n```\n${errors.take(1500)}\n```")
 		}
 		
+		//execute
 		val engine = ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts");
-		
 		try {
-			coroutineScope {
+			launch {
 				var hasFinished = false
 				launch {
 					delay(stopAfter)
