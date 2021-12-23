@@ -70,7 +70,7 @@ val RunCommand = flarogus.commands.Command(
 			}
 		}
 		
-		print(". starting the thread...")
+		print("starting the thread...")
 		val thread = object : Thread() {
 			override fun run() {
 				runBlocking {
@@ -84,6 +84,7 @@ val RunCommand = flarogus.commands.Command(
 				}
 			}
 		}
+		thread.start()
 		
 		//the thread MUST be killed. no matter what.
 		launch {
