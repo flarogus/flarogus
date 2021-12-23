@@ -80,7 +80,7 @@ suspend fun main(vararg args: String) = runBlocking {
 		}
 		message.delete()
 	}
-	.setDescription("Print the bot status")
+	.setDescription("Show the bot status")
 	
 	CommandHandler.register("flaroficate") {
 		launch {
@@ -110,12 +110,16 @@ suspend fun main(vararg args: String) = runBlocking {
 			}
 		}
 	}
-	.setHeader("userID: String? / attachment: Image")
-	.setDescription("If the argument is a user id, return a flaroficated avatar of the user with the providen id. If there's no argument specified, uses the attached image or, if there's none, the avatar of the caller")
+	.setHeader("user: User? / attachment: Image")
+	.setDescription("Flaroficate the providen image, avatar of the providen user or, if neither are present, avatar of the caller")
 	
 	CommandHandler.register("impostor") {
 		val arg = it.getOrNull(1)
-		val name = if (arg == null || arg.isEmpty() || arg[0].isDigit()) userOrAuthor(arg, this@register)?.username; else arg;
+		val name = if (arg == null || arg.isEmpty() || arg[0].isDigit() || arg.startsWith("<@")) { //todo: find a better way?
+			userOrAuthor(arg, this@register)?.username;
+		} else {
+			arg;
+		}
 		if (name == null) throw CommandException("impostor", "the amogus has escaped, I couldn't do anything :pensive:")
 		
 		replyWith(message, buildString {
@@ -132,8 +136,8 @@ suspend fun main(vararg args: String) = runBlocking {
 			}
 		})
 	}
-	.setHeader("string/userID: String?")
-	.setDescription("If the providen argument is a string, amogusificates it. If it's a user id, amogusifactes the name of the user with this id. Otherwise amogusificates the author's name.")
+	.setHeader("user: User? / single_word: String?")
+	.setDescription("Amogusificate the providen word, name of the providen user or, if neither are present, name of the caller.")
 	
 	CommandHandler.register("shutdown") {
 		val target = it.getOrNull(1)
@@ -147,7 +151,7 @@ suspend fun main(vararg args: String) = runBlocking {
 	}
 	.setCondition { it.id.value == ownerId }
 	.setHeader("ubid: Int")
-	.setDescription("shut down an instance by ubid. May not work from the first attempt.")
+	.setDescription("shut down an instance by ubid.")
 	
 	launch {
 		delay(1000 * 60 * 60 * 5L);
