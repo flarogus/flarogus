@@ -55,7 +55,7 @@ val RunCommand = flarogus.commands.Command(
 				}
 			}
 		}
-		//illegal(cause = "should not be used at all. It blocks the thread completely.", "runBlocking")
+		illegal(cause = "should not be used at all. Use `launch` instead.", "runBlocking", "coroutineScope")
 		if (!isAdmin) {
 			illegal(
 				cause = "can only be used in conjunction with argument '-admin'!\n",
@@ -82,7 +82,11 @@ val RunCommand = flarogus.commands.Command(
 				}
 				launch {
 					try {
-						val result = engine.eval(script)?.toString() ?: "null"
+						//this script must be run in a this coroutine
+						ktsinterface.KtsInterface.lastScope = this
+						val finalScript = "ktsinterface.KtsInterface.run { $script }"
+						
+						val result = engine.eval(finalScript)?.toString() ?: "null"
 						replyWith(message, result)
 					} catch (e: Exception) { 
 						val trace = if (e is ScriptException) e.toString() else e.cause?.stackTraceToString() ?: e.stackTraceToString()
