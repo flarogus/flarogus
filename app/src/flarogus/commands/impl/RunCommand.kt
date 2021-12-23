@@ -27,7 +27,7 @@ val RunCommand = flarogus.commands.Command(
 		var stopAfter = 3000L
 		
 		val regex = "-([a-z A-Z 0-9 =]*)[\\s<]".toRegex()
-		var argument = regex.find("amog -help -ohno djdje")
+		var argument = regex.find(command.substring(0, begin - 1))
 		while (argument != null) {
 			val arg = argument?.groupValues?.getOrNull(1) ?: break
 			print(" $arg,")
