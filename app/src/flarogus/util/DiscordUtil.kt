@@ -47,6 +47,7 @@ suspend fun CoroutineScope.sendMessage(to: Message, content: String) = launch {
 
 /** Tries to find the user by uid, returns the author of the event in case of an error */
 suspend fun userOrAuthor(uid: String?, event: MessageCreateEvent): User? {
+println(uid)
 	if (uid == null || uid.isEmpty()) {
 		return event.message.author
 	}
