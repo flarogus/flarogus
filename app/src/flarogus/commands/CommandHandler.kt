@@ -17,6 +17,8 @@ object CommandHandler {
 		val commandName = args.getOrNull(0)
 		if (commandName == null || commandName == "") return@launch;
 		
+		println("""[INFO] ${event.message.author?.username}: $commandName ${args.joinToString(", ")}""")
+		
 		val command = commands.get(commandName)
 		if (command == null) {
 			val err = event.message.channel.createMessage {

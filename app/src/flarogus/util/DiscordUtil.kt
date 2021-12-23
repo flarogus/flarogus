@@ -45,11 +45,16 @@ suspend fun CoroutineScope.sendMessage(to: Message, content: String) = launch {
 	}
 }
 
-/** Tries to find the user by uid, returns the author of the event in case of an error */
+/** Tries to find the user by uid / mention, returns the author of the event in case of an error */
 suspend fun userOrAuthor(uid: String?, event: MessageCreateEvent): User? {
-println(uid)
 	if (uid == null || uid.isEmpty()) {
 		return event.message.author
+	}
+	if (uid.startsWith("<@")) {
+		val id = "<@(\\d*)>".toRegex().find(uid)?.groupValues?.getOrNull(1)
+		if (id != null) {
+			return userOrAuthor(id, event)
+		}
 	}
 	try {
 		return event.supplier.getUser(Snowflake(uid.toULong()))
