@@ -78,8 +78,8 @@ val RunCommand = flarogus.commands.Command(
 			override fun run() {
 				runBlocking {
 					try {
-						val result = engine.eval(script).toString()
-						replyWith(message, result.toString())
+						val result = engine.eval(script)?.toString() ?: "null"
+						replyWith(message, result)
 					} catch (e: Exception) { 
 						//commands MUST NOT create any uncaught exceptions. Exceptions in this thread wouldn't be caught.
 						replyWith(message, "```\n${e.cause?.stackTraceToString()}\n```")

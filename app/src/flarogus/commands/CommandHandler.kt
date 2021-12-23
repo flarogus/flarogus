@@ -20,7 +20,7 @@ object CommandHandler {
 		if (commandName == null || commandName == "") return@launch;
 		args[0] = message.substring(commandName.length + 1)
 		
-		println("[INFO] ${event.message.author?.username}: $message")
+		println("[INFO] ${event.message.author?.username}: ${event.message.content}")
 		
 		val command = commands.get(commandName)
 		if (command == null) {
