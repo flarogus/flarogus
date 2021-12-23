@@ -37,8 +37,8 @@ dependencies {
 
 compileKotlin {
 	kotlinOptions {
-		sourceCompatibility = "16"
-		jvmTarget = "16"
+		sourceCompatibility = "11"
+		jvmTarget = "11"
 	}
 }
 
