@@ -18,7 +18,7 @@ val RunCommand = flarogus.commands.Command(
 		val script = if (cbstart != -1 && cbend != -1 && cbstart != cbend && cbstart > begin) {
 			command.substring(cbstart + 3, cbend - 1)
 		} else {
-			command.substring(begin + 1)
+			command.substring(begin + 2)
 		}
 		
 		println("executing a script with arguments:")
