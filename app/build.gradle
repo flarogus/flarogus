@@ -25,6 +25,7 @@ dependencies {
 	implementation 'org.jetbrains.kotlin:kotlin-script-util:1.6.10'                   //(kotlin("script-util"))
 	implementation 'org.jetbrains.kotlin:kotlin-compiler-embeddable:1.6.10'           //(kotlin("compiler-embeddable"))
 	implementation 'org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:1.6.10' //(kotlin("scripting-compiler-embeddable"))
+	runtimeOnly "org.jetbrains.kotlin:kotlin-scripting-jsr223:1.6.10"
 	
 	implementation 'dev.kord:kord-core:0.8.0-M8'
 	implementation 'org.sejda.webp-imageio:webp-imageio-sejda:0.1.0'
