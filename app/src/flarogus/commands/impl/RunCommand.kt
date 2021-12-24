@@ -1,5 +1,6 @@
 package flarogus.commands.impl
 
+import java.io.*
 import javax.script.*
 import kotlinx.coroutines.*;
 import flarogus.*
@@ -55,14 +56,15 @@ val RunCommand = flarogus.commands.Command(
 				}
 			}
 		}
-		illegal(cause = "should not be used at all. Use `ktsinterface.KtsInterface.launch` instead.", "runBlocking", "coroutineScope")
+		illegal(cause = "should not be used at all. Use `ktsinterface.launch` instead.", "runBlocking", "coroutineScope")
 		if (!isAdmin) {
 			illegal(
 				cause = "can only be used in conjunction with argument '-admin'!\n",
 				
 				"Thread", "System", "java.lang.Thread", "java.lang.System",
 				"Class", "KClass", "::class", ".getClass", "ClassLoader",
-				"dev.kord", "KtsObjectLoader", "ScriptEngine", "flarogus."
+				"dev.kord", "KtsObjectLoader", "ScriptEngine", "flarogus.",
+				"Process"
 			)
 		}
 		if (errCount > 0) {
@@ -70,35 +72,40 @@ val RunCommand = flarogus.commands.Command(
 		}
 		
 		//execute
-		val engine = ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts");
-		try {
+		if (isAdmin) {
+			//application context
+			val engine = ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts");
 			launch {
-				var hasFinished = false
-				//todo: doesn't work
-				launch {
-					delay(stopAfter)
-					if (!hasFinished) {
-						throw TimeoutException("[WARNING] The coroutine has been stopped due to exceeding the maximum execution time ($stopAfter ms)")
-					}
-				}
-				launch {
-					try {
-						//this script must be run in a this coroutine
-						ktsinterface.KtsInterface.lastScope = this
-						val result = engine.eval(script)?.toString() ?: "null"
-						replyWith(message, result)
-					} catch (e: Exception) { 
-						val trace = if (e is ScriptException) e.toString() else e.cause?.stackTraceToString() ?: e.stackTraceToString()
-						
-						replyWith(message, "exception during execution:\n```\n${trace}\n```")
-						e.printStackTrace()
-					}
-					hasFinished = true
+				try {
+					//this script must be run in this coroutine
+					ktsinterface.lastScope = this
+					val result = engine.eval(script)?.toString() ?: "null"
+					replyWith(message, "```\n$result\n```")
+				} catch (e: Exception) { 
+					val trace = if (e is ScriptException) e.toString() else e.cause?.stackTraceToString() ?: e.stackTraceToString()
+					
+					replyWith(message, "exception during execution:\n```\n${trace}\n```")
+					e.printStackTrace()
 				}
 			}
-		} catch (timeout: TimeoutException) {
-			println("killing the script coroutine")
-			replyWith(message, timeout.toString())
+		} else {
+			//subprocess context
+			try {
+				File("/tmp/scriptfile.kts")
+				
+				val parts = "kotlinc -script scriptfile.kts".split("\\s".toRegex())
+				val proc = ProcessBuilder(*parts.toTypedArray())
+					.directory(File("/tmp"))
+					.redirectOutput(ProcessBuilder.Redirect.PIPE)
+					.redirectError(ProcessBuilder.Redirect.PIPE)
+					.start()
+				
+				proc.waitFor(stopAfter, java.util.concurrent.TimeUnit.MILLISECONDS)
+				proc.destroy()
+				replyWith(message, proc.inputStream.bufferedReader().readText())
+			} catch(e: IOException) {
+				replyWith(message, e.toString())
+			}
 		}
 	},
 	
@@ -106,7 +113,7 @@ val RunCommand = flarogus.commands.Command(
 	
 	header = "-flags] << [arbitrary kotlin script: String",
 	
-	description = "Execute an arbitrary kotlin script (kts) and print it's result. Unless used with '-long' (admin-only) argument, the execution time is limited to 3 seconds"
+	description = "Execute an arbitrary kotlin script (kts) and print it's result. Unless used with '-long' or '-admin' argument, the execution time is limited to 3 seconds"
 )
 
 private class TimeoutException(message: String) : RuntimeException(message);

@@ -12,4 +12,6 @@ object Vars {
 	val ownerId = 502871063223336990.toULong()
 	var prefix = "flarogus"
 	
+	lateinit var lastProcess: Process
+	
 }

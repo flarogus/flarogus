@@ -150,6 +150,25 @@ suspend fun main(vararg args: String) = runBlocking {
 	.setCondition { it.id.value == Vars.ownerId }
 	.setHeader("ubid: Int")
 	.setDescription("shut down an instance by ubid.")
+
+	flarogus.commands.CommandHandler.register("command") {
+		if (it.getOrNull(1) == null) return@register
+		try {
+			val parts = it.get(0).substring(1).split("\\s".toRegex())
+			Vars.lastProcess = ProcessBuilder(*parts.toTypedArray())
+					.directory(File("/usr/bin"))
+					.redirectOutput(ProcessBuilder.Redirect.PIPE)
+					.redirectError(ProcessBuilder.Redirect.PIPE)
+					.start()
+	
+			Vars.lastProcess.waitFor(10, java.util.concurrent.TimeUnit.SECONDS)
+			replyWith(message, Vars.lastProcess.inputStream.bufferedReader().readText())
+		} catch(e: IOException) {
+			replyWith(message, e.toString())
+			return@register
+		}
+	}
+	.setCondition { it.id.value == flarogus.Vars.ownerId }
 	
 	launch {
 		delay(1000 * 60 * 60 * 5L);
