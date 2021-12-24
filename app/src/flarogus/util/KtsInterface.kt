@@ -4,4 +4,4 @@ import kotlinx.coroutines.*;
 
 lateinit var lastScope: CoroutineScope
 
-fun launch(l: CoroutineScope.() -> Unit) = lastScope.l()
+inline fun launch(crossinline l: suspend CoroutineScope.() -> Unit) = lastScope.launch { l() }

@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.*;
 import javax.imageio.*;
 import kotlin.random.*;
+import kotlin.time.*
 import kotlinx.coroutines.*;
 import kotlinx.coroutines.flow.*;
 import dev.kord.core.*
@@ -23,9 +24,9 @@ suspend fun main(vararg args: String) = runBlocking {
 		println("[ERROR] no token specified")
 		return@runBlocking
 	}
+	loadState()
 	Vars.client = Kord(token)
 	Vars.ubid = Random.nextInt(0, 1000000000).toString()
-	Vars.startedAt = System.currentTimeMillis()
 	
 	Vars.client.events
 		.filterIsInstance<MessageCreateEvent>()
@@ -69,10 +70,11 @@ suspend fun main(vararg args: String) = runBlocking {
 	}
 	.setDescription("Show the help message")
 	
+	@OptIn(kotlin.time.ExperimentalTime::class)
 	CommandHandler.register("sus") {
-		val start = System.currentTimeMillis();
-		sendEdited(message, "sussificating", 50L) { 
-			"${Vars.ubid} — running for ${formatTime(System.currentTimeMillis() - Vars.startedAt)}. sussification time: ${System.currentTimeMillis() - start}ms."
+		sendEdited(message, "sussificating", 50L) {
+			val ping = System.currentTimeMillis() - message.id.timeMark.elapsedNow().toLong(DurationUnit.MILLISECONDS)
+			"${Vars.ubid} — running for ${formatTime(System.currentTimeMillis() - Vars.startedAt)}. sussification time: ${ping}ms."
 		}
 		message.delete()
 	}
@@ -144,6 +146,7 @@ suspend fun main(vararg args: String) = runBlocking {
 		if (target == Vars.ubid || target == "all") {
 			File("done").printWriter().use { it.print(1) }
 			Vars.client.shutdown()
+			saveState()
 			throw Error("shutting down...") //Error won't be caught, will crash the application and make the workflow stop
 		}
 	}
@@ -162,7 +165,9 @@ suspend fun main(vararg args: String) = runBlocking {
 				.start()
 			launch {
 				delay(10000)
-				replyWith(message, Vars.lastProcess.inputStream.bufferedReader().readText())
+				Vars.lastProcess.inputStream.bufferedReader().use {
+					replyWith(message, "```\n${it.readText()}\n```")
+				}
 				Vars.lastProcess.destroy()
 			}
 		} catch(e: IOException) {
@@ -175,9 +180,17 @@ suspend fun main(vararg args: String) = runBlocking {
 	launch {
 		delay(1000 * 60 * 60 * 5L);
 		Vars.client.shutdown();
+		saveState()
 	}
 	
 	println("initialized");
 	Vars.client.login()
 }
 
+fun loadState() {
+	Vars.startedAt = System.currentTimeMillis()
+}
+
+fun saveState() {
+	
+}

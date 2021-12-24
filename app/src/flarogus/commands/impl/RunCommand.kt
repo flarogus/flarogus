@@ -14,13 +14,9 @@ val RunCommand = flarogus.commands.Command(
 		if (begin == -1) throw CommandException("run", "Invalid syntax! The correct one is 'run -arg1 -arg2 << some_script'. The script can be wrapped in a code block.")
 		
 		//try to find a code block, remove it if it's present
-		val cbstart = command.indexOf("```")
-		val cbend = command.lastIndexOf("```")
-		val script = if (cbstart != -1 && cbend != -1 && cbstart != cbend && cbstart > begin) {
-			command.substring(cbstart + 3, cbend - 1)
-		} else {
-			command.substring(begin + 2)
-		}
+		var script = command.substring(begin + 2)
+		val codeblock = "```([a-z]*)?((?s).*)```".toRegex().find(script)?.groupValues?.getOrNull(2)
+		if (codeblock != null) script = codeblock
 		
 		var isAdmin = false
 		var stopAfter = 3000L
@@ -102,8 +98,10 @@ val RunCommand = flarogus.commands.Command(
 				
 				launch {
 					delay(stopAfter)
+					proc.inputStream.bufferedReader().use {
+						replyWith(message, "output:\n```\n${it.readText()}\n```")
+					}
 					proc.destroy()
-					replyWith(message, proc.inputStream.bufferedReader().readText())
 				}
 			} catch(e: IOException) {
 				replyWith(message, e.toString())
