@@ -100,9 +100,11 @@ val RunCommand = flarogus.commands.Command(
 					.redirectError(ProcessBuilder.Redirect.PIPE)
 					.start()
 				
-				proc.waitFor(stopAfter, java.util.concurrent.TimeUnit.MILLISECONDS)
-				proc.destroy()
-				replyWith(message, proc.inputStream.bufferedReader().readText())
+				launch {
+					delay(stopAfter)
+					proc.destroy()
+					replyWith(message, proc.inputStream.bufferedReader().readText())
+				}
 			} catch(e: IOException) {
 				replyWith(message, e.toString())
 			}

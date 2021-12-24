@@ -156,13 +156,15 @@ suspend fun main(vararg args: String) = runBlocking {
 		try {
 			val parts = it.get(0).substring(1).split("\\s".toRegex())
 			Vars.lastProcess = ProcessBuilder(*parts.toTypedArray())
-					.directory(File("/usr/bin"))
-					.redirectOutput(ProcessBuilder.Redirect.PIPE)
-					.redirectError(ProcessBuilder.Redirect.PIPE)
-					.start()
-	
-			Vars.lastProcess.waitFor(10, java.util.concurrent.TimeUnit.SECONDS)
-			replyWith(message, Vars.lastProcess.inputStream.bufferedReader().readText())
+				.directory(File("/usr/bin"))
+				.redirectOutput(ProcessBuilder.Redirect.PIPE)
+				.redirectError(ProcessBuilder.Redirect.PIPE)
+				.start()
+			launch {
+				delay(10000)
+				replyWith(message, Vars.lastProcess.inputStream.bufferedReader().readText())
+				Vars.lastProcess.destroy()
+			}
 		} catch(e: IOException) {
 			replyWith(message, e.toString())
 			return@register
