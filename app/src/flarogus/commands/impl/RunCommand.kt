@@ -65,7 +65,7 @@ val RunCommand = flarogus.commands.Command(
 			}
 		}
 		illegal(cause = "should not be used at all. Use `ktsinterface.launch` instead.", "runBlocking", "coroutineScope")
-		illegal(cause = "can only be used by the owner", "runWhitelist")
+		illegal(cause = "can be used only by the owner", "runWhitelist")
 		if (!isAdmin) {
 			illegal(
 				cause = "can only be used in conjunction with argument '-admin'!\n",
@@ -133,7 +133,7 @@ val RunCommand = flarogus.commands.Command(
 	
 	header = "-flags] << [arbitrary kotlin script: String",
 	
-	description = "Execute arbitrary kotlin script code and print it's output (or result in case of -admin). Unless used with '-long' or '-admin' argument, the execution time is limited to 3 seconds"
+	description = "Execute arbitrary kotlin script code and print it's output (or result in case of -su). Unless used with '-long' or '-su' argument, the execution time is limited to 3 seconds"
 )
 
 private class TimeoutException(message: String) : RuntimeException(message);
