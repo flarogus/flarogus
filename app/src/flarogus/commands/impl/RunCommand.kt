@@ -116,7 +116,7 @@ val RunCommand = flarogus.commands.Command(
 		}
 	},
 	
-	condition = { it.id.value == Vars.ownerId },
+	//condition = { it.id.value == Vars.ownerId },
 	
 	header = "-flags] << [arbitrary kotlin script: String",
 	
