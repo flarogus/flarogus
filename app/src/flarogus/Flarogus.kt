@@ -74,7 +74,7 @@ suspend fun main(vararg args: String) = runBlocking {
 	@OptIn(kotlin.time.ExperimentalTime::class)
 	CommandHandler.register("sus") {
 		sendEdited(message, "sussificating", 50L) {
-			val ping = System.currentTimeMillis() - message.id.timeMark.elapsedNow().toLong(DurationUnit.MILLISECONDS)
+			val ping = message.id.timeMark.elapsedNow().toLong(DurationUnit.MILLISECONDS)
 			"${Vars.ubid} — running for ${formatTime(System.currentTimeMillis() - Vars.startedAt)}. sussification time: ${ping}ms."
 		}
 		message.delete()
@@ -158,7 +158,7 @@ suspend fun main(vararg args: String) = runBlocking {
 	flarogus.commands.CommandHandler.register("command") {
 		if (it.getOrNull(1) == null) return@register
 		
-		val parts = it.get(0).substring(1).split("\\s".toRegex())
+		val parts = it.get(0).substring(1).split("•")
 		var proc: Process? = null
 		
 		val thread = Vars.threadPool.submit {
@@ -183,6 +183,7 @@ suspend fun main(vararg args: String) = runBlocking {
 		thread.cancel(true)
 		if (proc != null) proc!!.destroy()
 	}
+	.setHeader("arguments splitted with '•': String")
 	.setCondition { it.id.value == flarogus.Vars.ownerId }
 	
 	launch {
