@@ -102,7 +102,7 @@ suspend fun main(vararg args: String) = runBlocking {
 							content = "sus"
 							messageReference = message.id
 							addFile("SUSSUSUSUSUSUSUSUSU.png", it)
-						}
+							}
 					}
 				}
 			} catch (e: Exception) {
@@ -158,12 +158,14 @@ suspend fun main(vararg args: String) = runBlocking {
 	flarogus.commands.CommandHandler.register("command") {
 		if (it.getOrNull(1) == null) return@register
 		
-		val parts = it.get(0).substring(1).split("•")
 		var proc: Process? = null
 		
 		val thread = Vars.threadPool.submit {
 			try {
-				proc = ProcessBuilder(*parts.toTypedArray())
+				File("/tmp/command").writeText(it.get(0))
+				
+				ProcessBuilder("sudo", "chmod", "+x", "/tmp/command").start().waitFor(1000, TimeUnit.MILLISECONDS)
+				proc = ProcessBuilder("bash", "/tmp/command")
 					.directory(File("/usr/bin"))
 					.redirectOutput(ProcessBuilder.Redirect.PIPE)
 					.redirectError(ProcessBuilder.Redirect.PIPE)
@@ -183,7 +185,7 @@ suspend fun main(vararg args: String) = runBlocking {
 		thread.cancel(true)
 		if (proc != null) proc!!.destroy()
 	}
-	.setHeader("arguments splitted with '•': String")
+	.setHeader("bash script: String")
 	.setCondition { it.id.value == flarogus.Vars.ownerId }
 	
 	launch {
