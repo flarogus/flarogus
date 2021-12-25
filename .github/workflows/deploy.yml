@@ -23,9 +23,10 @@ jobs:
 
       - name: Cache
         id: cache
+        if: always()
         uses: actions/cache@v1
         with:
-          path: ~/.build
+          path: ./save.bin
           key: ${{ runner.OS }}-build
           restore-keys: |
             ${{ runner.OS }}-build
@@ -50,9 +51,10 @@ jobs:
 
       - name: Cache
         id: cache
+        if: always()
         uses: actions/cache@v1
         with:
-          path: ~/.build
+          path: ./save.bin
           key: ${{ runner.OS }}-build
           restore-keys: |
             ${{ runner.OS }}-build
@@ -77,9 +79,10 @@ jobs:
 
       - name: Cache
         id: cache
+        if: always()
         uses: actions/cache@v1
         with:
-          path: ~/.build
+          path: ./save.bin
           key: ${{ runner.OS }}-build
           restore-keys: |
             ${{ runner.OS }}-build
@@ -104,9 +107,10 @@ jobs:
 
       - name: Cache
         id: cache
+        if: always()
         uses: actions/cache@v1
         with:
-          path: ~/.build
+          path: ./save.bin
           key: ${{ runner.OS }}-build
           restore-keys: |
             ${{ runner.OS }}-build
@@ -131,9 +135,10 @@ jobs:
 
       - name: Cache
         id: cache
+        if: always()
         uses: actions/cache@v1
         with:
-          path: ~/.build
+          path: ./save.bin
           key: ${{ runner.OS }}-build
           restore-keys: |
             ${{ runner.OS }}-build
@@ -158,9 +163,10 @@ jobs:
 
       - name: Cache
         id: cache
+        if: always()
         uses: actions/cache@v1
         with:
-          path: ~/.build
+          path: ./save.bin
           key: ${{ runner.OS }}-build
           restore-keys: |
             ${{ runner.OS }}-build
@@ -186,8 +192,9 @@ jobs:
       - name: Cache
         id: cache
         uses: actions/cache@v1
+        if: always()
         with:
-          path: ~/.build
+          path: ./save.bin
           key: ${{ runner.OS }}-build
           restore-keys: |
             ${{ runner.OS }}-build
@@ -212,9 +219,10 @@ jobs:
 
       - name: Cache
         id: cache
+        if: always()
         uses: actions/cache@v1
         with:
-          path: ~/.build
+          path: ./save.bin
           key: ${{ runner.OS }}-build
           restore-keys: |
             ${{ runner.OS }}-build

@@ -8,9 +8,43 @@ import flarogus.*
 import flarogus.util.*
 
 val RunCommand = flarogus.commands.Command(
-	handler = {
+	handler = handler@ {
 		val command = it[0]
 		val begin = command.indexOf("<<")
+		
+		var isAdmin = false
+		var stopAfter = 3000L
+		
+		val regex = "-([a-zA-Z0-9=]*)[\\s<]?".toRegex()
+		var argument = regex.find(command.substring(0, if (begin == -1) command.length else begin - 1))
+		while (argument != null) {
+			val arg = argument.groupValues.getOrNull(1) ?: break
+			
+			when {
+				arg == "su" -> {
+					if (message.author?.id?.value !in Vars.runWhitelist) throw IllegalAccessException("you are not allowed to use argument '-su'!")
+					isAdmin = true
+				}
+				arg == "long" -> {
+					if (message.author?.id?.value !in Vars.runWhitelist) throw IllegalAccessException("you're not allowed to use argument '-long'!")
+					stopAfter = 300000L
+				}
+				arg.startsWith("addSuperuser") -> {
+					if (message.author?.id?.value != Vars.ownerId) throw IllegalAccessException("Only the bot owner can add superusers")
+					val parts = arg.split("=")
+					try {
+						val id = parts.get(1).toULong()
+						Vars.runWhitelist.add(id)
+					} catch (e: Exception) {
+						replyWith(message, "couldn't add this user: $e!")
+					}
+					return@handler;
+				}
+				else -> throw CommandException("run", "unknown argument: $arg")
+			}
+			
+			argument = argument.next()
+		}
 		
 		if (begin == -1) throw CommandException("run", "Invalid syntax! The correct one is 'run -arg1 -arg2 << some_script'. The script can be wrapped in a code block.")
 		
@@ -18,29 +52,6 @@ val RunCommand = flarogus.commands.Command(
 		var script = command.substring(begin + 2)
 		val codeblock = "```([a-z]*)?((?s).*)```".toRegex().find(script)?.groupValues?.getOrNull(2)
 		if (codeblock != null) script = codeblock
-		
-		var isAdmin = false
-		var stopAfter = 3000L
-		
-		val regex = "-([a-zA-Z0-9=]*)[\\s<]?".toRegex()
-		var argument = regex.find(command.substring(0, begin - 1))
-		while (argument != null) {
-			val arg = argument.groupValues.getOrNull(1) ?: break
-			
-			when (arg) {
-				"admin" -> {
-					if (message.author?.id?.value != Vars.ownerId) throw IllegalAccessException("you are not allowed to use argument 'admin'!")
-					isAdmin = true
-				}
-				"long" -> {
-					if (message.author?.id?.value != Vars.ownerId) throw IllegalAccessException("you're not allowed to use argument '-long'!")
-					stopAfter = 300000L
-				}
-				else -> throw CommandException("run", "unknown argument: $arg")
-			}
-			
-			argument = argument.next()
-		}
 		
 		//check for errors
 		var errCount = 0
@@ -61,6 +72,7 @@ val RunCommand = flarogus.commands.Command(
 				"Thread", "System", "java.lang.Thread", "java.lang.System",
 				"Class", "KClass", "::class", ".getClass", "ClassLoader",
 				"dev.kord", "KtsObjectLoader", "ScriptEngine", "flarogus.",
+				"java.io",
 				"Process"
 			)
 		}
@@ -77,7 +89,7 @@ val RunCommand = flarogus.commands.Command(
 					//this script must be run in this coroutine
 					ktsinterface.lastScope = this
 					val result = engine.eval(script)?.toString() ?: "null"
-					replyWith(message, "```\n$result\n```")
+					replyWith(message, "```\n$result \n```")
 				} catch (e: Exception) { 
 					val trace = if (e is ScriptException) e.toString() else e.cause?.stackTraceToString() ?: e.stackTraceToString()
 					
@@ -110,7 +122,7 @@ val RunCommand = flarogus.commands.Command(
 					replyWith(message, e.toString())
 				}
 			}
-			delay(60 * 1000L) //60 seconds must be enough
+			delay(stopAfter + 10000L) //additional 10 seconds
 			thread.cancel(true)
 			if (proc != null) proc!!.destroy()
 		}
@@ -120,7 +132,7 @@ val RunCommand = flarogus.commands.Command(
 	
 	header = "-flags] << [arbitrary kotlin script: String",
 	
-	description = "Execute an arbitrary kotlin script (kts) and print it's result. Unless used with '-long' or '-admin' argument, the execution time is limited to 3 seconds"
+	description = "Execute arbitrary kotlin script code and print it's output (or result in case of -admin). Unless used with '-long' or '-admin' argument, the execution time is limited to 3 seconds"
 )
 
 private class TimeoutException(message: String) : RuntimeException(message);

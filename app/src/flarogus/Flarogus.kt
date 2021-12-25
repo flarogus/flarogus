@@ -174,7 +174,7 @@ suspend fun main(vararg args: String) = runBlocking {
 				proc!!.errorStream.bufferedReader().use {
 					val error = it.readText()
 					proc!!.inputStream.bufferedReader().use {
-						replyWith(message, "output${if (error != "") " and errors:" else ""}:\n```\n$error\n\n${it.readText()}\n```")
+						replyWith(message, "output${if (error != "") " and errors" else ""}:\n```\n$error\n\n${it.readText()} \n```")
 					}
 				}
 			} catch(e: IOException) {
@@ -199,9 +199,28 @@ suspend fun main(vararg args: String) = runBlocking {
 }
 
 fun loadState() {
+	try {
+		val file = File("save.bin")
+		
+		if (file.exists()) {
+			DataInputStream(file.inputStream()).use {
+				Vars.startedAt = it.readLong()
+				return
+			}
+		}
+	} catch (e: IOException) {
+		e.printStackTrace()
+	}
+	//fallback — should only occur if the file doesn't exist/cannot be read
 	Vars.startedAt = System.currentTimeMillis()
 }
 
 fun saveState() {
-	
+	try {
+		DataOutputStream(File("save.bin").outputStream()).use {
+			it.writeLong(Vars.startedAt)
+		}
+	} catch (e: IOException) {
+		e.printStackTrace()
+	}
 }
