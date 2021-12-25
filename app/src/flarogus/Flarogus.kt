@@ -2,6 +2,7 @@ package flarogus
 
 import java.io.*;
 import java.net.*;
+import java.util.concurrent.*;
 import javax.imageio.*;
 import kotlin.random.*;
 import kotlin.time.*
@@ -156,24 +157,31 @@ suspend fun main(vararg args: String) = runBlocking {
 
 	flarogus.commands.CommandHandler.register("command") {
 		if (it.getOrNull(1) == null) return@register
-		try {
-			val parts = it.get(0).substring(1).split("\\s".toRegex())
-			Vars.lastProcess = ProcessBuilder(*parts.toTypedArray())
-				.directory(File("/usr/bin"))
-				.redirectOutput(ProcessBuilder.Redirect.PIPE)
-				.redirectError(ProcessBuilder.Redirect.PIPE)
-				.start()
-			launch {
-				delay(10000)
-				Vars.lastProcess.inputStream.bufferedReader().use {
-					replyWith(message, "```\n${it.readText()}\n```")
+		
+		val parts = it.get(0).substring(1).split("\\s".toRegex())
+		var proc: Process? = null
+		
+		val thread = Vars.threadPool.submit {
+			try {
+				proc = ProcessBuilder(*parts.toTypedArray())
+					.directory(File("/usr/bin"))
+					.redirectOutput(ProcessBuilder.Redirect.PIPE)
+					.redirectError(ProcessBuilder.Redirect.PIPE)
+					.start()
+				proc!!.waitFor(10000, TimeUnit.MILLISECONDS)
+				proc!!.errorStream.bufferedReader().use {
+					val error = it.readText()
+					proc!!.inputStream.bufferedReader().use {
+						replyWith(message, "output${if (error != "") " and errors:" else ""}:\n```\n$error\n\n${it.readText()}\n```")
+					}
 				}
-				Vars.lastProcess.destroy()
+			} catch(e: IOException) {
+				ktsinterface.launch { replyWith(message, e.toString()) }
 			}
-		} catch(e: IOException) {
-			replyWith(message, e.toString())
-			return@register
 		}
+		delay(60 * 1000L) //60 seconds must be enough
+		thread.cancel(true)
+		if (proc != null) proc!!.destroy()
 	}
 	.setCondition { it.id.value == flarogus.Vars.ownerId }
 	

@@ -1,5 +1,6 @@
 package flarogus
 
+import java.util.concurrent.*
 import dev.kord.core.*
 
 /** An object declaration that stores variables/constants that are shared with the whole application */
@@ -12,6 +13,6 @@ object Vars {
 	val ownerId = 502871063223336990.toULong()
 	var prefix = "flarogus"
 	
-	lateinit var lastProcess: Process
+	val threadPool = Executors.newFixedThreadPool(5)
 	
 }

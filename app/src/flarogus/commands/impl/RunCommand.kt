@@ -1,6 +1,7 @@
 package flarogus.commands.impl
 
 import java.io.*
+import java.util.concurrent.*
 import javax.script.*
 import kotlinx.coroutines.*;
 import flarogus.*
@@ -86,26 +87,32 @@ val RunCommand = flarogus.commands.Command(
 			}
 		} else {
 			//subprocess context
-			try {
-				File("/tmp/scriptfile.kts")
-				
-				val parts = "kotlinc -script scriptfile.kts".split("\\s".toRegex())
-				val proc = ProcessBuilder(*parts.toTypedArray())
-					.directory(File("/tmp"))
-					.redirectOutput(ProcessBuilder.Redirect.PIPE)
-					.redirectError(ProcessBuilder.Redirect.PIPE)
-					.start()
-				
-				launch {
-					delay(stopAfter)
-					proc.inputStream.bufferedReader().use {
-						replyWith(message, "output:\n```\n${it.readText()}\n```")
+			var proc: Process? = null
+			
+			val thread = Vars.threadPool.submit {
+				try {
+					File("/tmp/scriptfile.kts").writeText(script)
+					
+					val parts = "kotlinc -script scriptfile.kts".split("\\s".toRegex())
+					proc = ProcessBuilder(*parts.toTypedArray())
+						.directory(File("/tmp"))
+						.redirectOutput(ProcessBuilder.Redirect.PIPE)
+						.redirectError(ProcessBuilder.Redirect.PIPE)
+						.start()
+					proc!!.waitFor(stopAfter, TimeUnit.MILLISECONDS)
+					proc!!.errorStream.bufferedReader().use {
+						val error = it.readText()
+						proc!!.inputStream.bufferedReader().use {
+							replyWith(message, "output${if (error != "") " and errors:" else ""}:\n```\n$error\n\n${it.readText()}\n```")
+						}
 					}
-					proc.destroy()
+				} catch(e: IOException) {
+					replyWith(message, e.toString())
 				}
-			} catch(e: IOException) {
-				replyWith(message, e.toString())
 			}
+			delay(60 * 1000L) //60 seconds must be enough
+			thread.cancel(true)
+			if (proc != null) proc!!.destroy()
 		}
 	},
 	
