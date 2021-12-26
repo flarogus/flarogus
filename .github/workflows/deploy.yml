@@ -1,4 +1,4 @@
-name: Amogus
+name: Amogus.
 
 on: [push, workflow_dispatch]
 
