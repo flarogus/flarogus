@@ -200,7 +200,7 @@ suspend fun main(vararg args: String) = runBlocking {
 
 fun loadState() {
 	try {
-		val file = File("save.bin")
+		val file = File("saves/save.bin")
 		
 		if (file.exists()) {
 			DataInputStream(file.inputStream()).use {
@@ -217,7 +217,8 @@ fun loadState() {
 
 fun saveState() {
 	try {
-		DataOutputStream(File("save.bin").outputStream()).use {
+		File("saves").mkdirs()
+		DataOutputStream(File("saves/save.bin").outputStream()).use {
 			it.writeLong(Vars.startedAt)
 		}
 	} catch (e: IOException) {
