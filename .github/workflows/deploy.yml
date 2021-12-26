@@ -26,10 +26,10 @@ jobs:
         if: always()
         uses: actions/cache@v1
         with:
-          path: ./saves/save.bin
-          key: ${{ runner.OS }}-build-${{ hashFiles("app/src/**") }}
+          path: ./saves
+          key: ${{ runner.OS }}-build-${{ hashFiles('app/src/**') }}
           restore-keys: |
-            ${{ runner.OS }}-build-${{ hashFiles("app/src/**") }}
+            ${{ runner.OS }}-build-${{ hashFiles('app/src/**') }}
       
       - name: Compile
         if: steps.cache.outputs.cache-hit != 'true'
@@ -54,10 +54,10 @@ jobs:
         if: always()
         uses: actions/cache@v1
         with:
-          path: ./saves/save.bin
-          key: ${{ runner.OS }}-build-${{ hashFiles("app/src/**") }}
+          path: ./saves
+          key: ${{ runner.OS }}-build-${{ hashFiles('app/src/**') }}
           restore-keys: |
-            ${{ runner.OS }}-build-${{ hashFiles("app/src/**") }}
+            ${{ runner.OS }}-build-${{ hashFiles('app/src/**') }}
       
       - name: Compile
         if: steps.cache.outputs.cache-hit != 'true'
@@ -82,10 +82,10 @@ jobs:
         if: always()
         uses: actions/cache@v1
         with:
-          path: ./saves/save.bin
-          key: ${{ runner.OS }}-build-${{ hashFiles("app/src/**") }}
+          path: ./saves
+          key: ${{ runner.OS }}-build-${{ hashFiles('app/src/**') }}
           restore-keys: |
-            ${{ runner.OS }}-build-${{ hashFiles("app/src/**") }}
+            ${{ runner.OS }}-build-${{ hashFiles('app/src/**') }}
       
       - name: Compile
         if: steps.cache.outputs.cache-hit != 'true'
@@ -110,10 +110,10 @@ jobs:
         if: always()
         uses: actions/cache@v1
         with:
-          path: ./saves/save.bin
-          key: ${{ runner.OS }}-build-${{ hashFiles("app/src/**") }}
+          path: ./saves
+          key: ${{ runner.OS }}-build-${{ hashFiles('app/src/**') }}
           restore-keys: |
-            ${{ runner.OS }}-build-${{ hashFiles("app/src/**") }}
+            ${{ runner.OS }}-build-${{ hashFiles('app/src/**') }}
       
       - name: Compile
         if: steps.cache.outputs.cache-hit != 'true'
@@ -138,10 +138,10 @@ jobs:
         if: always()
         uses: actions/cache@v1
         with:
-          path: ./saves/save.bin
-          key: ${{ runner.OS }}-build-${{ hashFiles("app/src/**") }}
+          path: ./saves
+          key: ${{ runner.OS }}-build-${{ hashFiles('app/src/**') }}
           restore-keys: |
-            ${{ runner.OS }}-build-${{ hashFiles("app/src/**") }}
+            ${{ runner.OS }}-build-${{ hashFiles('app/src/**') }}
       
       - name: Compile
         if: steps.cache.outputs.cache-hit != 'true'
@@ -166,10 +166,10 @@ jobs:
         if: always()
         uses: actions/cache@v1
         with:
-          path: ./saves/save.bin
-          key: ${{ runner.OS }}-build-${{ hashFiles("app/src/**") }}
+          path: ./saves
+          key: ${{ runner.OS }}-build-${{ hashFiles('app/src/**') }}
           restore-keys: |
-            ${{ runner.OS }}-build-${{ hashFiles("app/src/**") }}
+            ${{ runner.OS }}-build-${{ hashFiles('app/src/**') }}
       
       - name: Compile
         if: steps.cache.outputs.cache-hit != 'true'
@@ -194,10 +194,10 @@ jobs:
         uses: actions/cache@v1
         if: always()
         with:
-          path: ./saves/save.bin
-          key: ${{ runner.OS }}-build-${{ hashFiles("app/src/**") }}
+          path: ./saves
+          key: ${{ runner.OS }}-build-${{ hashFiles('app/src/**') }}
           restore-keys: |
-            ${{ runner.OS }}-build-${{ hashFiles("app/src/**") }}
+            ${{ runner.OS }}-build-${{ hashFiles('app/src/**') }}
       
       - name: Compile
         if: steps.cache.outputs.cache-hit != 'true'
@@ -222,10 +222,10 @@ jobs:
         if: always()
         uses: actions/cache@v1
         with:
-          path: ./saves/save.bin
-          key: ${{ runner.OS }}-build-${{ hashFiles("app/src/**") }}
+          path: ./saves
+          key: ${{ runner.OS }}-build-${{ hashFiles('app/src/**') }}
           restore-keys: |
-            ${{ runner.OS }}-build-${{ hashFiles("app/src/**") }}
+            ${{ runner.OS }}-build-${{ hashFiles('app/src/**') }}
       
       - name: Compile
         if: steps.cache.outputs.cache-hit != 'true'
