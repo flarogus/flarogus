@@ -9,11 +9,12 @@ object ImageUtil {
 	
 	/** Merges two images in a weird way */
 	fun merge(target: BufferedImage, with: BufferedImage): BufferedImage = operation(target, with) { a, b, x, y ->
-		val progress = Math.sin((x + y) / (target.width + target.height) * Math.PI) //0 to 1 — sine
+		val progress = Math.sin((x + y) / (target.width + target.height) * Math.PI / 2) //0 to 1 — sine
+		print(progress); print(" ")
 		(a * progress + b * (1 - progress)).toInt()
 	};
 	
-	/** Applies the providen operation to r, g and b components of each pixel of the target image */
+	/** Applies the providen (argb, argb, x, y) operation to a, r, g and b components of each pixel of the target image */
 	inline fun operation(target: BufferedImage, additional: BufferedImage, op: (Int, Int, Int, Int) -> Int): BufferedImage {
 		val new = BufferedImage(target.width, target.height, BufferedImage.TYPE_INT_ARGB);
 		
