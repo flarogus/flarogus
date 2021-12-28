@@ -1,6 +1,8 @@
 package flarogus
 
+import java.io.*
 import java.util.concurrent.*
+import kotlin.random.*
 import dev.kord.core.*
 
 /** An object declaration that stores variables/constants that are shared with the whole application */
@@ -22,5 +24,35 @@ object Vars {
 	
 	/** Users that are allowed to execute kotlin scripts in application context */
 	val runWhitelist = mutableListOf(ownerId)
+	
+	fun loadState() {
+		ubid = Random.nextInt(0, 1000000000).toString()
+		
+		try {
+			val file = File("saves/save.bin")
+			
+			if (file.exists()) {
+				DataInputStream(file.inputStream()).use {
+					startedAt = it.readLong()
+					return
+				}
+			}
+		} catch (e: IOException) {
+			e.printStackTrace()
+		}
+		//fallback — should only occur if the file doesn't exist/cannot be read
+		startedAt = System.currentTimeMillis()
+	}
+	
+	fun saveState() {
+		try {
+			File("saves").mkdirs()
+			DataOutputStream(File("saves/save.bin").outputStream()).use {
+				it.writeLong(startedAt)
+			}
+		} catch (e: IOException) {
+			e.printStackTrace()
+		}
+	}
 	
 }

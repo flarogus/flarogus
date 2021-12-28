@@ -1,5 +1,8 @@
 package flarogus.util
 
+import java.io.*
+import java.awt.image.*
+import javax.imageio.*
 import kotlinx.coroutines.*;
 import dev.kord.core.entity.*;
 import dev.kord.core.*
@@ -45,10 +48,28 @@ suspend fun CoroutineScope.sendMessage(to: Message, content: String) = launch {
 	}
 }
 
-/** Tries to find the user by uid / mention, returns the author of the event in case of an error */
-suspend fun userOrAuthor(uid: String?, event: MessageCreateEvent): User? {
+suspend fun CoroutineScope.sendImage(origin: Message, text: String = "", image: BufferedImage) {
+	try {
+		ByteArrayOutputStream().use {
+			ImageIO.write(image, "png", it);
+			ByteArrayInputStream(it.toByteArray()).use {
+				origin.channel.createMessage {
+					content = text
+					messageReference = origin.id
+					addFile("SUSSUSUSUSUSUSUSUSU.png", it)
+				}
+			}
+		}
+	} catch (e: Exception) {
+		println(e)
+	}
+}
+
+
+/** Tries to find the user by uid / mention, returns null of an error */
+suspend fun userOrNull(uid: String?, event: MessageCreateEvent): User? {
 	if (uid == null || uid.isEmpty()) {
-		return event.message.author
+		return null
 	}
 	if (uid.startsWith("<@")) {
 		val id = "<@(\\d*)>".toRegex().find(uid)?.groupValues?.getOrNull(1)
@@ -59,9 +80,11 @@ suspend fun userOrAuthor(uid: String?, event: MessageCreateEvent): User? {
 	try {
 		return event.supplier.getUser(Snowflake(uid.toULong()))
 	} catch (e: Exception) {
-		return event.message.author
+		return null
 	}
 }
+
+suspend fun userOrAuthor(uid: String?, event: MessageCreateEvent): User? = userOrNull(uid, event) ?: event.message.author
 
 fun User.getAvatarUrl() = avatar?.url ?: "https://cdn.discordapp.com/embed/avatars/${discriminator.toInt() % 5}.png"
 
