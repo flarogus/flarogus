@@ -9,8 +9,8 @@ object ImageUtil {
 	
 	/** Merges two images in a weird way */
 	fun merge(target: BufferedImage, with: BufferedImage): BufferedImage = operation(target, with) { a, b, x, y ->
-		val progress = Math.sin((x + y) / (target.width + target.height) * Math.PI / 2) //0 to 1 — sine
-		print("$progress: $x, $y, ${target.width}, ${target.height}"); 
+		val progress = Math.sin((x + y) / (target.width + target.height).toDouble() * Math.PI / 2) //0 to 1 — sine
+		//print("$progress: $x, $y, ${target.width}, ${target.height}"); 
 		(a * progress + b * (1 - progress)).toInt()
 	};
 	
