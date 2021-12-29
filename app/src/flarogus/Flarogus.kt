@@ -19,6 +19,7 @@ suspend fun main(vararg args: String) = runBlocking {
 		println("[ERROR] no token specified")
 		return@runBlocking
 	}
+	
 	Vars.loadState()
 	Vars.client = Kord(token)
 	
