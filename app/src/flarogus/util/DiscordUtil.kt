@@ -66,7 +66,7 @@ suspend fun CoroutineScope.sendImage(origin: Message, text: String = "", image: 
 }
 
 
-/** Tries to find the user by uid / mention, returns null of an error */
+/** Tries to find the user by uid / mention, returns null in case of an error */
 suspend fun userOrNull(uid: String?, event: MessageCreateEvent): User? {
 	if (uid == null || uid.isEmpty()) {
 		return null

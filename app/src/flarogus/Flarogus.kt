@@ -3,6 +3,7 @@ package flarogus
 import java.io.*;
 import kotlin.random.*;
 import kotlin.time.*
+import kotlin.concurrent.*;
 import kotlinx.coroutines.*;
 import kotlinx.coroutines.flow.*;
 import dev.kord.core.*
@@ -34,8 +35,12 @@ suspend fun main(vararg args: String) = runBlocking {
 	
 	launch {
 		delay(1000 * 60 * 60 * 5L);
-		Vars.client.shutdown();
+		Vars.client.shutdown(); //shutdown after 5 hours — execution time of a single GitHub Actions job is limited to 6 hours
 		Vars.saveState()
+	}
+	
+	fixedRateTimer("autosaves", true, period = 10000L) {
+		Vars.saveState() //save state every 10 seconds. shouldn't cause much of an issue since it's very lightweight
 	}
 	
 	println("initialized");

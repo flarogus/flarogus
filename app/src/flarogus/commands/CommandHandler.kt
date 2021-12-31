@@ -38,6 +38,12 @@ object CommandHandler {
 					event.handler(args)
 				} catch (e: Exception) { //no exceptions on my watch
 					replyWith(event.message, e.toString())
+					
+					if (e is CommandException) {
+						e.cause?.printStackTrace() //usually there's no cause, thus I can't do anything
+					} else {
+						e.printStackTrace()
+					}
 				}
 			} else {
 				replyWith(event.message, "You are not allowed to run $commandName.")
