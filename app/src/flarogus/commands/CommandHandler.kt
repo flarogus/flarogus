@@ -46,7 +46,7 @@ object CommandHandler {
 					}
 				}
 			} else {
-				replyWith(event.message, "You are not allowed to run $commandName.")
+				replyWith(event.message, "You are not allowed to run '$commandName'.")
 			}
 		}
 	}
