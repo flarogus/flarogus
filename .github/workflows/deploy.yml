@@ -1,6 +1,9 @@
 name: Amogus???
 
-on: [push, workflow_dispatch]
+on:
+  workflow_dispatch
+  schedule:
+    '0 1,5,9,13,17,21 * * *'
 
 jobs:
   emergencyMetting:

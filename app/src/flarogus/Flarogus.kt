@@ -34,8 +34,8 @@ suspend fun main(vararg args: String) = runBlocking {
 	initCommands()
 	
 	launch {
-		delay(1000 * 60 * 60 * 5L);
-		Vars.client.shutdown(); //shutdown after 5 hours — execution time of a single GitHub Actions job is limited to 6 hours
+		delay(1000 * 60 * 60 * 5L - 1000L * 120); //shutdown after 4 hours to let the next workflow continue the work
+		Vars.client.shutdown();                  //why -2 minutes? Compilation takes around 1 minute, and we must save the state to the cache before it restarts
 		Vars.saveState()
 	}
 	
