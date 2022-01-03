@@ -168,7 +168,7 @@ fun initCommands() {
 		val first = userOrNull(it.getOrNull(1), this)
 		val second = userOrAuthor(it.getOrNull(2), this)
 			
-		if (first == null || second == null) throw CommandException("merge", "you must specify at least one valid user!")
+		if (first == null || second == null) throw CommandException("merge", "you must specify at least one valid user! (null-equals: first - ${first == null}, second - ${second == null})")
 		if (first == second) throw CommandException("merge", "you must specify different users!")
 		
 		try {
