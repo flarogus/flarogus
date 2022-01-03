@@ -34,7 +34,7 @@ suspend fun main(vararg args: String) = runBlocking {
 	initCommands()
 	
 	launch {
-		delay(1000 * 60 * 60 * 5L - 1000L * 120); //shutdown after 4 hours to let the next workflow continue the work
+		delay(1000 * 60 * 60 * 4L - 1000L * 120); //shutdown after 4 hours to let the next workflow continue the work
 		Vars.client.shutdown();                  //why -2 minutes? Compilation takes around 1 minute, and we must save the state to the cache before it restarts
 		Vars.saveState()
 	}
