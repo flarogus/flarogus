@@ -2,7 +2,7 @@ name: Amogus???
 
 on:
   schedule:
-    - cron: '32 1,5,9,13,17,21 * * *'
+    - cron: '0 2,6,10,14,18,22 * * *'
 
 jobs:
   emergencyMetting:
