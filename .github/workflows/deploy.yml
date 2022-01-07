@@ -3,6 +3,7 @@ name: Amogus???
 on:
   schedule:
     - cron: '11 1,5,9,13,17,21 * * *'
+  workflow_dispatch
 
 jobs:
   emergencyMetting:
