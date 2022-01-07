@@ -17,6 +17,8 @@ object Vars {
 	
 	/** Mnemotechnican#9967 — discord */
 	val ownerId = 502871063223336990UL
+	/** Flarogus#0233 — discord */
+	val botId = 919995150502101042UL
 	/** Bot prefix used for command handling */
 	var prefix = "flarogus"
 	

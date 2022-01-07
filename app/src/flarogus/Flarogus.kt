@@ -33,6 +33,7 @@ suspend fun main(vararg args: String) = runBlocking {
 		.onEach { CommandHandler.handle(this, it.message.content.substring(Vars.prefix.length), it) }
 		.launchIn(Vars.client)
 	
+	Multiverse.start()
 	initCommands()
 	
 	launch {
@@ -47,4 +48,6 @@ suspend fun main(vararg args: String) = runBlocking {
 	
 	println("initialized");
 	Vars.client.login()
+	
+	Multiverse.brodcast { content = "Multiverse is shutting down for several minutes!" }
 }
