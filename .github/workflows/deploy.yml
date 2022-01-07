@@ -1,6 +1,11 @@
 name: Amogus???
 
-on: workflow_dispatch
+on: 
+  workflow_dispatch:
+    inputs:
+      amogi:
+        description: 'idk'
+        required: false
   schedule:
     - cron: '11 1,5,9,13,17,21 * * *'
 
