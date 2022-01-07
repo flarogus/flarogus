@@ -22,7 +22,9 @@ suspend fun main(vararg args: String) = runBlocking {
 	}
 	
 	Vars.loadState()
-	Vars.client = Kord(token)
+	Vars.client = Kord(token) {
+		defaultStrategy = dev.kord.core.supplier.EntitySupplyStrategy.rest
+	}
 	
 	Vars.client.events
 		.filterIsInstance<MessageCreateEvent>()
