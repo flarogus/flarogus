@@ -49,13 +49,11 @@ object Multiverse {
 			.filter { it.message.author?.id?.value != Vars.botId }
 			.filter { it.message.channel.asChannel() in multiverse }
 			.onEach { event ->
-				val inputs = event.message.data.attachments.map { URL(it.url).openStream() }
-				
 				brodcast(event.message.channel.id.value) {
 					content = "[${event.message.author?.tag} — ${event.getGuild()?.name}]: ${event.message.content}"
 					
-					inputs.forEachIndexed { index, input ->
-						addFile(event.message.data.attachments[index].filename, input)
+					event.message.data.attachments.forEachIndexed { index, attachment ->
+						addFile(attachment.filename, URL(attachment.url).openStream())
 					}
 				}
 			}
