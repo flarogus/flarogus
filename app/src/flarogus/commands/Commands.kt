@@ -124,6 +124,7 @@ fun initCommands() {
 			File("done").printWriter().use { it.print(1) }
 			Vars.client.shutdown()
 			Vars.saveState()
+			Multiverse.brodcast { content = "Multiverse is shutting down..."
 			throw Error("shutting down...") //Error won't be caught, will crash the application and make the workflow stop
 		}
 	}

@@ -20,7 +20,10 @@ object Multiverse {
 	suspend fun start() {
 		findChannels()
 		
-		brodcast { content = "***This channel is now a part of the Multiverse! There's ${multiverse.size} other channels!***" }
+		Vars.client.launch {
+			delay(5000L)
+			brodcast { content = "***This channel is now a part of the Multiverse! There's ${multiverse.size} other channels!***" }
+		}
 		
 		//search for new channels every 30 seconds
 		fixedRateTimer("channel search", true, period = 30 * 1000L) {
