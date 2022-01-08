@@ -96,5 +96,5 @@ val UserinfoCommand = flarogus.commands.Command(
 	
 	header = "userid: String?",
 	
-	description = "Displays info of the providen user. If no user id is providen"
+	description = "Displays info of the providen user. If no user id is providen, shows info of the caller"
 )

@@ -1,6 +1,6 @@
 package flarogus
 
-import flarogus.*
+import java.net.*
 import kotlin.concurrent.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -10,6 +10,7 @@ import dev.kord.core.event.message.*
 import dev.kord.core.entity.channel.*
 import dev.kord.core.behavior.*
 import dev.kord.core.behavior.channel.*
+import flarogus.*
 
 object Multiverse {
 
@@ -22,7 +23,7 @@ object Multiverse {
 		
 		Vars.client.launch {
 			delay(5000L)
-			brodcast { content = "***This channel is now a part of the Multiverse! There's ${multiverse.size} other channels!***" }
+			brodcast { content = "***This channel is now a part of the Multiverse! There's ${multiverse.size - 1} other channels!***" }
 		}
 		
 		//search for new channels every 30 seconds
@@ -42,13 +43,20 @@ object Multiverse {
 			}
 		}
 		
+		//retranslate any messages in multiverse channels
 		Vars.client.events
 			.filterIsInstance<MessageCreateEvent>()
 			.filter { it.message.author?.id?.value != Vars.botId }
 			.filter { it.message.channel.asChannel() in multiverse }
-			.onEach {
-				brodcast(it.message.channel.id.value) {
-					content = "[${it.message.author?.tag} — ${it.getGuild()?.name}]: ${it.message.content}"
+			.onEach { event ->
+				val inputs = event.message.data.attachments.map { URL(it.url).openStream() }
+				
+				brodcast(event.message.channel.id.value) {
+					content = "[${event.message.author?.tag} — ${event.getGuild()?.name}]: ${event.message.content}"
+					
+					inputs.forEachIndexed { index, input ->
+						addFile(event.message.data.attachments[index].filename, input)
+					}
 				}
 			}
 			.launchIn(Vars.client)
@@ -73,7 +81,11 @@ object Multiverse {
 	inline fun brodcast(exclude: ULong = 0UL, crossinline message: suspend MessageCreateBuilder.() -> Unit) = Vars.client.launch {
 		multiverse.forEach {
 			if (exclude != it.id.value) {
-				it.createMessage { message() }
+				try {
+					it.createMessage { message() }
+				} catch (e: Exception) {
+					e.printStackTrace()
+				}
 			}
 		}
 	}
