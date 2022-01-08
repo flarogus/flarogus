@@ -55,9 +55,12 @@ object Multiverse {
 	fun findChannels() = Vars.client.launch {
 		Vars.client.rest.user.getCurrentUserGuilds().forEach { 
 			Vars.client.unsafe.guild(it.id).asGuild().channelBehaviors.forEach {
-				val c = Channel.from(it.asChannel().data, Vars.client)
-				if (c is MessageChannel && c.data.name.toString().contains("multiverse") && c !in multiverse) {
-					multiverse += c
+				var c = it.asChannel()
+				
+				if (c.data.type == ChannelType.GuildText && c.data.name.toString().contains("multiverse")) {
+					if (!multiverse.any { it.id.value == c.id.value }) {
+						multiverse += TextChannel(c.data, Vars.client)
+					}
 				}
 			}
 		}
