@@ -47,7 +47,7 @@ object Multiverse {
 			.filter { it.message.author?.id?.value != Vars.botId }
 			.filter { it.message.channel.asChannel() in multiverse }
 			.onEach {
-				brodcast(it.message.id.value) {
+				brodcast(it.message.channel.id.value) {
 					content = "[${it.message.author?.tag} — ${it.getGuild()?.name}]: ${it.message.content}"
 				}
 			}
