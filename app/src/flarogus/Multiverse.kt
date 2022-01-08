@@ -28,13 +28,13 @@ object Multiverse {
 			findChannels()
 			
 			val newChannels = multiverse.size - lastSize
-			brodcast {
+			if (newChannels > 0) brodcast {
 				content = buildString {
 					append("***Looks like there's ")
 					append(newChannels)
 					append(" new channel")
 					if (newChannels > 1) append("s")
-					append("in the multiverse!***")
+					append(" in the multiverse!***")
 				}
 			}
 		}
