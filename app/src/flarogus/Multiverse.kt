@@ -50,7 +50,7 @@ object Multiverse {
 			.filter { it.message.channel.asChannel() in multiverse }
 			.onEach { event ->
 				brodcast(event.message.channel.id.value) {
-					val original = event.message.content.replace("@everyone", "@еveryonе") //russian in e's the second case
+					val original = event.message.content.replace("@everyone", "@еveryonе").replace("@here", "@hеrе") //russian in e's the second case
 					val author = event.message.author?.tag ?: "webhook <${event.supplier.getWebhookOrNull(event.message.webhookId ?: Snowflake(0))?.name}>"
 					content = "[${author} — ${event.getGuild()?.name}]: ${original}"
 					
