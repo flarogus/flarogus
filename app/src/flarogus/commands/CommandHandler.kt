@@ -17,7 +17,7 @@ object CommandHandler {
 		val args = message.split(" ").filter { !it.isEmpty() }.toMutableList()
 		
 		val commandName = args.getOrNull(0)
-		if (commandName == null || commandName == "") return@launch;
+		if (commandName == null || commandName == "" || commandName.size >= message.size) return@launch;
 		args[0] = message.substring(commandName.length + 1)
 		
 		println("[INFO] ${event.message.author?.username}: ${event.message.content}")
