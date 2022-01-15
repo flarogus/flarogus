@@ -74,7 +74,7 @@ suspend fun userOrNull(uid: String?, event: MessageCreateEvent): User? {
 	if (uid.startsWith("<@")) {
 		val id = "<@(\\d*)>".toRegex().find(uid)?.groupValues?.getOrNull(1)
 		if (id != null) {
-			return userOrAuthor(id, event)
+			return userOrNull(id, event)
 		}
 	}
 	try {
@@ -84,7 +84,10 @@ suspend fun userOrNull(uid: String?, event: MessageCreateEvent): User? {
 	}
 }
 
-suspend fun userOrAuthor(uid: String?, event: MessageCreateEvent): User? = userOrNull(uid, event) ?: event.message.author
+/** Tries to find a user by mention/userid, returns the author in case of error. May return null if it's a system message */
+suspend fun userOrAuthor(uid: String?, event: MessageCreateEvent): User? {
+	return userOrNull(uid, event) ?: event.message.author
+}
 
 fun User.getAvatarUrl() = avatar?.url ?: "https://cdn.discordapp.com/embed/avatars/${discriminator.toInt() % 5}.png"
 

@@ -50,7 +50,9 @@ object Multiverse {
 			.filter { it.message.channel.asChannel() in multiverse }
 			.onEach { event ->
 				brodcast(event.message.channel.id.value) {
-					content = "[${event.message.author?.tag} — ${event.getGuild()?.name}]: ${event.message.content}"
+					val original = event.message.content.replace("@everyone", "@еveryonе") //russian in e's the second case
+					val author = event.message.author?.tag ?: "webhook <${event.supplier.getWebhookOrNull(event.message.webhookId ?: Snowflake(0))?.name}>"
+					content = "[${author} — ${event.getGuild()?.name}]: ${original}"
 					
 					event.message.data.attachments.forEachIndexed { index, attachment ->
 						addFile(attachment.filename, URL(attachment.url).openStream())
