@@ -77,7 +77,7 @@ object Multiverse {
 		}
 	}
 	
-	/** Sends a message into every multiverse channel */
+	/** Sends a message into every multiverse channel expect the one with id == exclude */
 	inline fun brodcast(exclude: ULong = 0UL, crossinline message: suspend MessageCreateBuilder.() -> Unit) = Vars.client.launch {
 		multiverse.forEach {
 			if (exclude != it.id.value) {

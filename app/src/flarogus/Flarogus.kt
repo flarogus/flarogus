@@ -36,7 +36,11 @@ suspend fun main(vararg args: String) = runBlocking {
 	
 	launch {
 		delay(1000 * 60 * 60 * 4L - 1000L * 120); //shutdown after 4 hours to let the next workflow continue the work
-		Vars.client.shutdown();                  //why -2 minutes? Compilation takes around 1 minute, and we must save the state to the cache before it restarts
+		//why -2 minutes? Compilation takes around 1 minute, and we must save the state to the cache before it restarts
+		
+		Multiverse.brodcast { content = "Multiverse is restarting, please stand by..." }
+		delay(5000L)
+		Vars.client.shutdown();                  
 		Vars.saveState()
 	}
 	
@@ -46,6 +50,4 @@ suspend fun main(vararg args: String) = runBlocking {
 	
 	println("initialized");
 	Vars.client.login()
-	
-	Multiverse.brodcast { content = "Multiverse is shutting down for several minutes!" }
 }

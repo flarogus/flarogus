@@ -68,7 +68,7 @@ val RunCommand = flarogus.commands.Command(
 		illegal(cause = "can be used only by the owner", "runWhitelist")
 		if (!isAdmin) {
 			illegal(
-				cause = "can only be used in conjunction with argument '-admin'!\n",
+				cause = "can only be used in conjunction with argument '-su'!\n",
 				
 				"Thread", "System", "java.lang.Thread", "java.lang.System",
 				"Class", "KClass", "::class", ".getClass", "ClassLoader",
@@ -90,11 +90,11 @@ val RunCommand = flarogus.commands.Command(
 					//this script must be run in this coroutine
 					ktsinterface.lastScope = this
 					val result = engine.eval(script)?.toString() ?: "null"
-					replyWith(message, "```\n$result \n```")
+					replyWith(message, "```\n${result.take(1950)} \n```")
 				} catch (e: Exception) { 
 					val trace = if (e is ScriptException) e.toString() else e.cause?.stackTraceToString() ?: e.stackTraceToString()
 					
-					replyWith(message, "exception during execution:\n```\n${trace}\n```")
+					replyWith(message, "exception during execution:\n```\n${trace.take(1950)}\n```")
 					e.printStackTrace()
 				}
 			}
