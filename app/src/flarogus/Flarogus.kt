@@ -28,8 +28,11 @@ suspend fun main(vararg args: String) = runBlocking {
 		.filterIsInstance<MessageCreateEvent>()
 		.filter { it.message.author?.isBot == false }
 		.filter { it.message.content.startsWith(Vars.prefix) }
-		.onEach { CommandHandler.handle(this, it.message.content.substring(Vars.prefix.length), it) }
-		.launchIn(Vars.client)
+		.onEach { 
+			try {
+				CommandHandler.handle(this, it.message.content.substring(Vars.prefix.length), it)
+			} catch (e: Exception) {} //how sad, don't care. we don't tolerate any expections!
+		}.launchIn(Vars.client)
 	
 	Multiverse.start()
 	initCommands()

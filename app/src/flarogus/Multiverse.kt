@@ -49,14 +49,18 @@ object Multiverse {
 			.filter { it.message.author?.id?.value != Vars.botId }
 			.filter { it.message.channel.asChannel() in multiverse }
 			.onEach { event ->
-				brodcast(event.message.channel.id.value) {
-					val original = event.message.content.replace("@everyone", "@еveryonе").replace("@here", "@hеrе") //russian in e's the second case
-					val author = event.message.author?.tag ?: "webhook <${event.supplier.getWebhookOrNull(event.message.webhookId ?: Snowflake(0))?.name}>"
-					content = "[${author} — ${event.getGuild()?.name}]: ${original}"
-					
-					event.message.data.attachments.forEachIndexed { index, attachment ->
-						addFile(attachment.filename, URL(attachment.url).openStream())
+				try {
+					brodcast(event.message.channel.id.value) {
+						val original = event.message.content.replace("@everyone", "@еveryonе").replace("@here", "@hеrе") //russian in e's the second case
+						val author = event.message.author?.tag ?: "webhook <${event.supplier.getWebhookOrNull(event.message.webhookId ?: Snowflake(0))?.name}>"
+						content = "[${author} — ${event.getGuild()?.name}]: ${original.take(1800)}"
+						
+						event.message.data.attachments.forEachIndexed { index, attachment ->
+							addFile(attachment.filename, URL(attachment.url).openStream())
+						}
 					}
+				} catch (e: Exception) {
+					e.printStackTrace()
 				}
 			}
 			.launchIn(Vars.client)
