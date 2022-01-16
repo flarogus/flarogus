@@ -129,7 +129,7 @@ val RunCommand = flarogus.commands.Command(
 		}
 	},
 	
-	//condition = { it.id.value == Vars.ownerId },
+	condition = { it.id.value in Vars.runWhitelist },
 	
 	header = "-flags] << [arbitrary kotlin script: String",
 	
