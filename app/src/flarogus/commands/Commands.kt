@@ -196,7 +196,7 @@ fun initCommands() {
 		when (command) {
 			"listGuilds" -> {
 				val msg = Multiverse.multiverse.map {
-					message.supplier.getGuild(it.data.guildId.value)
+					message.supplier.getGuild(it.data.guildId.value ?: return@map)
 				}.toSet().map { "${it?.id?.value} - ${it?.name?.stripEveryone()}" }.joinToString(",\n")
 				replyWith(message, msg)
 			}
