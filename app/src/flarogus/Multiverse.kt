@@ -80,7 +80,7 @@ object Multiverse {
 		Vars.client.rest.user.getCurrentUserGuilds().forEach { 
 			if (it.name.contains("@everyone") || it.name.contains("here")) {
 				//instant blacklist, motherfucker
-				blacklist(it.id)
+				blacklist.add(Snowflake(it.id))
 				return@forEach
 			}
 			
@@ -119,7 +119,7 @@ object Multiverse {
 		 try {
 		 	blacklist.add(id)
 		 	
-		 	Vars.client.unsafe.messageChannel(Snowflake(blacklistChannel)).createMessage {
+		 	Vars.client.unsafe.messageChannel(Snowflake(id)).createMessage {
 		 		content = "g${id.value}"
 		 	}
 		 } catch (ignored: Exception) {}
