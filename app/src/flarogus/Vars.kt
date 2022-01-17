@@ -25,7 +25,7 @@ object Vars {
 	val threadPool = Executors.newFixedThreadPool(5)
 	
 	/** Superusers that are allowed to do most things */
-	val runWhitelist = mutableListOf(ownerId, 691650272166019164UL)
+	val runWhitelist = mutableListOf(ownerId, 691650272166019164UL, 794686191467233280UL) //the first is smolkeys, second is real sushi
 	
 	fun loadState() {
 		ubid = Random.nextInt(0, 1000000000).toString()

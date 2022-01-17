@@ -14,6 +14,12 @@ import dev.kord.core.behavior.channel.*
 import flarogus.*
 import flarogus.util.*
 
+/**
+ * Retranslates messages sent in any channel of guild network, aka Multiverse, into other multiverse channels
+ *
+ * The bot is hosted on github actions and it's really hard to make it save the state.
+ * Thus, multiverse settings are stored on a discord server.
+ */
 object Multiverse {
 
 	/** All channels the multiverse works in */
@@ -34,7 +40,7 @@ object Multiverse {
 		findChannels()
 		
 		Vars.client.launch {
-			delay(5000L)
+			delay(10000L)
 			brodcast { content = "***This channel is now a part of the Multiverse! There's ${multiverse.size - 1} other channels!***" }
 		}
 		
