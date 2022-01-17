@@ -80,7 +80,7 @@ object Multiverse {
 		Vars.client.rest.user.getCurrentUserGuilds().forEach { 
 			if (it.name.contains("@everyone") || it.name.contains("here")) {
 				//instant blacklist, motherfucker
-				blacklist.add(Snowflake(it.id))
+				blacklist.add(it.id)
 				return@forEach
 			}
 			
