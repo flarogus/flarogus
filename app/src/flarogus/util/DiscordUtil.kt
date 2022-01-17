@@ -94,7 +94,7 @@ fun User.getAvatarUrl() = avatar?.url ?: "https://cdn.discordapp.com/embed/avata
 fun String.stripEveryone() = this.replace("@everyone", "@еveryonе").replace("@here", "@hеrе").replace("<#(\\d+)>".toRegex(), "@<\$1>")
 
 fun countPings(string: String): Int {
-	var r = "<@\\d+>".toRegex().find(string)
+	var r = "<@(!)?\\d+>".toRegex().find(string)
 	if (r != null) {
 		var c = 0;
 		while (true) {
