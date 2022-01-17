@@ -119,7 +119,7 @@ object Multiverse {
 		 try {
 		 	blacklist.add(id)
 		 	
-		 	Vars.client.unsafe.messageChannel(Snowflake(id)).createMessage {
+		 	Vars.client.unsafe.messageChannel(Snowflake(blacklistChannel)).createMessage {
 		 		content = "g${id.value}"
 		 	}
 		 } catch (ignored: Exception) {}
