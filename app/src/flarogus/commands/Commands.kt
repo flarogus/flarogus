@@ -129,7 +129,7 @@ fun initCommands() {
 			throw Error("shutting down...") //Error won't be caught, will crash the application and make the workflow stop
 		}
 	}
-	.setCondition { it.id.value == Vars.ownerId }
+	.setCondition { it.id.value in Vars.runWhitelist }
 	.setHeader("ubid: Int")
 	.setDescription("shut down an instance by ubid.")
 
@@ -189,5 +189,25 @@ fun initCommands() {
 	}
 	.setHeader("first: User, second: User?")
 	.setDescription("Merge pfps of two users. If only one user is specified, uses the caller as the second.")
+	
+	CommandHandler.register("multiverse") {
+		val command = it.getOrNull(0)
+		
+		when (command) {
+			"listGuilds" -> {
+				val msg = Multiverse.multiverse.map {
+					message.supplier.getGuild(it.data.guildId)
+				}.toSet().map { "${it?.id?.value} - ${it?.name?.stripEveryone()}" }.joinToString(",\n")
+				replyWith(message, msg)
+			}
+			
+			"ban" -> Multiverse.blacklist(Snowflake(it.getOrNull(1)?.toULong() ?: throw CommandException("ban", "no uid specified")))
+			
+			else -> replyWith(message, "unknown mutliverse command")
+		}
+	}
+	.setHeader("command: [listGuilds, ban (id)]")
+	.setDescription("Execute a multiverse command")
+	.setCondition { it.id.value in Vars.runWhitelist }
 	
 }

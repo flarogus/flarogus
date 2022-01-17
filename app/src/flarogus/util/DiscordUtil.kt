@@ -91,6 +91,8 @@ suspend fun userOrAuthor(uid: String?, event: MessageCreateEvent): User? {
 
 fun User.getAvatarUrl() = avatar?.url ?: "https://cdn.discordapp.com/embed/avatars/${discriminator.toInt() % 5}.png"
 
+fun String.stripEveryone() = this.replace("@everyone", "@еveryonе").replace("@here", "@hеrе")
+
 const val minute = 60L
 const val hour = 60L * minute
 const val day = 24L * hour

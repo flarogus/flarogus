@@ -24,7 +24,7 @@ object Vars {
 	
 	val threadPool = Executors.newFixedThreadPool(5)
 	
-	/** Users that are allowed to execute kotlin scripts in application context */
+	/** Superusers that are allowed to do most things */
 	val runWhitelist = mutableListOf(ownerId, 691650272166019164UL)
 	
 	fun loadState() {
