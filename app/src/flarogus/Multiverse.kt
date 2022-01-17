@@ -17,9 +17,12 @@ object Multiverse {
 
 	/** All channels the multiverse works in */
 	val multiverse = ArrayList<MessageChannel>(10)
+	/** Guilds that are allowed to send messages in multiverse */
+	val whitelist = ArrayList<Snowflake>(50)
 	/** Entities that are blacklisted from multiverse */
 	val blacklist = ArrayList<Snowflake>(50)
 	
+	val whitelistChannel = 932632370354475028UL
 	val blacklistChannel = 932524242707308564UL
 	
 	/** Sets up the multiverse */
@@ -34,8 +37,10 @@ object Multiverse {
 		//search for new channels every 30 seconds
 		fixedRateTimer("channel search", true, period = 30 * 1000L) {
 			val lastSize = multiverse.size
+			
 			findChannels()
 			updateBlacklist()
+			updateWhitelist()
 			
 			val newChannels = multiverse.size - lastSize
 			if (newChannels > 0) brodcast {
@@ -56,7 +61,7 @@ object Multiverse {
 			.filter { it.message.channel.asChannel() in multiverse }
 			.onEach { event ->
 				val guild = event.getGuild()
-				if (guild?.id in blacklist || event.message.author?.id in blacklist) return@onEach
+				if (guild?.id in blacklist || guild?.id !in whitelist || event.message.author?.id in blacklist) return@onEach
 				
 				try {
 					if (countPings(event.message.content) > 7) {
@@ -67,7 +72,7 @@ object Multiverse {
 					brodcast(event.message.channel.id.value) {
 						val original = event.message.content
 						val author = event.message.author?.tag ?: "webhook <${event.supplier.getWebhookOrNull(event.message.webhookId ?: Snowflake(0))?.name}>"
-						content = "[${author} — ${guild?.name}]: ${original.take(1800)}"
+						content = "${(if (event.message.author?.id?.value in Vars.runWhitelist) "[ADMIN][" else "[") + author} — ${guild?.name}]: ${original.take(1800)}"
 						
 						event.message.data.attachments.forEachIndexed { index, attachment ->
 							addFile(attachment.filename, URL(attachment.url).openStream())
@@ -111,7 +116,26 @@ object Multiverse {
 					try {
 						val id = "[ug](\\d+)".toRegex().find(it.content)!!.groupValues[1].toULong()
 						
-						blacklist.add(Snowflake(id))
+						val snow = Snowflake(id)
+						if (snow !in blacklist) blacklist.add(snow)
+					} catch (e: Exception) { //any invalid messages are ignored. this includes number format exceptions, nullpointers and etc
+						e.printStackTrace()
+					}
+				}.collect()
+		} catch (ignored: Throwable) {}
+	}
+	
+	fun updateWhitelist() = Vars.client.launch {
+		try {
+			val channel = Vars.client.unsafe.messageChannel(Snowflake(whitelistChannel))
+			
+			channel.messages
+				.onEach {
+					try {
+						val id = it.content.trim().toULong()
+						
+						val snow = Snowflake(id)
+						if (snow !in whitelist) whitelist.add(snow)
 					} catch (e: Exception) { //any invalid messages are ignored. this includes number format exceptions, nullpointers and etc
 						e.printStackTrace()
 					}
@@ -133,7 +157,7 @@ object Multiverse {
 	/** Sends a message into every multiverse channel expect the one with id == exclude */
 	inline fun brodcast(exclude: ULong = 0UL, crossinline message: suspend MessageCreateBuilder.() -> Unit) = Vars.client.launch {
 		multiverse.forEach {
-			if (exclude != it.id.value) {
+			if (exclude != it.id.value && it.id !in blacklist) {
 				try {
 					it.createMessage {
 						message()
