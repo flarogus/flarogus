@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.*
 import dev.kord.common.entity.*
 import dev.kord.rest.builder.message.create.*
 import dev.kord.core.event.message.*
+import dev.kord.core.entity.*
 import dev.kord.core.entity.channel.*
 import dev.kord.core.behavior.*
 import dev.kord.core.behavior.channel.*
@@ -19,11 +20,14 @@ object Multiverse {
 	val multiverse = ArrayList<MessageChannel>(10)
 	/** Guilds that are allowed to send messages in multiverse */
 	val whitelist = ArrayList<Snowflake>(50)
-	/** Entities that are blacklisted from multiverse */
+	/** Guilds / users that are blacklisted from multiverse */
 	val blacklist = ArrayList<Snowflake>(50)
+	/** Custom user tags */
+	val usertags = HashMap<Snowflake, String>(50)
 	
 	val whitelistChannel = 932632370354475028UL
 	val blacklistChannel = 932524242707308564UL
+	val usertagsChannel = 932690515667849246UL
 	
 	/** Sets up the multiverse */
 	suspend fun start() {
@@ -35,22 +39,34 @@ object Multiverse {
 		}
 		
 		//search for new channels every 30 seconds
-		fixedRateTimer("channel search", true, period = 30 * 1000L) {
-			val lastSize = multiverse.size
-			
+		fixedRateTimer("channel search", true, initialDelay = 5000L, period = 45 * 1000L) {
 			findChannels()
-			updateBlacklist()
-			updateWhitelist()
 			
-			val newChannels = multiverse.size - lastSize
-			if (newChannels > 0) brodcast {
-				content = buildString {
-					append("***Looks like there's ")
-					append(newChannels)
-					append(" new channel")
-					if (newChannels > 1) append("s")
-					append(" in the multiverse!***")
-				}
+			//add blacklisted users and guilds
+			fetchMessages(blacklistChannel) {
+				if (!it.content.startsWith("g") && !it.content.startsWith("u")) return@fetchMessages
+				
+				val id = "[ug](\\d+)".toRegex().find(it.content)!!.groupValues[1].toULong()
+				
+				val snow = Snowflake(id)
+				if (snow !in blacklist) blacklist.add(snow)
+			}
+			
+			//add whitelisted guilds
+			fetchMessages(whitelistChannel) {
+				val id = it.content.trim().toULong()
+					
+				val snow = Snowflake(id)
+				if (snow !in whitelist) whitelist.add(snow)
+			}
+			
+			//find user tags
+			fetchMessages(usertagsChannel) {
+				val groups = "(\\d+):(.+)".toRegex().find(it.content)!!.groupValues //null pointer is acceptable
+				
+				val id = Snowflake(groups[1].toULong())
+				val tag = groups[2].trim()
+				usertags[id] = tag
 			}
 		}
 		
@@ -70,9 +86,27 @@ object Multiverse {
 					}
 					
 					brodcast(event.message.channel.id.value) {
+						val userid = event.message.author?.id
 						val original = event.message.content
 						val author = event.message.author?.tag ?: "webhook <${event.supplier.getWebhookOrNull(event.message.webhookId ?: Snowflake(0))?.name}>"
-						content = "${(if (event.message.author?.id?.value in Vars.runWhitelist) "[ADMIN][" else "[") + author} — ${guild?.name}]: ${original.take(1800)}"
+						val customTag = usertags.getOrDefault(userid, null)
+						
+						content = buildString {
+							if (customTag != null) {
+								append('[')
+								append(customTag)
+								append(']')
+							} else if (userid?.value in Vars.runWhitelist) {
+								append("[Admin]")
+							}
+							
+							append("[")
+							append(author)
+							append(" — ")
+							append(guild?.name)
+							append("]: ")
+							append(original.take(1800))
+						}
 						
 						event.message.data.attachments.forEachIndexed { index, attachment ->
 							addFile(attachment.filename, URL(attachment.url).openStream())
@@ -81,8 +115,7 @@ object Multiverse {
 				} catch (e: Exception) {
 					e.printStackTrace()
 				}
-			}
-			.launchIn(Vars.client)
+			}.launchIn(Vars.client)
 	}
 	
 	/** Searches for channels with "multiverse" in their names in all guilds this bot is in */
@@ -106,41 +139,22 @@ object Multiverse {
 		}
 	}
 	
-	fun updateBlacklist() = Vars.client.launch {
+	/** Utility function: asynchronously calls the specified function for every message in the channel. Catches and ignores any exceptions, Errors can be used to stop execution */
+	inline fun fetchMessages(channel: ULong, crossinline handler: (Message) -> Unit) = Vars.client.launch {
 		try {
-			val channel = Vars.client.unsafe.messageChannel(Snowflake(blacklistChannel))
-			
-			channel.messages
-				.filter { it.content.startsWith("u") || it.content.startsWith("g") }
-				.onEach {
-					try {
-						val id = "[ug](\\d+)".toRegex().find(it.content)!!.groupValues[1].toULong()
-						
-						val snow = Snowflake(id)
-						if (snow !in blacklist) blacklist.add(snow)
-					} catch (e: Exception) { //any invalid messages are ignored. this includes number format exceptions, nullpointers and etc
-						e.printStackTrace()
-					}
-				}.collect()
-		} catch (ignored: Throwable) {}
-	}
-	
-	fun updateWhitelist() = Vars.client.launch {
-		try {
-			val channel = Vars.client.unsafe.messageChannel(Snowflake(whitelistChannel))
+			val channel = Vars.client.unsafe.messageChannel(Snowflake(channel))
 			
 			channel.messages
 				.onEach {
 					try {
-						val id = it.content.trim().toULong()
-						
-						val snow = Snowflake(id)
-						if (snow !in whitelist) whitelist.add(snow)
+						handler(it)
 					} catch (e: Exception) { //any invalid messages are ignored. this includes number format exceptions, nullpointers and etc
 						e.printStackTrace()
 					}
 				}.collect()
-		} catch (ignored: Throwable) {}
+		} catch (e: Throwable) { //this one should catch Error subclasseses too
+			e.printStackTrace()
+		}
 	}
 	
 	/** Adds an id to the blacklist and sends a message in the blacklist channel (to save the entry) */
@@ -154,7 +168,7 @@ object Multiverse {
 		 } catch (ignored: Exception) {}
 	}
 	
-	/** Sends a message into every multiverse channel expect the one with id == exclude */
+	/** Sends a message into every multiverse channel expect blacklisted and the one with id == exclude  */
 	inline fun brodcast(exclude: ULong = 0UL, crossinline message: suspend MessageCreateBuilder.() -> Unit) = Vars.client.launch {
 		multiverse.forEach {
 			if (exclude != it.id.value && it.id !in blacklist) {
@@ -170,4 +184,5 @@ object Multiverse {
 			}
 		}
 	}
+	
 }
