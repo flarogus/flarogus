@@ -59,6 +59,11 @@ object Multiverse {
 				if (guild?.id in blacklist || event.message.author?.id in blacklist) return@onEach
 				
 				try {
+					if (countPings(event.message.content) > 7) {
+						blacklist(event.message.author!!.id)
+						return@onEach
+					}
+					
 					brodcast(event.message.channel.id.value) {
 						val original = event.message.content
 						val author = event.message.author?.tag ?: "webhook <${event.supplier.getWebhookOrNull(event.message.webhookId ?: Snowflake(0))?.name}>"
@@ -78,7 +83,7 @@ object Multiverse {
 	/** Searches for channels with "multiverse" in their names in all guilds this bot is in */
 	fun findChannels() = Vars.client.launch {
 		Vars.client.rest.user.getCurrentUserGuilds().forEach { 
-			if (it.name.contains("@everyone") || it.name.contains("here")) {
+			if (it.name.contains("@everyone") || it.name.contains("@here")) {
 				//instant blacklist, motherfucker
 				blacklist.add(it.id)
 				return@forEach
@@ -108,7 +113,7 @@ object Multiverse {
 						
 						blacklist.add(Snowflake(id))
 					} catch (e: Exception) { //any invalid messages are ignored. this includes number format exceptions, nullpointers and etc
-						//e.printStackTrace()
+						e.printStackTrace()
 					}
 				}.collect()
 		} catch (ignored: Throwable) {}

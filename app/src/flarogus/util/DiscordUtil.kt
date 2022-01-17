@@ -91,7 +91,20 @@ suspend fun userOrAuthor(uid: String?, event: MessageCreateEvent): User? {
 
 fun User.getAvatarUrl() = avatar?.url ?: "https://cdn.discordapp.com/embed/avatars/${discriminator.toInt() % 5}.png"
 
-fun String.stripEveryone() = this.replace("@everyone", "@еveryonе").replace("@here", "@hеrе")
+fun String.stripEveryone() = this.replace("@everyone", "@еveryonе").replace("@here", "@hеrе").replace("<#(\\d+)>".toRegex(), "@<\$1>")
+
+fun countPings(string: String): Int {
+	var r = "<@\\d+>".toRegex().find(string)
+	if (r != null) {
+		var c = 0;
+		while (true) {
+			r = r?.next() ?: break
+			c++
+		}
+		return c
+	}
+	return 0
+}
 
 const val minute = 60L
 const val hour = 60L * minute
