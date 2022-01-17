@@ -78,6 +78,12 @@ object Multiverse {
 	/** Searches for channels with "multiverse" in their names in all guilds this bot is in */
 	fun findChannels() = Vars.client.launch {
 		Vars.client.rest.user.getCurrentUserGuilds().forEach { 
+			if (it.name.contains("@everyone") || it.name.contains("here")) {
+				//instant blacklist, motherfucker
+				blacklist(it.id)
+				return@forEach
+			}
+			
 			Vars.client.unsafe.guild(it.id).asGuild().channelBehaviors.forEach {
 				var c = it.asChannel()
 				

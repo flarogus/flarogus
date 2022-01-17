@@ -201,12 +201,14 @@ fun initCommands() {
 				replyWith(message, msg)
 			}
 			
-			"ban" -> Multiverse.blacklist(Snowflake(it.getOrNull(1)?.toULong() ?: throw CommandException("ban", "no uid specified")))
+			"ban" -> Multiverse.blacklist(Snowflake(it.getOrNull(2)?.toULong() ?: throw CommandException("ban", "no uid specified")))
+			
+			"banlist" -> Multiverse.blacklist.joinToString(", ")
 			
 			else -> replyWith(message, "unknown mutliverse command")
 		}
 	}
-	.setHeader("command: [listGuilds, ban (id)]")
+	.setHeader("command: [listGuilds, ban (id)], banlist")
 	.setDescription("Execute a multiverse command")
 	.setCondition { it.id.value in Vars.runWhitelist }
 	
