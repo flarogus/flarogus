@@ -191,7 +191,7 @@ fun initCommands() {
 	.setDescription("Merge pfps of two users. If only one user is specified, uses the caller as the second.")
 	
 	CommandHandler.register("multiverse") {
-		val command = it.getOrNull(0)
+		val command = it.getOrNull(1)
 		
 		when (command) {
 			"listGuilds" -> {
