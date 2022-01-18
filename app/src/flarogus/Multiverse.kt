@@ -23,13 +23,17 @@ import flarogus.util.*
 object Multiverse {
 
 	/** All channels the multiverse works in */
-	val multiverse = ArrayList<MessageChannel>(10)
+	val multiverse = ArrayList<MessageChannel>(50)
 	/** Guilds that are allowed to send messages in multiverse */
 	val whitelist = ArrayList<Snowflake>(50)
 	/** Guilds / users that are blacklisted from multiverse */
 	val blacklist = ArrayList<Snowflake>(50)
 	/** Custom user tags */
 	val usertags = HashMap<Snowflake, String>(50)
+	
+	/** Rate limitation map */
+	val ratelimited = HashMap<Snowflake, Long>(150)
+	val ratelimit = 2000L
 	
 	val whitelistChannel = 932632370354475028UL
 	val blacklistChannel = 932524242707308564UL
@@ -44,7 +48,6 @@ object Multiverse {
 			brodcast { content = "***This channel is now a part of the Multiverse! There's ${multiverse.size - 1} other channels!***" }
 		}
 		
-		//search for new channels every 30 seconds
 		fixedRateTimer("channel search", true, initialDelay = 5000L, period = 45 * 1000L) {
 			findChannels()
 			
@@ -82,17 +85,34 @@ object Multiverse {
 			.filter { it.message.author?.id?.value != Vars.botId }
 			.filter { it.message.channel.asChannel() in multiverse }
 			.onEach { event ->
+				val userid = event.message.author?.id
 				val guild = event.getGuild()
 				if (guild?.id in blacklist || guild?.id !in whitelist || event.message.author?.id in blacklist) return@onEach
 				
 				try {
 					if (countPings(event.message.content) > 7) {
+						//instaban spammers
 						blacklist(event.message.author!!.id)
 						return@onEach
 					}
 					
+					//rate limitation
+					if (userid != null) {
+						val current = System.currentTimeMillis()
+						val lastMessage = ratelimited.getOrDefault(userid, 0L)
+						
+						if (current - lastMessage < ratelimit) {
+							Vars.client.launch {
+								replyWith(event.message, "[!] You are being rate limited. Please wait ${ratelimit + lastMessage - current} milliseconds.")
+							}
+							return@onEach
+						} else {
+							ratelimited[userid] = current
+						}
+					}
+					
+					//actual retranslation
 					brodcast(event.message.channel.id.value) {
-						val userid = event.message.author?.id
 						val original = event.message.content
 						val author = event.message.author?.tag ?: "webhook <${event.supplier.getWebhookOrNull(event.message.webhookId ?: Snowflake(0))?.name}>"
 						val customTag = usertags.getOrDefault(userid, null)

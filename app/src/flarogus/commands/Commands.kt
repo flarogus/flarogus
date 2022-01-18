@@ -122,10 +122,10 @@ fun initCommands() {
 		
 		if (target == Vars.ubid || target == "all") {
 			File("done").printWriter().use { it.print(1) }
-			Vars.client.shutdown()
-			Vars.saveState()
 			Multiverse.brodcast { content = "Multiverse is shutting down..." }
 			delay(5000L)
+			Vars.client.shutdown()
+			Vars.saveState()
 			throw Error("shutting down...") //Error won't be caught, will crash the application and make the workflow stop
 		}
 	}
@@ -203,12 +203,20 @@ fun initCommands() {
 			
 			"ban" -> Multiverse.blacklist(Snowflake(it.getOrNull(2)?.toULong() ?: throw CommandException("ban", "no uid specified")))
 			
-			"banlist" -> Multiverse.blacklist.joinToString(", ")
+			"banlist" -> replyWith(message, Multiverse.blacklist.joinToString(", "))
+			
+			"lastusers" -> replyWith(message, Multiverse.ratelimited.keys.map {
+				try {
+					return@map "[${Vars.client.defaultSupplier.getUser(it).tag}]: $it"
+				} catch (e: Exception) {
+					return@map "[error]: $it"
+				}
+			}.joinToString(",\n"))
 			
 			else -> replyWith(message, "unknown mutliverse command")
 		}
 	}
-	.setHeader("command: [listGuilds, ban (id)], banlist")
+	.setHeader("command: [listGuilds, ban (id)], banlist, lastusers")
 	.setDescription("Execute a multiverse command")
 	.setCondition { it.id.value in Vars.runWhitelist }
 	
