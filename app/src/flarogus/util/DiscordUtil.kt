@@ -15,9 +15,9 @@ import dev.kord.common.entity.*
 /** Sends a message, waits delayMs, edits it to the output of the lambda */
 fun CoroutineScope.sendEdited(origin: Message, message: String, delayMs: Long = 0, newMessage: (String) -> String) = launch {
 	try {
-		val msg = origin.channel.createMessage(message.take(1999))
+		val msg = origin.channel.createMessage(message.take(1999).stripEveryone())
 		if (delayMs > 0) delay(delayMs)
-		msg.edit { content = newMessage(message).take(1999) }
+		msg.edit { content = newMessage(message).take(1999).stripEveryone() }
 	} catch (e: Exception) {
 		println(e)
 	}
@@ -27,7 +27,7 @@ fun CoroutineScope.sendEdited(origin: Message, message: String, delayMs: Long = 
 fun CoroutineScope.replyWith(origin: Message, message: String, selfdestructIn: Long? = null) = launch {
 	try {
 		val msg = origin.channel.createMessage {
-			content = message.take(1999)
+			content = message.take(1999).stripEveryone()
 			messageReference = origin.id
 		}
 		if (selfdestructIn != null) {
@@ -42,7 +42,7 @@ fun CoroutineScope.replyWith(origin: Message, message: String, selfdestructIn: L
 /** Sends the message into the same channel the original message was sent into */
 suspend fun CoroutineScope.sendMessage(to: Message, content: String) = launch {
 	try {
-		to.channel.createMessage(content.take(1999))
+		to.channel.createMessage(content.take(1999).stripEveryone())
 	} catch (e: Exception) {
 		println(e)
 	}
@@ -54,7 +54,7 @@ suspend fun CoroutineScope.sendImage(origin: Message, text: String = "", image: 
 			ImageIO.write(image, "png", it);
 			ByteArrayInputStream(it.toByteArray()).use {
 				origin.channel.createMessage {
-					content = text
+					content = text.take(1999).stripEveryone()
 					messageReference = origin.id
 					addFile("SUSSUSUSUSUSUSUSUSU.png", it)
 				}
@@ -91,7 +91,7 @@ suspend fun userOrAuthor(uid: String?, event: MessageCreateEvent): User? {
 
 fun User.getAvatarUrl() = avatar?.url ?: "https://cdn.discordapp.com/embed/avatars/${discriminator.toInt() % 5}.png"
 
-fun String.stripEveryone() = this.replace("@everyone", "@еveryonе").replace("@here", "@hеrе").replace("<#(\\d+)>".toRegex(), "@<\$1>")
+fun String.stripEveryone() = this.replace("@everyone", "@еveryonе").replace("@here", "@hеrе")
 
 fun countPings(string: String): Int {
 	var r = "<@(!)?\\d+>".toRegex().find(string)

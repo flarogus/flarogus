@@ -134,7 +134,11 @@ object Multiverse {
 							append(original.take(1800))
 						}
 						
-						event.message.data.attachments.forEachIndexed { index, attachment ->
+						event.message.stickers.forEach {
+							val url = "https://discord.com/api/v9//stickers/${it.id.value}"
+						}
+						
+						event.message.data.attachments.forEach { attachment ->
 							addFile(attachment.filename, URL(attachment.url).openStream())
 						}
 					}
