@@ -6,6 +6,7 @@ import kotlin.time.*
 import kotlin.concurrent.*;
 import kotlinx.coroutines.*;
 import kotlinx.coroutines.flow.*;
+import dev.kord.rest.builder.message.create.*
 import dev.kord.core.*
 import dev.kord.core.event.*
 import dev.kord.core.event.message.*
@@ -38,11 +39,13 @@ suspend fun main(vararg args: String) = runBlocking {
 	initCommands()
 	
 	launch {
-		delay(1000 * 60 * 60 * 4L - 1000L * 120); //shutdown after 4 hours to let the next workflow continue the work
-		//why -2 minutes? Compilation takes around 1 minute, and we must save the state to the cache before it restarts
+		delay(1000 * 60 * 60 * 4L); //shutdown after 4 hours and let the next workflow continue the work
 		
-		Multiverse.brodcast { content = "Multiverse is restarting, please stand by..." }
-		delay(5000L)
+		Multiverse.brodcast { 
+			embed { description = "Multiverse is restarting, please stand by..." }
+		}
+		
+		delay(6000L)
 		Vars.client.shutdown();                  
 		Vars.saveState()
 	}

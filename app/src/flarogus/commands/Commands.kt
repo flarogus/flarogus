@@ -8,6 +8,7 @@ import kotlin.random.*;
 import kotlin.time.*
 import kotlinx.coroutines.*;
 import kotlinx.coroutines.flow.*;
+import dev.kord.rest.builder.message.create.*
 import dev.kord.core.event.*
 import dev.kord.core.event.message.*
 import dev.kord.core.supplier.*;
@@ -121,8 +122,10 @@ fun initCommands() {
 		if (target == null) throw CommandException("shutdown", "no unique bot id specified")
 		
 		if (target == Vars.ubid || target == "all") {
-			File("done").printWriter().use { it.print(1) }
-			Multiverse.brodcast { content = "Multiverse is shutting down..." }
+			Multiverse.brodcast { 
+				embed { description = "Multiverse is shutting down..." }
+			}
+			
 			delay(5000L)
 			Vars.client.shutdown()
 			Vars.saveState()

@@ -45,7 +45,9 @@ object Multiverse {
 		
 		Vars.client.launch {
 			delay(10000L)
-			brodcast { content = "***This channel is now a part of the Multiverse! There's ${multiverse.size - 1} other channels!***" }
+			brodcast {
+				embed { description = "***This channel is now a part of the Multiverse! There's ${multiverse.size - 1} other channels!***" }
+			}
 		}
 		
 		fixedRateTimer("channel search", true, initialDelay = 5000L, period = 45 * 1000L) {
@@ -118,6 +120,17 @@ object Multiverse {
 						val customTag = usertags.getOrDefault(userid, null)
 						
 						content = buildString {
+							val reply = event.message.referencedMessage
+							
+							if (reply != null) {
+								append("> ")
+								append(reply.content.take(100).replace('\n', ' '))
+								
+								if (reply.content.length > 100) append("...")
+								
+								append("\n")
+							}
+							
 							if (customTag != null) {
 								append('[')
 								append(customTag)
@@ -131,12 +144,21 @@ object Multiverse {
 							append(" — ")
 							append(guild?.name)
 							append("]: ")
-							append(original.take(1800))
+							append(original.take(1600))
 						}
 						
-						event.message.stickers.forEach {
-							val url = "https://discord.com/api/v9//stickers/${it.id.value}"
-						}
+						try {
+							event.message.stickers.forEach {
+								val extension = when (it.formatType.value) {
+									1 -> "png"
+									2 -> "apng"
+									else -> throw Exception()
+								}
+								
+								val url = "https://discord.com/api/v9/stickers/${it.id.value}.${extension}"
+								addFile("sticker-${it.id.value}.${extension}", URL(url).openStream())
+							}
+						} catch (e: Exception) {} //ignored: stickers are not so uh i forgor
 						
 						event.message.data.attachments.forEach { attachment ->
 							addFile(attachment.filename, URL(attachment.url).openStream())
