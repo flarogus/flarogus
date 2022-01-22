@@ -123,7 +123,7 @@ object Multiverse {
 							val reply = event.message.referencedMessage
 							
 							if (reply != null) {
-								val replyOrigin = "(> .+\n)?((?s).+)".toRegex().find(reply.content.replace('\n', ' '))?.groupValues?.getOrNull(2) ?: "unknown"
+								val replyOrigin = "(> .+\n)?((?s).+)".toRegex().find(reply.content)?.groupValues?.getOrNull(2)?.replace('\n', ' ') ?: "unknown"
 								
 								append("> ")
 								append(replyOrigin.take(100))
