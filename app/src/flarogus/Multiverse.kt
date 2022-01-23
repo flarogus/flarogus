@@ -231,6 +231,8 @@ object Multiverse {
 						message()
 						
 						content = content?.stripEveryone()
+						
+						allowedMentions() //forbid all mentions
 					}
 				} catch (e: Exception) {
 					e.printStackTrace()
