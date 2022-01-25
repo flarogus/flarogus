@@ -1,5 +1,6 @@
 package flarogus
 
+import java.io.*
 import java.net.*
 import kotlin.concurrent.*
 import kotlinx.coroutines.*
@@ -38,9 +39,13 @@ object Multiverse {
 	val whitelistChannel = 932632370354475028UL
 	val blacklistChannel = 932524242707308564UL
 	val usertagsChannel = 932690515667849246UL
+	val settingsChannel = 935062117931950120UL
+	
+	val settingsPrefix = "@set"
 	
 	/** Sets up the multiverse */
 	suspend fun start() {
+		loadState(true)
 		findChannels()
 		
 		Vars.client.launch {
@@ -51,33 +56,37 @@ object Multiverse {
 		}
 		
 		fixedRateTimer("channel search", true, initialDelay = 5000L, period = 45 * 1000L) {
-			findChannels()
-			
-			//add blacklisted users and guilds
-			fetchMessages(blacklistChannel) {
-				if (!it.content.startsWith("g") && !it.content.startsWith("u")) return@fetchMessages
+			Vars.client.launch {
+				findChannels()
 				
-				val id = "[ug](\\d+)".toRegex().find(it.content)!!.groupValues[1].toULong()
-				
-				val snow = Snowflake(id)
-				if (snow !in blacklist) blacklist.add(snow)
-			}
-			
-			//add whitelisted guilds
-			fetchMessages(whitelistChannel) {
-				val id = it.content.trim().toULong()
+				//add blacklisted users and guilds
+				fetchMessages(blacklistChannel) {
+					if (!it.content.startsWith("g") && !it.content.startsWith("u")) return@fetchMessages
 					
-				val snow = Snowflake(id)
-				if (snow !in whitelist) whitelist.add(snow)
-			}
-			
-			//find user tags
-			fetchMessages(usertagsChannel) {
-				val groups = "(\\d+):(.+)".toRegex().find(it.content)!!.groupValues //null pointer is acceptable
+					val id = "[ug](\\d+)".toRegex().find(it.content)!!.groupValues[1].toULong()
+					
+					val snow = Snowflake(id)
+					if (snow !in blacklist) blacklist.add(snow)
+				}
 				
-				val id = Snowflake(groups[1].toULong())
-				val tag = groups[2].trim()
-				usertags[id] = tag
+				//add whitelisted guilds
+				fetchMessages(whitelistChannel) {
+					val id = it.content.trim().toULong()
+						
+					val snow = Snowflake(id)
+					if (snow !in whitelist) whitelist.add(snow)
+				}
+				
+				//find user tags
+				fetchMessages(usertagsChannel) {
+					val groups = "(\\d+):(.+)".toRegex().find(it.content)!!.groupValues //null pointer is acceptable
+					
+					val id = Snowflake(groups[1].toULong())
+					val tag = groups[2].trim()
+					usertags[id] = tag
+				}
+				
+				saveState()
 			}
 		}
 		
@@ -194,7 +203,7 @@ object Multiverse {
 	}
 	
 	/** Utility function: asynchronously calls the specified function for every message in the channel. Catches and ignores any exceptions, Errors can be used to stop execution */
-	inline fun fetchMessages(channel: ULong, crossinline handler: (Message) -> Unit) = Vars.client.launch {
+	suspend inline fun fetchMessages(channel: ULong, crossinline handler: suspend (Message) -> Unit) {
 		try {
 			val channel = Vars.client.unsafe.messageChannel(Snowflake(channel))
 			
@@ -209,7 +218,7 @@ object Multiverse {
 		} catch (e: Throwable) { //this one should catch Error subclasseses too
 			e.printStackTrace()
 		}
-	}
+	};
 	
 	/** Adds an id to the blacklist and sends a message in the blacklist channel (to save the entry) */
 	fun blacklist(id: Snowflake) = Vars.client.launch {
@@ -220,7 +229,7 @@ object Multiverse {
 		 		content = "g${id.value}"
 		 	}
 		 } catch (ignored: Exception) {}
-	}
+	};
 	
 	/** Sends a message into every multiverse channel expect blacklisted and the one with id == exclude  */
 	inline fun brodcast(exclude: ULong = 0UL, crossinline message: suspend MessageCreateBuilder.() -> Unit) = Vars.client.launch {
@@ -237,6 +246,54 @@ object Multiverse {
 				} catch (e: Exception) {
 					e.printStackTrace()
 				}
+			}
+		}
+	};
+	
+	//i / o region
+	/** reads state from settings channel, shuts the bot down if there's a newer instance running */
+	suspend fun loadState(firstRun: Boolean) {
+		var found = false
+		
+		fetchMessages(settingsChannel) {
+			if (it.author?.id?.value == Vars.botId && it.content.startsWith(settingsPrefix)) {
+				DataInputStream(ByteArrayInputStream(it.content.toByteArray())).use {
+					val id = it.readLong().toString()
+					
+					if (firstRun && id != Vars.ubid) {
+						brodcast { content = "Another Multiverse instance detected, shutting this one down..." }
+						delay(10000L)
+						Vars.client.shutdown() //if true, another instance has overridden this field
+					}
+				}
+				
+				found = true
+				throw Error() //exit from fetchMessages
+			}
+		}
+		
+		if (!found) {
+			try {
+				Vars.client.unsafe.messageChannel(Snowflake(settingsChannel)).createMessage(settingsPrefix)
+				saveState()
+			} catch (ignored: Exception) {}
+		}
+	}
+	
+	/** Saves the state to the settings channel */
+	suspend fun saveState() {
+		val os = ByteArrayOutputStream()
+		DataOutputStream(os).use {
+			it.writeLong(Vars.ubid.toLong())
+		}
+		
+		fetchMessages(settingsChannel) {
+			if (it.author?.id?.value == Vars.botId && it.content.startsWith(settingsPrefix)) {
+				it.edit {
+					content = settingsPrefix + String(os.toByteArray())
+				}
+				
+				throw Error() //exit from fetchMessages. this is dumb, yes. but I'm too lazy to find a better way
 			}
 		}
 	}

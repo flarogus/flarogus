@@ -32,26 +32,26 @@ suspend fun main(vararg args: String) = runBlocking {
 		.onEach { 
 			try {
 				CommandHandler.handle(this, it.message.content.substring(Vars.prefix.length), it)
-			} catch (e: Exception) {} //how sad, don't care. we don't tolerate any expections!
+			} catch (e: Exception) {} //how sad, don't care. we don't tolerate any exceptions!
 		}.launchIn(Vars.client)
 	
-	Multiverse.start()
 	initCommands()
 	
 	launch {
 		delay(1000 * 60 * 60 * 4L); //shutdown after 4 hours and let the next workflow continue the work
 		
 		Multiverse.brodcast { 
-			embed { description = "Multiverse is restarting, please stand by..." }
+			embed { description = "A Multiverse instance is restarting." }
 		}
 		
 		delay(6000L)
 		Vars.client.shutdown();                  
-		Vars.saveState()
+		//Vars.saveState()
 	}
 	
-	fixedRateTimer("autosaves", true, period = 10000L) {
-		Vars.saveState() //save state every 10 seconds. shouldn't cause much of an issue since it's very lightweight
+	launch {
+		delay(15000L)
+		Multiverse.start()
 	}
 	
 	println("initialized");

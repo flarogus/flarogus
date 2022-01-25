@@ -123,12 +123,12 @@ fun initCommands() {
 		
 		if (target == Vars.ubid || target == "all") {
 			Multiverse.brodcast { 
-				embed { description = "Multiverse is shutting down..." }
+				embed { description = "A Multiverse instance is shutting down..." }
 			}
 			
 			delay(5000L)
 			Vars.client.shutdown()
-			Vars.saveState()
+			//Vars.saveState()
 			throw Error("shutting down...") //Error won't be caught, will crash the application and make the workflow stop
 		}
 	}
