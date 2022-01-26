@@ -260,7 +260,7 @@ object Multiverse {
 		
 		fetchMessages(settingsChannel) {
 			if (it.author?.id?.value == Vars.botId && it.content.startsWith(settingsPrefix)) {
-				DataInputStream(ByteArrayInputStream(it.content.toByteArray())).use {
+				DataInputStream(ByteArrayInputStream(it.content.substring(settingsPrefix.length).toByteArray())).use {
 					val id = it.readLong().toString()
 					
 					if (!firstRun && id != Vars.ubid) {
