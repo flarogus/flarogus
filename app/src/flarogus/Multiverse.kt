@@ -86,6 +86,7 @@ object Multiverse {
 					usertags[id] = tag
 				}
 				
+				loadState(false)
 				saveState()
 			}
 		}
@@ -260,7 +261,7 @@ object Multiverse {
 				DataInputStream(ByteArrayInputStream(it.content.toByteArray())).use {
 					val id = it.readLong().toString()
 					
-					if (firstRun && id != Vars.ubid) {
+					if (!firstRun && id != Vars.ubid) {
 						brodcast { content = "Another Multiverse instance detected, shutting this one down..." }
 						delay(10000L)
 						Vars.client.shutdown() //if true, another instance has overridden this field
