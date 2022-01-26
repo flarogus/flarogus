@@ -263,7 +263,7 @@ object Multiverse {
 				DataInputStream(ByteArrayInputStream(it.content.substring(settingsPrefix.length).toByteArray())).use {
 					val id = it.readLong().toString()
 					
-					if (!firstRun && id != Vars.ubid) {
+					if (false && !firstRun && id != Vars.ubid) {
 						brodcast { content = "Another Multiverse instance detected, shutting this one down..." }
 						delay(10000L)
 						Vars.client.shutdown() //if true, another instance has overridden this field
