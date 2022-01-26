@@ -46,6 +46,8 @@ object Multiverse {
 	/** Sets up the multiverse */
 	suspend fun start() {
 		loadState(true)
+		saveState()
+		
 		findChannels()
 		
 		Vars.client.launch {
