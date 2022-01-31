@@ -16,6 +16,7 @@ import flarogus.util.*;
 import flarogus.commands.*;
 
 suspend fun main(vararg args: String) = runBlocking {
+	
 	val token = args.getOrNull(0)
 	if (token == null) {
 		println("[ERROR] no token specified")
@@ -38,7 +39,7 @@ suspend fun main(vararg args: String) = runBlocking {
 	initCommands()
 	
 	launch {
-		delay(1000 * 60 * 60 * 4L); //shutdown after 4 hours and let the next workflow continue the work
+		delay(1000 * 60 * 60 * 4L + 1000 * 60 * 30L); //shutdown after 4 hours and 2 minutes and let the next workflow continue the work
 		
 		Multiverse.brodcast { 
 			embed { description = "A Multiverse instance is restarting." }

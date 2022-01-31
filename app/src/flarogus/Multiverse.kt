@@ -39,7 +39,7 @@ object Multiverse {
 	val whitelistChannel = 932632370354475028UL
 	val blacklistChannel = 932524242707308564UL
 	val usertagsChannel = 932690515667849246UL
-	val settingsChannel = 935062117931950120UL
+	val settingsChannel = 937781472394358784UL
 	
 	val settingsPrefix = "@set"
 	
@@ -260,13 +260,22 @@ object Multiverse {
 		
 		fetchMessages(settingsChannel) {
 			if (it.author?.id?.value == Vars.botId && it.content.startsWith(settingsPrefix)) {
-				DataInputStream(ByteArrayInputStream(it.content.substring(settingsPrefix.length).toByteArray())).use {
-					val id = it.readLong().toString()
-					
-					if (false && !firstRun && id != Vars.ubid) {
-						brodcast { content = "Another Multiverse instance detected, shutting this one down..." }
+				val map = SimpleMapSerializer.deserialize(it.content.substring(settingsPrefix.length))
+				
+				//throwing an exception is perfectly fine here
+				if (map["ubid"] as String? != Vars.ubid) {
+					//shutdown if there's a newer instance running
+					if (map.getOrDefault("started", 0L) as Long > Vars.startedAt) {
+						brodcast {
+							embed { description = "another instance is running, shutting the current one down" }
+						}
+						
 						delay(10000L)
-						Vars.client.shutdown() //if true, another instance has overridden this field
+						
+						Vars.client.shutdown()
+					} else {
+						//this instance is a newer one
+						map.getOrDefault("runWhitelist", null)?.let { Vars.runWhitelist.addAll(it as Array<ULong>) }
 					}
 				}
 				
@@ -285,15 +294,16 @@ object Multiverse {
 	
 	/** Saves the state to the settings channel */
 	suspend fun saveState() {
-		val os = ByteArrayOutputStream()
-		DataOutputStream(os).use {
-			it.writeLong(Vars.ubid.toLong())
-		}
+		val map = mapOf<String, Any>(
+			"ubid" to Vars.ubid,
+			"runWhitelist" to Vars.runWhitelist.toTypedArray(),
+			"started" to Vars.startedAt
+		)
 		
 		fetchMessages(settingsChannel) {
 			if (it.author?.id?.value == Vars.botId && it.content.startsWith(settingsPrefix)) {
 				it.edit {
-					content = settingsPrefix + String(os.toByteArray())
+					content = settingsPrefix + SimpleMapSerializer.serialize(map)
 				}
 				
 				throw Error() //exit from fetchMessages. this is dumb, yes. but I'm too lazy to find a better way
