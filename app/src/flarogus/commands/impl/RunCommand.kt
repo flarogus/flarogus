@@ -65,7 +65,11 @@ val RunCommand = flarogus.commands.Command(
 			}
 		}
 		illegal(cause = "should not be used at all. Use `ktsinterface.launch` instead.", "runBlocking", "coroutineScope")
-		illegal(cause = "can be used only by the owner", "runWhitelist")
+		
+		if (message.author?.id?.value != Vars.ownerId) {
+			illegal(cause = "can be used only by the owner", "runWhitelist")
+		}
+		
 		if (!isAdmin) {
 			illegal(
 				cause = "can only be used in conjunction with argument '-su'!\n",

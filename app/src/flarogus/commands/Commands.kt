@@ -63,7 +63,10 @@ fun initCommands() {
 			val ping = message.id.timeMark.elapsedNow().toLong(DurationUnit.MILLISECONDS)
 			"${Vars.ubid} — running for ${formatTime(System.currentTimeMillis() - Vars.startedAt)}. sussification time: ${ping}ms."
 		}
-		message.delete()
+		
+		try {
+			message.delete()
+		} catch (ignored: Exception) {} //lack of "manage messages" permission
 	}
 	.setDescription("Show the bot status")
 	
