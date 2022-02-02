@@ -262,6 +262,8 @@ object Multiverse {
 			if (it.author?.id?.value == Vars.botId && it.content.startsWith(settingsPrefix)) {
 				val map = SimpleMapSerializer.deserialize(it.content.substring(settingsPrefix.length))
 				
+				found = true
+				
 				//throwing an exception is perfectly fine here
 				if (map["ubid"] as String? != Vars.ubid) {
 					//shutdown if there's a newer instance running
@@ -275,11 +277,12 @@ object Multiverse {
 						Vars.client.shutdown()
 					} else {
 						//this instance is a newer one
-						map.getOrDefault("runWhitelist", null)?.let { Vars.runWhitelist.addAll(it as Array<ULong>) }
+						(map.getOrDefault("runWhitelist", null) as Array<Any>)?.forEach { 
+							if (it is ULong) Vars.runWhitelist.add(it)
+						}
 					}
 				}
 				
-				found = true
 				throw Error() //exit from fetchMessages
 			}
 		}

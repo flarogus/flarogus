@@ -39,7 +39,8 @@ suspend fun main(vararg args: String) = runBlocking {
 	initCommands()
 	
 	launch {
-		delay(1000 * 60 * 60 * 4L + 1000 * 60 * 30L); //shutdown after 4 hours and 2 minutes and let the next workflow continue the work
+		//shutdown after 5.5 hours. This should never happen: the instance should shut itself down after noticing there's another instance running
+		delay(1000 * 60 * 60 * 5L + 1000 * 60 * 30L)
 		
 		Multiverse.brodcast { 
 			embed { description = "A Multiverse instance is restarting." }
