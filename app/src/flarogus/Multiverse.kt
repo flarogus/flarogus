@@ -138,7 +138,7 @@ object Multiverse {
 								val replyOrigin = "(> .+\n)?((?s).+)".toRegex().find(reply.content)?.groupValues?.getOrNull(2)?.replace('\n', ' ') ?: "unknown"
 								
 								append("> ")
-								append(replyOrigin.take(100))
+								append(replyOrigin.take(100).replace("/", "\\/"))
 								
 								if (replyOrigin.length > 100) append("...")
 								
