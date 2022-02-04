@@ -276,10 +276,12 @@ object Multiverse {
 						
 						Vars.client.shutdown()
 					} else {
-						//this instance is a newer one
-						(map.getOrDefault("runWhitelist", null) as Array<Any>)?.forEach { 
+						//this instance is a newer one. get all saved data from the save message
+						map.getOrDefault("runWhitelist", null)?.asOrNull<Array<Any>>()?.forEach { 
 							if (it is ULong) Vars.runWhitelist.add(it)
 						}
+						
+						Vars.flarogusEpoch = map.getOrDefault("epoch", null)?.asOrNull<Long>() ?: System.currentTimeMillis()
 					}
 				}
 				
@@ -300,7 +302,8 @@ object Multiverse {
 		val map = mapOf<String, Any>(
 			"ubid" to Vars.ubid,
 			"runWhitelist" to Vars.runWhitelist.toTypedArray(),
-			"started" to Vars.startedAt
+			"started" to Vars.startedAt,
+			"epoch" to Vars.flarogusEpoch
 		)
 		
 		fetchMessages(settingsChannel) {
@@ -313,5 +316,7 @@ object Multiverse {
 			}
 		}
 	}
+	
+	inline fun <reified T> Any.asOrNull(): T? = if (this is T) this else null;
 	
 }

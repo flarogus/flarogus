@@ -14,6 +14,8 @@ object Vars {
 	lateinit var ubid: String
 	/** The moment the bot has started */
 	var startedAt = -1L
+	/** The start of flarogus epoch, aka the last hard reset */
+	var flarogusEpoch = -1L
 	
 	/** Mnemotechnican#9967 — discord */
 	val ownerId = 502871063223336990UL

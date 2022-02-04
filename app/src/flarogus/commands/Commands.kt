@@ -61,7 +61,10 @@ fun initCommands() {
 	CommandHandler.register("sus") {
 		sendEdited(message, "sussificating", 50L) {
 			val ping = message.id.timeMark.elapsedNow().toLong(DurationUnit.MILLISECONDS)
-			"${Vars.ubid} — running for ${formatTime(System.currentTimeMillis() - Vars.startedAt)}. sussification time: ${ping}ms."
+			"""
+				${Vars.ubid} — running for ${formatTime(System.currentTimeMillis() - Vars.startedAt)}. sussification time: ${ping}ms.
+				Time since flarogus epoch: ${formatTime(System.currentTimeMillis() - Vars.flarogusEpoch)}
+			""".trimIndent()
 		}
 		
 		try {
