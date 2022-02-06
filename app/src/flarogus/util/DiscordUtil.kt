@@ -11,9 +11,10 @@ import dev.kord.core.event.message.*
 import dev.kord.core.behavior.*
 import dev.kord.core.behavior.channel.*
 import dev.kord.common.entity.*
+import flarogus.*
 
 /** Sends a message, waits delayMs, edits it to the output of the lambda */
-fun CoroutineScope.sendEdited(origin: Message, message: String, delayMs: Long = 0, newMessage: (String) -> String) = launch {
+fun sendEdited(origin: Message, message: String, delayMs: Long = 0, newMessage: (String) -> String) = Vars.client.launch {
 	try {
 		val msg = origin.channel.createMessage(message.take(1999).stripEveryone())
 		if (delayMs > 0) delay(delayMs)
@@ -24,13 +25,13 @@ fun CoroutineScope.sendEdited(origin: Message, message: String, delayMs: Long = 
 }
 
 /** Replies to the message, optionally deletes the message in selfdestructIn ms */
-fun CoroutineScope.replyWith(origin: Message, message: String, selfdestructIn: Long? = null) = launch {
+fun replyWith(origin: Message, message: String, selfdestructIn: Long = -1) = Vars.client.launch {
 	try {
 		val msg = origin.channel.createMessage {
 			content = message.take(1999).stripEveryone()
 			messageReference = origin.id
 		}
-		if (selfdestructIn != null) {
+		if (selfdestructIn != -1L) {
 			delay(selfdestructIn)
 			msg.delete()
 		}
@@ -40,7 +41,7 @@ fun CoroutineScope.replyWith(origin: Message, message: String, selfdestructIn: L
 }
 
 /** Sends the message into the same channel the original message was sent into */
-suspend fun CoroutineScope.sendMessage(to: Message, content: String) = launch {
+fun sendMessage(to: Message, content: String) = Vars.client.launch {
 	try {
 		to.channel.createMessage(content.take(1999).stripEveryone())
 	} catch (e: Exception) {
@@ -48,7 +49,7 @@ suspend fun CoroutineScope.sendMessage(to: Message, content: String) = launch {
 	}
 }
 
-suspend fun CoroutineScope.sendImage(origin: Message, text: String = "", image: BufferedImage) {
+fun sendImage(origin: Message, text: String = "", image: BufferedImage) = Vars.client.launch {
 	try {
 		ByteArrayOutputStream().use {
 			ImageIO.write(image, "png", it);

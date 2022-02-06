@@ -28,6 +28,8 @@ fun initCommands() {
 	
 	CommandHandler.register("run", RunCommand)
 	
+	CommandHandler.register("multiverse", MultiverseCommand)
+	
 	CommandHandler.register("help") {
 		launch {
 			message.channel.createEmbed {
@@ -198,35 +200,5 @@ fun initCommands() {
 	}
 	.setHeader("first: User, second: User?")
 	.setDescription("Merge pfps of two users. If only one user is specified, uses the caller as the second.")
-	
-	CommandHandler.register("multiverse") {
-		val command = it.getOrNull(1)
-		
-		when (command) {
-			"listGuilds" -> {
-				val msg = Multiverse.multiverse.map {
-					message.supplier.getGuild(it.data.guildId.value ?: return@map null)
-				}.filter { it != null}.toSet().map { "${it?.id?.value} - ${it?.name?.stripEveryone()}" }.joinToString(",\n")
-				replyWith(message, msg)
-			}
-			
-			"ban" -> Multiverse.blacklist(Snowflake(it.getOrNull(2)?.toULong() ?: throw CommandException("ban", "no uid specified")))
-			
-			"banlist" -> replyWith(message, Multiverse.blacklist.joinToString(", "))
-			
-			"lastusers" -> replyWith(message, Multiverse.ratelimited.keys.map {
-				try {
-					return@map "[${Vars.client.defaultSupplier.getUser(it).tag}]: $it"
-				} catch (e: Exception) {
-					return@map "[error]: $it"
-				}
-			}.joinToString(",\n"))
-			
-			else -> replyWith(message, "unknown mutliverse command")
-		}
-	}
-	.setHeader("command: [listGuilds, ban (id)], banlist, lastusers")
-	.setDescription("Execute a multiverse command")
-	.setCondition { it.id.value in Vars.runWhitelist }
 	
 }

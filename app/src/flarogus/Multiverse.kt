@@ -101,12 +101,23 @@ object Multiverse {
 			.onEach { event ->
 				val userid = event.message.author?.id
 				val guild = event.getGuild()
-				if (guild?.id in blacklist || guild?.id !in whitelist || event.message.author?.id in blacklist) return@onEach
+				
+				if (guild?.id in blacklist || guild?.id !in whitelist || event.message.author?.id in blacklist) {
+					replyWith(event.message, "[!] you're not allowed to send messages in multiverse. please contact one of admins to find out why.")
+					return@onEach
+				}
 				
 				try {
+					//instaban spammers
 					if (countPings(event.message.content) > 7) {
-						//instaban spammers
 						blacklist(event.message.author!!.id)
+						replyWith(event.message, "[!] you've been auto-banned from this multiverse instance. please wait 'till the next restart.")
+						return@onEach
+					}
+					
+					//block potential spam messages
+					if (ScamDetector.hasScam(event.message.content)) {
+						replyWith(event.message, "[!] your message contains a potential scam. if you're not a bot, remove any links and try again")
 						return@onEach
 					}
 					
