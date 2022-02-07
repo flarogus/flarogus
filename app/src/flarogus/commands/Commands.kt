@@ -186,7 +186,7 @@ suspend fun MessageChannelBehavior.sendHelp(user: User, origin: Map<out Any, fla
 		
 		var hidden = 0
 		for ((commandName, command) in origin) {
-			if (author == null || !command.condition(user)) {
+			if (!command.condition(user)) {
 				hidden++
 				continue;
 			}
