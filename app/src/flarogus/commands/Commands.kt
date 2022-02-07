@@ -13,6 +13,7 @@ import dev.kord.core.event.*
 import dev.kord.core.event.message.*
 import dev.kord.core.supplier.*;
 import dev.kord.core.entity.*;
+import dev.kord.core.entity.channel.*
 import dev.kord.core.behavior.*
 import dev.kord.core.behavior.channel.*
 import dev.kord.common.entity.*
@@ -31,31 +32,7 @@ fun initCommands() {
 	CommandHandler.register("multiverse", MultiverseCommand)
 	
 	CommandHandler.register("help") {
-		launch {
-			message.channel.createEmbed {
-				title = "Flarogus help"
-				
-				var hidden = 0
-				val author = message.author
-				for ((commandName, command) in CommandHandler.commands) {
-					if (author == null || !command.condition(author)) {
-						hidden++
-						continue;
-					}
-					field {
-						name = commandName
-						value = command.description ?: "no description"
-						`inline` = true
-						
-						if (command.header != null) name += " [" + command.header + "]"
-					}
-				}
-				
-				if (hidden > 0) {
-					footer { text = "there's [$hidden] commands you are not allowed to run" }
-				}
-			}
-		}
+		message.channel.sendHelp(message.author!!, CommandHandler.commands)
 	}
 	.setDescription("Show the help message")
 	
@@ -201,4 +178,29 @@ fun initCommands() {
 	.setHeader("first: User, second: User?")
 	.setDescription("Merge pfps of two users. If only one user is specified, uses the caller as the second.")
 	
+}
+
+suspend fun MessageChannelBehavior.sendHelp(user: User, origin: Map<out Any, flarogus.commands.Command>) {
+	createEmbed {
+		title = "List of commands"
+		
+		var hidden = 0
+		for ((commandName, command) in origin) {
+			if (author == null || !command.condition(user)) {
+				hidden++
+				continue;
+			}
+			field {
+				name = commandName.toString()
+				value = command.description ?: "no description"
+				`inline` = true
+				
+				if (command.header != null) name += " [" + command.header + "]"
+			}
+		}
+		
+		if (hidden > 0) {
+			footer { text = "there's [$hidden] commands you are not allowed to run" }
+		}
+	}
 }

@@ -3,6 +3,7 @@ package flarogus.commands
 import kotlinx.coroutines.*;
 import dev.kord.core.entity.*;
 import dev.kord.core.event.message.*;
+import flarogus.*
 
 data class Command(
 	val handler: suspend MessageCreateEvent.(List<String>) -> Unit,
@@ -23,5 +24,11 @@ data class Command(
 	fun setCondition(condition: (User) -> Boolean): Command {
 		this.condition = condition
 		return this
+	}
+	
+	companion object {
+		val ownerOnly: (User) -> Boolean = { it.id.value == Vars.ownerId }
+		
+		val adminOnly: (User) -> Boolean = { it.id.value in Vars.runWhitelist }
 	}
 }
