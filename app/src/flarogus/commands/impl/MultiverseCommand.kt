@@ -141,7 +141,7 @@ private val subcommands: Map<String, CustomCommand> = mapOf(
 				
 				for (i in Multiverse.rules.size - 1 downTo 0) {
 					embed {
-						title = "Part #$i"
+						title = "Part #${Multiverse.rules.size - i}"
 						description = Multiverse.rules[i]
 					}
 				}
