@@ -72,6 +72,15 @@ private val subcommands: Map<String, CustomCommand> = mapOf(
 		description = "Ban a user or a guild"
 	),
 	
+	"tempban" to CustomCommand(
+		handler = {
+			Multiverse.blacklist += (Snowflake(it.getOrNull(1)?.toULong() ?: throw CommandException("ban", "no uid specified")))
+		},
+		condition = CustomCommand.adminOnly,
+		header = "id: Snowflake",
+		description = "Ban a user or a guild __from the current instance__. The next instance will not have this user banned."
+	),
+	
 	"banlist" to CustomCommand(
 		handler = {
 			replyWith(message, Multiverse.blacklist.joinToString(", "))
@@ -97,7 +106,48 @@ private val subcommands: Map<String, CustomCommand> = mapOf(
 	"help" to CustomCommand(
 		handler = {
 			message.channel.sendHelp(message.author!!, getSubcommands())
-		}
+		},
+		description = "Show the list of commands"
+	),
+	
+	"echo" to CustomCommand(
+		handler = {
+			if (it[0].isEmpty()) throw CommandException("echo", "can't send an empty message")
+			
+			Multiverse.brodcast {
+				content = "***[system — multiverse]*** ${it[0].take(1800)}"
+			}
+		},
+		condition = CustomCommand.adminOnly,
+		header = "text: String",
+		description = "Send a system message in multiverse"
+	),
+	
+	"reload" to CustomCommand(
+		handler = {
+			Multiverse.blacklist.clear()
+			Multiverse.whitelist.clear()
+			Multiverse.usertags.clear()
+			Multiverse.updateState()
+		},
+		condition = CustomCommand.adminOnly,
+		description = "Clear all lists and reload them from the respective channels. This command is to be called after unbanning removing an entry from white / black / other list."
+	),
+	
+	"rules" to CustomCommand(
+		handler = {
+			message.channel.createMessage {
+				messageReference = message.id
+				
+				Multiverse.rules.forEachIndexed { index: Int, rule ->
+					embed {
+						title = "Part #$index"
+						description = rule
+					}
+				}
+			}
+		},
+		description = "Show the list of multiversal rules"
 	)
 )
 
