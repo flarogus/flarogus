@@ -45,9 +45,7 @@ val MultiverseCommand = CustomCommand(
 	
 	header = "subcommand",
 	
-	description = "Execute a multiversal subcommand. Use flarogus multiverse help to see all available commands",
-	
-	condition = { it.id.value in Vars.runWhitelist }
+	description = "Execute a multiversal subcommand. Use flarogus multiverse help to see all available commands"
 )
 
 private val subcommands: Map<String, CustomCommand> = mapOf(
