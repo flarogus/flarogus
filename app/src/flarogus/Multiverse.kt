@@ -129,7 +129,7 @@ object Multiverse {
 								append("\n")
 							}
 							
-							append("***")
+							append("**")
 							
 							if (customTag != null) {
 								append('[')
@@ -143,8 +143,8 @@ object Multiverse {
 							append(author)
 							append(" — ")
 							append(guild?.name)
-							append("]: ")
-							append("***")
+							append("]:")
+							append("** ")
 							append(original.take(1600))
 						}
 						

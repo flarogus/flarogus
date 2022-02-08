@@ -115,7 +115,7 @@ private val subcommands: Map<String, CustomCommand> = mapOf(
 			if (it[0].isEmpty()) throw CommandException("echo", "can't send an empty message")
 			
 			Multiverse.brodcast {
-				content = "***[system — multiverse]*** ${it[0].take(1800)}"
+				content = "**[System — Multiverse]:** ${it[0].take(1800)}"
 			}
 		},
 		condition = CustomCommand.adminOnly,
@@ -139,10 +139,10 @@ private val subcommands: Map<String, CustomCommand> = mapOf(
 			message.channel.createMessage {
 				messageReference = message.id
 				
-				Multiverse.rules.forEachIndexed { index: Int, rule ->
+				for (i in Multiverse.rules.size - 1 downTo 0) {
 					embed {
-						title = "Part #$index"
-						description = rule
+						title = "Part #$i"
+						description = Multiverse.rules[i]
 					}
 				}
 			}
