@@ -8,7 +8,7 @@ import flarogus.*
 import flarogus.util.*
 
 val defaultImports = arrayOf(
-	"flarogus.*", "flarogus.util.*", "flarogus.multiverse.*", "ktsinterface.*", "dev.kord.core.entity.*", "dev.kord.correcte.entity.channel.*",
+	"flarogus.*", "flarogus.util.*", "flarogus.multiverse.*", "ktsinterface.*", "dev.kord.core.entity.*", "dev.kord.core.entity.channel.*",
 	"dev.kord.common.entity.*", "dev.kord.rest.builder.*", "dev.kord.rest.builder.message.*", "dev.kord.rest.builder.message.create.*"
 ).map { "import $it;" }.joinToString("")
 
