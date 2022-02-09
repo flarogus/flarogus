@@ -60,7 +60,7 @@ val RunCommand = flarogus.commands.Command(
 			for (illegal in illegals) {
 				if (script.contains(illegal)) {
 					errCount++
-					errors += "[ERROR]: '$illegal' $cause";
+					errors += "[ERROR]: '$illegal' $cause\n";
 				}
 			}
 		}
@@ -70,7 +70,7 @@ val RunCommand = flarogus.commands.Command(
 			illegal(cause = "can be used only by the owner", "runWhitelist")
 		}
 		
-		if (!isAdmin) {
+		/*if (!isAdmin) {
 			illegal(
 				cause = "can only be used in conjunction with argument '-su'!\n",
 				
@@ -80,7 +80,7 @@ val RunCommand = flarogus.commands.Command(
 				"java.io",
 				"Process"
 			)
-		}
+		}*/
 		if (errCount > 0) {
 			throw CommandException("run", "$errCount errors:\n```\n${errors.take(1500)}\n```")
 		}
@@ -91,10 +91,14 @@ val RunCommand = flarogus.commands.Command(
 			val engine = ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts");
 			launch {
 				try {
-					//this script must be run in this coroutine
-					ktsinterface.lastScope = this
-					val result = engine.eval(script)?.toString() ?: "null"
-					replyWith(message, "```\n${result.take(1950)} \n```")
+					StringWriter().use {
+						engine.context.setWriter(it)
+						
+						val result = engine.eval(script)?.toString() ?: "null"
+						val printed = it.toString()
+						val output = result + if (printed.isEmpty()) "" else "\n-----\n$printed"
+						replyWith(message, "```\n${output.take(1950)}\n```")
+					}
 				} catch (e: Exception) { 
 					val trace = if (e is ScriptException) e.toString() else e.cause?.stackTraceToString() ?: e.stackTraceToString()
 					

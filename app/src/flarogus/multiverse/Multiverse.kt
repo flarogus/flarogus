@@ -1,4 +1,4 @@
-package flarogus
+package flarogus.multiverse
 
 import java.io.*
 import java.net.*

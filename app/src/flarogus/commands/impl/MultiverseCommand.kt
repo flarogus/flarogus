@@ -13,6 +13,7 @@ import dev.kord.common.entity.*
 import flarogus.*
 import flarogus.util.*;
 import flarogus.commands.*
+import flarogus.multiverse.*
 
 typealias CustomCommand = flarogus.commands.Command
 

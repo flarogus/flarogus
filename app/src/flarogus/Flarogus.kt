@@ -14,6 +14,7 @@ import dev.kord.core.supplier.*;
 import dev.kord.core.entity.*;
 import flarogus.util.*;
 import flarogus.commands.*;
+import flarogus.multiverse.*
 
 suspend fun main(vararg args: String) = runBlocking {
 	

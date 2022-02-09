@@ -21,6 +21,7 @@ import flarogus.*
 import flarogus.util.*;
 import flarogus.commands.*;
 import flarogus.commands.impl.*;
+import flarogus.multiverse.*
 
 fun initCommands() {
 	CommandHandler.register("mines", MinesweeperCommand);
