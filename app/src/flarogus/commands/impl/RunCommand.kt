@@ -59,7 +59,7 @@ val RunCommand = flarogus.commands.Command(
 		var script = command.substring(begin + 2)
 		val codeblock = "```([a-z]*)?((?s).*)```".toRegex().find(script)?.groupValues?.getOrNull(2)
 		if (codeblock != null) script = codeblock
-		if (addImports) script = defaultImports + script
+		if (addImports) script = "$defaultImports\n$script"
 		
 		//check for errors
 		var errCount = 0
