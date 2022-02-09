@@ -7,6 +7,11 @@ import kotlinx.coroutines.*;
 import flarogus.*
 import flarogus.util.*
 
+val defaultImports = arrayOf(
+	"flarogus.*", "flarogus.util.*", "flarogus.multiverse.*", "ktsinterface.*", "dev.kord.core.entity.*", "dev.kord.correcte.entity.channel.*",
+	"dev.kord.common.entity.*", "dev.kord.rest.builder.*", "dev.kord.rest.builder.message.*", "dev.kord.rest.builder.message.create.*"
+).map { "import $it;" }.joinToString("")
+
 val RunCommand = flarogus.commands.Command(
 	handler = handler@ {
 		val command = it[0]
@@ -14,6 +19,7 @@ val RunCommand = flarogus.commands.Command(
 		
 		var isAdmin = false
 		var stopAfter = 3000L
+		var addImports = false
 		
 		val regex = "-([a-zA-Z0-9=]*)[\\s<]?".toRegex()
 		var argument = regex.find(command.substring(0, if (begin == -1) command.length else begin - 1))
@@ -22,12 +28,13 @@ val RunCommand = flarogus.commands.Command(
 			
 			when {
 				arg == "su" -> {
-					if (message.author?.id?.value !in Vars.runWhitelist) throw IllegalAccessException("you are not allowed to use argument '-su'!")
 					isAdmin = true
 				}
 				arg == "long" -> {
-					if (message.author?.id?.value !in Vars.runWhitelist) throw IllegalAccessException("you're not allowed to use argument '-long'!")
 					stopAfter = 300000L
+				}
+				arg == "imports" -> {
+					addImports = true
 				}
 				arg.startsWith("addSuperuser") -> {
 					if (message.author?.id?.value != Vars.ownerId) throw IllegalAccessException("Only the bot owner can add superusers")
@@ -52,6 +59,7 @@ val RunCommand = flarogus.commands.Command(
 		var script = command.substring(begin + 2)
 		val codeblock = "```([a-z]*)?((?s).*)```".toRegex().find(script)?.groupValues?.getOrNull(2)
 		if (codeblock != null) script = codeblock
+		if (addImports) script = defaultImports + script
 		
 		//check for errors
 		var errCount = 0
@@ -91,14 +99,8 @@ val RunCommand = flarogus.commands.Command(
 			val engine = ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts");
 			launch {
 				try {
-					StringWriter().use {
-						engine.context.setWriter(it)
-						
-						val result = engine.eval(script)?.toString() ?: "null"
-						val printed = it.toString()
-						val output = result + if (printed.isEmpty()) "" else "\n-----\n$printed"
-						replyWith(message, "```\n${output.take(1950)}\n```")
-					}
+					val result = engine.eval(script)?.toString() ?: "null"
+					replyWith(message, "```\n${result.take(1950)}\n```")
 				} catch (e: Exception) { 
 					val trace = if (e is ScriptException) e.toString() else e.cause?.stackTraceToString() ?: e.stackTraceToString()
 					
