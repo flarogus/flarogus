@@ -53,7 +53,11 @@ private val subcommands: Map<String, CustomCommand> = mapOf(
 	"listguilds" to CustomCommand(
 		handler = {
 			val msg = Multiverse.multiverse.map {
-				message.supplier.getGuild(it.data.guildId.value ?: return@map null)
+				try {
+					message.supplier.getGuild(it.data.guildId.value ?: return@map null)
+				} catch (ignored: Exception) {
+					null
+				}
 			}.filter { it != null}.toSet().map { "${it?.id?.value} - ${it?.name?.stripEveryone()}" }.joinToString(",\n")
 			
 			replyWith(message, msg)
