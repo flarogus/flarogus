@@ -32,10 +32,8 @@ suspend fun main(vararg args: String) = runBlocking {
 		.onEach { 
 			try {
 				CommandHandler.handle(this, it.message.content.substring(Vars.prefix.length), it)
-				
-				Log.debug { "${it.message.author?.tag} has executed a command: ${it.message.content.take(200)}" }
 			} catch (e: Exception) {
-				Log.error { "exception has occurred while evaluating a command ran by ${it.message.author?.tag}: $e" }
+				Log.error { "an uncaught exception has occurred while evaluating a command ran by ${it.message.author?.tag}: $e" }
 			}
 		}.launchIn(Vars.client)
 	

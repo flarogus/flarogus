@@ -37,22 +37,22 @@ object CommandHandler {
 				try {
 					event.handler(args)
 					
-					Log.lifecycle { "${event.message.author?.tag} has successfully executed $commandName" }
+					Log.lifecycle { "${event.message.author?.tag} has successfully executed `$commandName`" }
 				} catch (e: Exception) { //no exceptions on my watch
 					replyWith(event.message, e.toString())
 					
 					if (e is CommandException) {
 						e.cause?.printStackTrace() //usually there's no cause, thus I can't do anything
-						Log.debug { "a command exception has occurred while executing command $commandName: $e" }
+						Log.debug { "a command exception has occurred while executing command `$commandName`: `$e`" }
 					} else {
 						e.printStackTrace()
-						Log.error { "a fatal exception has occurred while executing command $commandName: $e" }
+						Log.error { "a fatal exception has occurred while executing command `$commandName`: `$e`" }
 					}
 				}
 			} else {
 				replyWith(event.message, "You are not allowed to run '${commandName.stripEveryone()}'.")
 				
-				Log.info { "${event.message.author?.tag} has tried to execute a command they don't have access to: ${commandName}" }
+				Log.info { "${event.message.author?.tag} has tried to execute a command they don't have access to: `${commandName}`" }
 			}
 		}
 	}

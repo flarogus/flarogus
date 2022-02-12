@@ -63,6 +63,7 @@ object Multiverse {
 				
 				if (!Lists.canTransmit(guild, event.message.author)) {
 					replyWith(event.message, "[!] you're not allowed to send messages in multiverse. please contact one of admins to find out why.")
+					Log.info { "${event.message.author?.tag}'s multiversal message was not retranslated: `${event.message.content.take(200)}`" }
 					return@onEach
 				}
 				
@@ -71,12 +72,14 @@ object Multiverse {
 					if (countPings(event.message.content) > 7) {
 						Lists.blacklist += event.message.author!!.id //we don't need to ban permanently
 						replyWith(event.message, "[!] you've been auto-banned from this multiverse instance. please wait 'till the next restart.")
+						Log.info { "${event.message.author?.tag} was auto-tempbanned for attempting to ping too many people at once" }
 						return@onEach
 					}
 					
 					//block potential spam messages
 					if (ScamDetector.hasScam(event.message.content)) {
 						replyWith(event.message, "[!] your message contains a potential scam. if you're not a bot, remove any links and try again")
+						Log.info { "a potential scam message was blocked: ```${event.message.content.take(200)}```" }
 						return@onEach
 					}
 					
@@ -133,6 +136,8 @@ object Multiverse {
 						append(original.take(1600))
 					}
 					
+					val beginTime = System.currentTimeMillis()
+					
 					brodcast(event.message.channel.id.value) {
 						content = finalMessage
 						
@@ -155,6 +160,9 @@ object Multiverse {
 							addFile(attachment.filename, URL(attachment.url).openStream())
 						}
 					}
+					
+					val time = System.currentTimeMillis() - beginTime
+					Log.lifecycle { "$author's multiversal message was retranslated in $time ms." }
 				} catch (e: Exception) {
 					e.printStackTrace()
 				}
