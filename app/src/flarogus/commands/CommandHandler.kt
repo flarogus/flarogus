@@ -6,6 +6,7 @@ import dev.kord.core.behavior.*
 import dev.kord.core.behavior.channel.*
 import flarogus.util.*
 import flarogus.commands.Command as FlarogusCommand
+import flarogus.multiverse.*
 
 object CommandHandler {
 	
@@ -20,9 +21,8 @@ object CommandHandler {
 		if (commandName == null || commandName == "" || commandName.length >= message.length) return@launch;
 		args[0] = message.substring(commandName.length + 1)
 		
-		println("[INFO] ${event.message.author?.username}: ${event.message.content}")
-		
 		val command = commands.get(commandName)
+		
 		if (command == null) {
 			val err = event.message.channel.createMessage {
 				content = "unknown command: ${commandName.take(500).stripEveryone()}\n(${event.message.author?.username?.stripEveryone()}, you're so sussy)"
@@ -36,17 +36,23 @@ object CommandHandler {
 				val handler = command.handler;
 				try {
 					event.handler(args)
+					
+					Log.lifecycle { "${event.message.author?.tag} has successfully executed $commandName" }
 				} catch (e: Exception) { //no exceptions on my watch
 					replyWith(event.message, e.toString())
 					
 					if (e is CommandException) {
 						e.cause?.printStackTrace() //usually there's no cause, thus I can't do anything
+						Log.debug { "a command exception has occurred while executing command $commandName: $e" }
 					} else {
 						e.printStackTrace()
+						Log.error { "a fatal exception has occurred while executing command $commandName: $e" }
 					}
 				}
 			} else {
 				replyWith(event.message, "You are not allowed to run '${commandName.stripEveryone()}'.")
+				
+				Log.info { "${event.message.author?.tag} has tried to execute a command they don't have access to: ${commandName}" }
 			}
 		}
 	}

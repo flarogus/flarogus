@@ -48,13 +48,13 @@ object SimpleMapSerializer {
 		return b.toString()
 	}
 	
-	internal fun StringBuilder.writeMapEntry(k: String, v: Any): StringBuilder {
+	fun StringBuilder.writeMapEntry(k: String, v: Any): StringBuilder {
 		append(k).append(keyTypeSplitter)
 		
 		return writeValue(v)
 	}
 	
-	internal fun StringBuilder.writeValue(other: Any): StringBuilder {
+	fun StringBuilder.writeValue(other: Any): StringBuilder {
 		val type = typeOf(other)
 		append('a' + type).append(typeValueSplitter)
 		
@@ -73,7 +73,7 @@ object SimpleMapSerializer {
 		return append(valueEnd)
 	};
 	
-	internal fun StringBuilder.writeArray(other: Array<*>): StringBuilder {
+	fun StringBuilder.writeArray(other: Array<*>): StringBuilder {
 		append(arrayBegin)
 		
 		other.forEach { 
@@ -83,7 +83,7 @@ object SimpleMapSerializer {
 		return append(arrayEnd)
 	}
 	
-	internal fun StringBuilder.writeMap(other: SimpleMap): StringBuilder {
+	fun StringBuilder.writeMap(other: SimpleMap): StringBuilder {
 		append(mapBegin)
 		
 		other.forEach { k, v ->
@@ -111,7 +111,7 @@ object SimpleMapSerializer {
 		return DeserializationContext(from).deserialize()
 	}
 	
-	internal class DeserializationContext(val input: String) {
+	class DeserializationContext(val input: String) {
 		val output = HashMap<String, Any>(20)
 		val tempbuilder = StringBuilder(50)
 		var index = -1

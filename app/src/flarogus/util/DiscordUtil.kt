@@ -4,6 +4,7 @@ import java.io.*
 import java.awt.image.*
 import javax.imageio.*
 import kotlinx.coroutines.*;
+import kotlinx.coroutines.flow.*
 import dev.kord.core.entity.*;
 import dev.kord.core.*
 import dev.kord.core.event.*
@@ -158,3 +159,21 @@ fun formatTime(millis: Long): String {
 		if (c != 1L) append('s')
 	}
 }
+
+/** Utility function: calls the specified function for every message in the channel. Catches and ignores any exceptions, Errors can be used to stop execution */
+inline suspend fun fetchMessages(channelId: Snowflake, crossinline handler: suspend (Message) -> Unit) {
+	try {
+		val channel = Vars.client.unsafe.messageChannel(channelId)
+		
+		channel.messages
+			.onEach {
+				try {
+					handler(it)
+				} catch (e: Exception) { //any invalid messages are ignored. this includes number format exceptions, nullpointers and etc
+					//e.printStackTrace()
+				}
+			}.collect()
+	} catch (e: Throwable) { //this one should catch Error subclasseses too
+		//e.printStackTrace()
+	}
+};

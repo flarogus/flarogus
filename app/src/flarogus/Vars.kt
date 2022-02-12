@@ -5,7 +5,7 @@ import kotlin.random.*
 import kotlinx.coroutines.*
 import dev.kord.core.*
 
-/** An object declaration that stores variables/constants that are shared with the whole application */
+/** An object declaration that stores variables/constants that are shared across the whole application */
 object Vars {
 	
 	/** The kord client instance */

@@ -1,8 +1,7 @@
 package flarogus
 
 import java.io.*;
-import kotlin.random.*;
-import kotlin.time.*
+import java.util.*
 import kotlin.concurrent.*;
 import kotlinx.coroutines.*;
 import kotlinx.coroutines.flow.*;
@@ -10,7 +9,6 @@ import dev.kord.rest.builder.message.create.*
 import dev.kord.core.*
 import dev.kord.core.event.*
 import dev.kord.core.event.message.*
-import dev.kord.core.supplier.*;
 import dev.kord.core.entity.*;
 import flarogus.util.*;
 import flarogus.commands.*;
@@ -34,29 +32,33 @@ suspend fun main(vararg args: String) = runBlocking {
 		.onEach { 
 			try {
 				CommandHandler.handle(this, it.message.content.substring(Vars.prefix.length), it)
-			} catch (e: Exception) {} //how sad, don't care. we don't tolerate any exceptions!
+				
+				Log.debug { "${it.message.author?.tag} has executed a command: ${it.message.content.take(200)}" }
+			} catch (e: Exception) {
+				Log.error { "exception has occurred while evaluating a command ran by ${it.message.author?.tag}: $e" }
+			}
 		}.launchIn(Vars.client)
 	
 	initCommands()
 	
-	launch {
-		//shutdown after 5.5 hours. This should never happen: the instance should shut itself down after noticing there's another instance running
-		delay(1000 * 60 * 60 * 5L + 1000 * 60 * 30L)
-		
-		Multiverse.brodcast { 
-			embed { description = "A Multiverse instance is restarting." }
+	//shutdown after 5.5 hours. This should never happen: the instance should shut itself down after noticing there's another instance running
+	Timer(true).schedule(1000 * 60 * 60 * 5L + 1000 * 60 * 30L) {
+		Vars.client.launch {
+			Log.info { "a multiverse instance is shutting down" }
+			
+			Multiverse.brodcast {
+				embed { description = "This workflow job cannot be continued anymore. Shutting down." }
+			}
+			
+			Vars.client.shutdown();
 		}
-		
-		delay(6000L)
-		Vars.client.shutdown();                  
-		//Vars.saveState()
 	}
 	
 	launch {
 		delay(15000L)
 		Multiverse.start()
+		Log.info { "a mutliverse instance has started" }
 	}
 	
-	println("initialized");
 	Vars.client.login()
 }

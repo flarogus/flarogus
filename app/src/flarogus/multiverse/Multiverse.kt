@@ -24,28 +24,14 @@ import flarogus.util.*
 object Multiverse {
 
 	/** All channels the multiverse works in */
-	val multiverse = ArrayList<MessageChannel>(50)
-	/** Guilds that are allowed to send messages in multiverse */
-	val whitelist = ArrayList<Snowflake>(50)
-	/** Guilds / users that are blacklisted from multiverse */
-	val blacklist = ArrayList<Snowflake>(50)
-	/** Custom user tags */
-	val usertags = HashMap<Snowflake, String>(50)
-	/** Multiversal ruleset */
-	val rules = ArrayList<String>(10)
+	val universes = ArrayList<MessageChannel>(50)
 	
 	/** Rate limitation map */
 	val ratelimited = HashMap<Snowflake, Long>(150)
 	val ratelimit = 2000L
 	
-	val whitelistChannel = 932632370354475028UL
-	val blacklistChannel = 932524242707308564UL
-	val usertagsChannel = 932690515667849246UL
-	val settingsChannel = 937781472394358784UL
-	val rulesChannel = 940551409307377684UL
-	
 	val settingsPrefix = "@set"
-	val rulesPrefix = "@rules:\n"
+	val settingsChannel = Snowflake(937781472394358784UL)
 	
 	/** Sets up the multiverse */
 	suspend fun start() {
@@ -58,24 +44,24 @@ object Multiverse {
 			delay(10000L)
 			brodcast {
 				embed { description = """
-					***This channel is now a part of the Multiverse! There's ${multiverse.size - 1} channels!***
+					***This channel is now a part of the Multiverse! There's ${universes.size - 1} channels!***
 					Call `flarogus multiverse rules` to see the rules
 				""".trimIndent() }
 			}
 		}
 		
-		fixedRateTimer("channel search", true, initialDelay = 5000L, period = 45 * 1000L) { updateState() }
+		fixedRateTimer("update state", true, initialDelay = 5000L, period = 45 * 1000L) { updateState() }
 		
 		//retranslate any messages in multiverse channels
 		Vars.client.events
 			.filterIsInstance<MessageCreateEvent>()
 			.filter { it.message.author?.id?.value != Vars.botId }
-			.filter { it.message.channel.asChannel() in multiverse }
+			.filter { event -> universes.any { event.message.channel.id == it.id } }
 			.onEach { event ->
 				val userid = event.message.author?.id
 				val guild = event.getGuild()
 				
-				if (guild?.id in blacklist || guild?.id !in whitelist || event.message.author?.id in blacklist) {
+				if (!Lists.canTransmit(guild, event.message.author)) {
 					replyWith(event.message, "[!] you're not allowed to send messages in multiverse. please contact one of admins to find out why.")
 					return@onEach
 				}
@@ -83,7 +69,7 @@ object Multiverse {
 				try {
 					//instaban spammers
 					if (countPings(event.message.content) > 7) {
-						blacklist += event.message.author!!.id //we don't need to ban permanently
+						Lists.blacklist += event.message.author!!.id //we don't need to ban permanently
 						replyWith(event.message, "[!] you've been auto-banned from this multiverse instance. please wait 'till the next restart.")
 						return@onEach
 					}
@@ -110,44 +96,47 @@ object Multiverse {
 					}
 					
 					//actual retranslation
-					brodcast(event.message.channel.id.value) {
-						val original = event.message.content
-						val author = event.message.author?.tag?.replace("*", "\\*") ?: "<webhook>"
-						val customTag = usertags.getOrDefault(userid, null)
+					val original = event.message.content
+					val author = event.message.author?.tag?.replace("*", "\\*") ?: "<webhook>"
+					val customTag = Lists.usertags.getOrDefault(userid, null)
 						
-						content = buildString {
-							val reply = event.message.referencedMessage
+					val finalMessage = buildString {
+						val reply = event.message.referencedMessage
+						
+						if (reply != null) {
+							val replyOrigin = "(> .+\n)?((?s).+)".toRegex().find(reply.content)?.groupValues?.getOrNull(2)?.replace('\n', ' ') ?: "unknown"
 							
-							if (reply != null) {
-								val replyOrigin = "(> .+\n)?((?s).+)".toRegex().find(reply.content)?.groupValues?.getOrNull(2)?.replace('\n', ' ') ?: "unknown"
-								
-								append("> ")
-								append(replyOrigin.take(100).replace("/", "\\/"))
-								
-								if (replyOrigin.length > 100) append("...")
-								
-								append("\n")
-							}
+							append("> ")
+							append(replyOrigin.take(100).replace("/", "\\/"))
 							
-							append("**")
+							if (replyOrigin.length > 100) append("...")
 							
-							if (customTag != null) {
-								append('[')
-								append(customTag)
-								append(']')
-							} else if (userid?.value in Vars.runWhitelist) {
-								append("[Admin]")
-							}
-							
-							append("[")
-							append(author)
-							append(" — ")
-							append(guild?.name)
-							append("]:")
-							append("** ")
-							append(original.take(1600))
+							append("\n")
 						}
 						
+						append("**")
+						
+						if (customTag != null) {
+							append('[')
+							append(customTag)
+							append(']')
+						} else if (userid?.value in Vars.runWhitelist) {
+							append("[Admin]")
+						}
+						
+						append("[")
+						append(author)
+						append(" — ")
+						append(guild?.name ?: "<DISCORD>")
+						append("]:")
+						append("** ")
+						append(original.take(1600))
+					}
+					
+					brodcast(event.message.channel.id.value) {
+						content = finalMessage
+						
+						/* TODO: this doesn't work and never did
 						try {
 							event.message.stickers.forEach {
 								val extension = when (it.formatType.value) {
@@ -160,6 +149,7 @@ object Multiverse {
 								addFile("sticker-${it.id.value}.${extension}", URL(url).openStream())
 							}
 						} catch (e: Exception) {} //ignored: stickers are not so uh i forgor
+						*/
 						
 						event.message.data.attachments.forEach { attachment ->
 							addFile(attachment.filename, URL(attachment.url).openStream())
@@ -173,10 +163,12 @@ object Multiverse {
 	
 	/** Searches for channels with "multiverse" in their names in all guilds this bot is in */
 	fun findChannels() = Vars.client.launch {
+		//todo: this code is unoptimized AS FUCK and I don't know why I've choosen these exact solutions.
+		//this method is to be rewritten
 		Vars.client.rest.user.getCurrentUserGuilds().forEach { 
 			if (it.name.contains("@everyone") || it.name.contains("@here")) {
 				//instant blacklist, motherfucker
-				blacklist.add(it.id)
+				Lists.blacklist.add(it.id)
 				return@forEach
 			}
 			
@@ -184,90 +176,27 @@ object Multiverse {
 				var c = it.asChannel()
 				
 				if (c.data.type == ChannelType.GuildText && c.data.name.toString().contains("multiverse")) {
-					if (!multiverse.any { it.id.value == c.id.value }) {
-						multiverse += TextChannel(c.data, Vars.client)
+					if (!universes.any { it.id.value == c.id.value }) {
+						universes += TextChannel(c.data, Vars.client)
 					}
 				}
 			}
 		}
 	};
 	
-	/** Updates ban, white and tag list */
+	/** Updates everything */
 	fun updateState() = Vars.client.launch {
 		findChannels()
-		
-		//add blacklisted users and guilds
-		fetchMessages(blacklistChannel) {
-			if (!it.content.startsWith("g") && !it.content.startsWith("u")) return@fetchMessages
-			
-			val id = "[ug](\\d+)".toRegex().find(it.content)!!.groupValues[1].toULong()
-			
-			val snow = Snowflake(id)
-			if (snow !in blacklist) blacklist.add(snow)
-		}
-		
-		//add whitelisted guilds
-		fetchMessages(whitelistChannel) {
-			val id = it.content.trim().toULong()
-				
-			val snow = Snowflake(id)
-			if (snow !in whitelist) whitelist.add(snow)
-		}
-		
-		//find user tags
-		fetchMessages(usertagsChannel) {
-			val groups = "(\\d+):(.+)".toRegex().find(it.content)!!.groupValues //null pointer is acceptable
-			
-			val id = Snowflake(groups[1].toULong())
-			val tag = groups[2].trim()
-			usertags[id] = tag
-		}
-		
-		//read ruleset
-		rules.clear()
-		fetchMessages(rulesChannel) {
-			if (it.content.startsWith(rulesPrefix)) {
-				rules += it.content.substring(rulesPrefix.length)
-			}
-		}
+		Lists.updateLists()
 		
 		loadState(false)
 		saveState()
 	}
 	
-	/** Utility function: asynchronously calls the specified function for every message in the channel. Catches and ignores any exceptions, Errors can be used to stop execution */
-	suspend inline fun fetchMessages(channel: ULong, crossinline handler: suspend (Message) -> Unit) {
-		try {
-			val channel = Vars.client.unsafe.messageChannel(Snowflake(channel))
-			
-			channel.messages
-				.onEach {
-					try {
-						handler(it)
-					} catch (e: Exception) { //any invalid messages are ignored. this includes number format exceptions, nullpointers and etc
-						e.printStackTrace()
-					}
-				}.collect()
-		} catch (e: Throwable) { //this one should catch Error subclasseses too
-			e.printStackTrace()
-		}
-	};
-	
-	/** Adds an id to the blacklist and sends a message in the blacklist channel (to save the entry) */
-	fun blacklist(id: Snowflake) = Vars.client.launch {
-		 try {
-		 	blacklist.add(id)
-		 	
-		 	Vars.client.unsafe.messageChannel(Snowflake(blacklistChannel)).createMessage {
-		 		content = "g${id.value}"
-		 	}
-		 } catch (ignored: Exception) {}
-	};
-	
 	/** Sends a message into every multiverse channel expect blacklisted and the one with id == exclude  */
-	inline fun brodcast(exclude: ULong = 0UL, crossinline message: suspend MessageCreateBuilder.() -> Unit) = Vars.client.launch {
-		multiverse.forEach {
-			if (exclude != it.id.value && it.id !in blacklist) {
+	inline suspend fun brodcast(exclude: ULong = 0UL, crossinline message: suspend MessageCreateBuilder.() -> Unit) {
+		universes.forEach {
+			if (exclude != it.id.value && Lists.canReceive(it)) {
 				try {
 					it.createMessage {
 						message()
@@ -302,8 +231,6 @@ object Multiverse {
 							embed { description = "another instance is running, shutting the current one down" }
 						}
 						
-						delay(10000L)
-						
 						Vars.client.shutdown()
 					} else {
 						//this instance is a newer one. get all saved data from the save message
@@ -312,6 +239,8 @@ object Multiverse {
 						}
 						
 						Vars.flarogusEpoch = map.getOrDefault("epoch", null)?.asOrNull<Long>() ?: System.currentTimeMillis()
+						
+						Log.level = Log.LogLevel.of(map.getOrDefault("log", null)?.asOrNull<Int>() ?: -1)
 					}
 				}
 				
@@ -321,7 +250,7 @@ object Multiverse {
 		
 		if (!found) {
 			try {
-				Vars.client.unsafe.messageChannel(Snowflake(settingsChannel)).createMessage(settingsPrefix)
+				Vars.client.unsafe.messageChannel(settingsChannel).createMessage(settingsPrefix)
 				saveState()
 			} catch (ignored: Exception) {}
 		}
@@ -333,7 +262,8 @@ object Multiverse {
 			"ubid" to Vars.ubid,
 			"runWhitelist" to Vars.runWhitelist.toTypedArray(),
 			"started" to Vars.startedAt,
-			"epoch" to Vars.flarogusEpoch
+			"epoch" to Vars.flarogusEpoch,
+			"log" to Log.level.level
 		)
 		
 		fetchMessages(settingsChannel) {
@@ -348,5 +278,11 @@ object Multiverse {
 	}
 	
 	inline fun <reified T> Any.asOrNull(): T? = if (this is T) this else null;
+	
+	inline fun <T> T.catchAny(block: (T) -> Unit): Unit {
+		try {
+			block(this)
+		} catch (ignored: Exception) {}
+	}
 	
 }

@@ -33,12 +33,14 @@ val MultiverseCommand = CustomCommand(
 		
 		if (command.condition(message.author!!)) {
 			val handler = command.handler
-			//turn ["subcommand arg1 arg2", "subcommand", "arg1", "arg2"] into ["arg1 arg2", "arg1", "arg2"]
+			//turn ["subcommand arg1 arg2", "subcommand", "arg1", "arg2"] to ["arg1 arg2", "arg1", "arg2"]
 			val args = it.toMutableList()
 			args.removeAt(0)
 			args[0] = it[0].substring(commandName.length + 1)
 			
 			this.handler(args)
+			
+			Log.info { "${message.author?.tag} has successfully executed a multiversal subcommand: ${it[0]}" }
 		} else {
 			throw CommandException("multiverse", "you're not allowed to execute command $commandName!")
 		}
@@ -52,13 +54,13 @@ val MultiverseCommand = CustomCommand(
 private val subcommands: Map<String, CustomCommand> = mapOf(
 	"listguilds" to CustomCommand(
 		handler = {
-			val msg = Multiverse.multiverse.map {
+			val msg = Multiverse.universes.map {
 				try {
 					message.supplier.getGuild(it.data.guildId.value ?: return@map null)
 				} catch (ignored: Exception) {
 					null
 				}
-			}.filter { it != null}.toSet().map { "${it?.id?.value} - ${it?.name?.stripEveryone()}" }.joinToString(",\n")
+			}.filter { it != null }.toSet().map { "${it?.id?.value} - ${it?.name}" }.joinToString(",\n")
 			
 			replyWith(message, msg)
 		}, 
@@ -68,7 +70,7 @@ private val subcommands: Map<String, CustomCommand> = mapOf(
 	
 	"ban" to CustomCommand(
 		handler = {
-			Multiverse.blacklist(Snowflake(it.getOrNull(1)?.toULong() ?: throw CommandException("ban", "no uid specified")))
+			Lists.blacklist(Snowflake(it.getOrNull(1)?.toULong() ?: throw CommandException("ban", "no uid specified")))
 		},
 		condition = CustomCommand.adminOnly,
 		header = "id: Snowflake",
@@ -77,16 +79,25 @@ private val subcommands: Map<String, CustomCommand> = mapOf(
 	
 	"tempban" to CustomCommand(
 		handler = {
-			Multiverse.blacklist += (Snowflake(it.getOrNull(1)?.toULong() ?: throw CommandException("ban", "no uid specified")))
+			Lists.blacklist += (Snowflake(it.getOrNull(1)?.toULong() ?: throw CommandException("ban", "no uid specified")))
 		},
 		condition = CustomCommand.adminOnly,
 		header = "id: Snowflake",
 		description = "Ban a user or a guild __from the current instance__. The next instance will not have this user banned."
 	),
 	
+	"whitelist" to CustomCommand(
+		handler = {
+			Lists.whitelist(Snowflake(it.getOrNull(1)?.toULong() ?: throw CommandException("ban", "no uid specified")))
+		},
+		condition = CustomCommand.adminOnly,
+		header = "id: Snowflake",
+		description = "Whitelist a guild."
+	),
+	
 	"banlist" to CustomCommand(
 		handler = {
-			replyWith(message, Multiverse.blacklist.joinToString(", "))
+			replyWith(message, Lists.blacklist.joinToString(", "))
 		},
 		condition = CustomCommand.adminOnly,
 		description = "List banned users / guilds. Note that this shows IDs, not names."
@@ -128,9 +139,9 @@ private val subcommands: Map<String, CustomCommand> = mapOf(
 	
 	"reload" to CustomCommand(
 		handler = {
-			Multiverse.blacklist.clear()
-			Multiverse.whitelist.clear()
-			Multiverse.usertags.clear()
+			Lists.blacklist.clear()
+			Lists.whitelist.clear()
+			Lists.usertags.clear()
 			Multiverse.updateState()
 		},
 		condition = CustomCommand.adminOnly,
@@ -142,15 +153,32 @@ private val subcommands: Map<String, CustomCommand> = mapOf(
 			message.channel.createMessage {
 				messageReference = message.id
 				
-				for (i in Multiverse.rules.size - 1 downTo 0) {
+				for (i in Lists.rules.size - 1 downTo 0) {
 					embed {
-						title = "Part #${Multiverse.rules.size - i}"
-						description = Multiverse.rules[i]
+						title = "Part #${Lists.rules.size - i}"
+						description = Lists.rules[i]
 					}
 				}
 			}
 		},
 		description = "Show the list of multiversal rules"
+	),
+	
+	"setloglevel" to CustomCommand(
+		handler = {
+			Log.level = when (it.getOrNull(1)?.lowercase()) {
+				//todo: maybe valueOf would be better?
+				"lifecycle" -> Log.LogLevel.LIFECYCLE
+				"debug" -> Log.LogLevel.DEBUG
+				"info" -> Log.LogLevel.INFO
+				"error" -> Log.LogLevel.ERROR
+				null -> throw CommandException("setLogLevel", "no log level specified")
+				else -> throw CommandException("setLogLevel", "unknown log level")
+			}
+		},
+		condition = CustomCommand.adminOnly,
+		header = "level: [lifecycle, debug, info, error]",
+		description = "Set the log level"
 	)
 )
 

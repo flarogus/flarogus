@@ -6,6 +6,7 @@ import javax.script.*
 import kotlinx.coroutines.*;
 import flarogus.*
 import flarogus.util.*
+import flarogus.multiverse.*
 
 val defaultImports = arrayOf(
 	"flarogus.*", "flarogus.util.*", "flarogus.multiverse.*", "ktsinterface.*", "dev.kord.core.entity.*", "dev.kord.core.entity.channel.*",
@@ -101,6 +102,8 @@ val RunCommand = flarogus.commands.Command(
 				try {
 					val result = engine.eval(script)?.toString() ?: "null"
 					replyWith(message, "```\n${result.take(1950)}\n```")
+					
+					Log.info { "${message.author?.tag} has successfully executed a kotlin script (see fetchMessage(${message.channel.id}UL, ${message.id}UL))" }
 				} catch (e: Exception) { 
 					val trace = if (e is ScriptException) e.toString() else e.cause?.stackTraceToString() ?: e.stackTraceToString()
 					
