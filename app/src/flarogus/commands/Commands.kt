@@ -178,7 +178,29 @@ fun initCommands() {
 	}
 	.setHeader("first: User, second: User?")
 	.setDescription("Merge pfps of two users. If only one user is specified, uses the caller as the second.")
+
+	val reportsChannel = Snowflake(944718226649124874UL)
 	
+	CommandHandler.register("report") {
+		if (it[0].isEmpty()) throw CommandException("report", "you must specify a message")
+		
+		try {
+			Vars.client.unsafe.messageChannel(reportsChannel).createMessage {
+				content = """
+					${message.author?.tag} (${message.author?.id}) reports:
+					```
+					${it[0].stripEveryone().take(1800)}
+					```
+				""".trimIndent()
+			}
+			
+			replyWith(message, "Sent succefully")
+		} catch (e: Exception) {
+			replyWith(message, "Could not send a report: $e")
+		}
+	}
+	.setHeader("message: String")
+	.setDescription("Send a message that will be visible to admins")
 }
 
 suspend fun MessageChannelBehavior.sendHelp(user: User, origin: Map<out Any, flarogus.commands.Command>) {

@@ -10,7 +10,8 @@ import flarogus.multiverse.*
 
 val defaultImports = arrayOf(
 	"flarogus.*", "flarogus.util.*", "flarogus.multiverse.*", "ktsinterface.*", "dev.kord.core.entity.*", "dev.kord.core.entity.channel.*",
-	"dev.kord.common.entity.*", "dev.kord.rest.builder.*", "dev.kord.rest.builder.message.*", "dev.kord.rest.builder.message.create.*"
+	"dev.kord.common.entity.*", "dev.kord.rest.builder.*", "dev.kord.rest.builder.message.*", "dev.kord.rest.builder.message.create.*",
+	"dev.kord.core.behavior.*", "dev.kord.core.behavior.channel.*"
 ).map { "import $it;" }.joinToString("")
 
 val RunCommand = flarogus.commands.Command(

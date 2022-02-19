@@ -40,7 +40,7 @@ val MultiverseCommand = CustomCommand(
 			
 			this.handler(args)
 			
-			Log.info { "${message.author?.tag} has successfully executed a multiversal subcommand: ${it[0]}" }
+			Log.info { "${message.author?.tag} has successfully executed a multiversal subcommand: `${it[0]}`" }
 		} else {
 			throw CommandException("multiverse", "you're not allowed to execute command $commandName!")
 		}

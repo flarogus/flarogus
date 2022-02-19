@@ -62,7 +62,10 @@ object Multiverse {
 				val guild = event.getGuild()
 				
 				if (!Lists.canTransmit(guild, event.message.author)) {
-					replyWith(event.message, "[!] you're not allowed to send messages in multiverse. please contact one of admins to find out why.")
+					replyWith(event.message, """
+						[!] You're not allowed to send messages in multiverse. Please contact one of admins to find out why.
+						You can do that using `flarogus report`.
+					""".trimIndent())
 					Log.info { "${event.message.author?.tag}'s multiversal message was not retranslated: `${event.message.content.take(200)}`" }
 					return@onEach
 				}
@@ -71,7 +74,7 @@ object Multiverse {
 					//instaban spammers
 					if (countPings(event.message.content) > 7) {
 						Lists.blacklist += event.message.author!!.id //we don't need to ban permanently
-						replyWith(event.message, "[!] you've been auto-banned from this multiverse instance. please wait 'till the next restart.")
+						replyWith(event.message, "[!] You've been auto-banned from this multiverse instance. please wait 'till the next restart.")
 						Log.info { "${event.message.author?.tag} was auto-tempbanned for attempting to ping too many people at once" }
 						return@onEach
 					}
@@ -79,7 +82,7 @@ object Multiverse {
 					//block potential spam messages
 					if (ScamDetector.hasScam(event.message.content)) {
 						replyWith(event.message, "[!] your message contains a potential scam. if you're not a bot, remove any links and try again")
-						Log.info { "a potential scam message was blocked: ```${event.message.content.take(200)}```" }
+						Log.info { "a potential scam message sent by ${event.message.author?.tag} was blocked: ```${event.message.content.take(200)}```" }
 						return@onEach
 					}
 					
