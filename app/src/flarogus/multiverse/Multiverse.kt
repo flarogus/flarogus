@@ -111,7 +111,8 @@ object Multiverse {
 					
 					//actual retranslation
 					val original = event.message.content
-					val author = event.message.author?.tag?.replace("*", "\\*") ?: "<webhook>"
+					val webhook = event.message.webhookId?.let { Vars.client.defaultSupplier.getWebhookOrNull(it) }
+					val author = event.message.author?.tag?.replace("*", "\\*") ?: "webhook<${webhook?.name}>"
 					val customTag = Lists.usertags.getOrDefault(userid, null)
 						
 					val username = buildString {
@@ -146,7 +147,7 @@ object Multiverse {
 					
 					val beginTime = System.currentTimeMillis()
 					
-					brodcast(event.message.channel.id.value, username, event.message.author?.getAvatarUrl()) {
+					brodcast(event.message.channel.id.value, username, event.message.author?.getAvatarUrl() ?: webhook?.data?.avatar) {
 						content = finalMessage
 						
 						/* TODO: this doesn't work and never did
