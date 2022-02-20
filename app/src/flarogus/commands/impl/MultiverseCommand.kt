@@ -128,7 +128,7 @@ private val subcommands: Map<String, CustomCommand> = mapOf(
 		handler = {
 			if (it[0].isEmpty()) throw CommandException("echo", "can't send an empty message")
 			
-			Multiverse.brodcast {
+			Multiverse.brodcastSystem {
 				content = "**[System — Multiverse]:** ${it[0].take(1800)}"
 			}
 		},

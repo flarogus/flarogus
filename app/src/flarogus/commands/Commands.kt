@@ -108,7 +108,7 @@ fun initCommands() {
 		if (target == null) throw CommandException("shutdown", "no unique bot id specified")
 		
 		if (target == Vars.ubid || target == "all") {
-			Multiverse.brodcast { 
+			Multiverse.brodcastSystem { 
 				embed { description = "A Multiverse instance is shutting down..." }
 			}
 			

@@ -36,6 +36,9 @@ object Multiverse {
 	val settingsPrefix = "@set"
 	val settingsChannel = Snowflake(937781472394358784UL)
 	
+	val systemName = "Multiverse"
+	val systemAvatar = "https://lh6.googleusercontent.com/-m_Vgb1-Jm1e2nPTWHKLAh7s8pGmwMnzfWXw0QvygrDmmHE3rJRWzGd8QNFw65U3OfF19O7gPBtRYuqZP4mw=w1400-h2712"
+	
 	/** Sets up the multiverse */
 	suspend fun start() {
 		loadState(true)
@@ -45,7 +48,7 @@ object Multiverse {
 		
 		Vars.client.launch {
 			delay(10000L)
-			brodcast {
+			brodcastSystem {
 				embed { description = """
 					***This channel is now a part of the Multiverse! There's ${universes.size - 1} channels!***
 					Call `flarogus multiverse rules` to see the rules
@@ -111,6 +114,20 @@ object Multiverse {
 					val author = event.message.author?.tag?.replace("*", "\\*") ?: "<webhook>"
 					val customTag = Lists.usertags.getOrDefault(userid, null)
 						
+					val username = buildString {
+						if (customTag != null) {
+							append('[')
+							append(customTag)
+							append(']')
+						} else if (userid?.value in Vars.runWhitelist) {
+							append("[Admin]")
+						}
+						append("[")
+						append(guild?.name ?: "<DISCORD>")
+						append("] ")
+						append(author)
+					}
+					
 					val finalMessage = buildString {
 						val reply = event.message.referencedMessage
 						
@@ -124,29 +141,12 @@ object Multiverse {
 							
 							append("\n")
 						}
-						
-						append("**")
-						
-						if (customTag != null) {
-							append('[')
-							append(customTag)
-							append(']')
-						} else if (userid?.value in Vars.runWhitelist) {
-							append("[Admin]")
-						}
-						
-						append("[")
-						append(author)
-						append(" — ")
-						append(guild?.name ?: "<DISCORD>")
-						append("]:")
-						append("** ")
-						append(original.take(1600))
-					}
+						append(original)
+					}.take(1999)
 					
 					val beginTime = System.currentTimeMillis()
 					
-					brodcast(event.message.channel.id.value, event.message.author) {
+					brodcast(event.message.channel.id.value, username, event.message.author?.getAvatarUrl()) {
 						content = finalMessage
 						
 						/* TODO: this doesn't work and never did
@@ -217,11 +217,17 @@ object Multiverse {
 			} catch (e: Exception) {
 				if (!entry.hasReported) Log.error { "Could not acquire webhook for ${universe.name} (${universe.id}): $e" }
 				
-				if (!entry.hasReported && e.toString().contains("Missing Permission")) {
+				if (!entry.hasReported) {
+					val reason = if (e.toString().contains("Missing Permission")) {
+						"missing 'MANAGE_WEBHOOKS' permission!\nYou should allow the bot to manage webhooks or ask the guild's admin(s) to do that!"
+					} else {
+						e.toString()
+					}
+					
 					try {
 						entry.channel.createEmbed { description = """
-							[ERROR] Could not acquire a webhook: missing 'MANAGE_WEBHOOKS' permission! 
-							You should allow the bot to manage webhooks!
+							[ERROR] Could not acquire a webhook: $reason
+							----------
 							***Using fallback strategy for this channel: messages will be sent in the classic way!***
 						""".trimIndent() }
 						
@@ -242,15 +248,18 @@ object Multiverse {
 		saveState()
 	}
 	
+	/** Same as normal brodcast but uses system pfp & name */
+	inline suspend fun brodcastSystem(crossinline message: suspend MessageCreateBuilder.() -> Unit) = brodcast(0UL, systemName, systemAvatar, message)
+	
 	/** Sends a message into every multiverse channel expect blacklisted and the one with id == exclude  */
-	inline suspend fun brodcast(exclude: ULong = 0UL, user: User? = null, crossinline message: suspend MessageCreateBuilder.() -> Unit) {
+	inline suspend fun brodcast(exclude: ULong = 0UL, user: String? = null, avatar: String? = null, crossinline message: suspend MessageCreateBuilder.() -> Unit) {
 		universeWebhooks.forEach {
 			if (exclude != it.channel.id.value && Lists.canReceive(it.channel)) {
 				try {
 					if (it.webhook == null) {
 						it.channel.createMessage {
 							message()
-							content = content?.take(1999)?.stripEveryone()
+							content = "$user: $content".take(1999).stripEveryone()
 							allowedMentions() //forbid all mentions
 						}
 					} else {
@@ -258,8 +267,8 @@ object Multiverse {
 							message()
 							content = content?.take(1999)?.stripEveryone()
 							allowedMentions() //forbid all mentions
-							username = user?.tag ?: "unknown user"
-							avatarUrl = user?.getAvatarUrl()
+							username = user ?: "unknown user"
+							avatarUrl = avatar
 						}
 					}
 				} catch (e: Exception) {
@@ -284,7 +293,7 @@ object Multiverse {
 				if (map["ubid"] as String? != Vars.ubid) {
 					//shutdown if there's a newer instance running
 					if (map.getOrDefault("started", 0L) as Long > Vars.startedAt) {
-						brodcast {
+						brodcastSystem {
 							embed { description = "another instance is running, shutting the current one down" }
 						}
 						

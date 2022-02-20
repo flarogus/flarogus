@@ -4,6 +4,7 @@ import kotlinx.coroutines.*
 import dev.kord.common.entity.*
 import dev.kord.rest.builder.message.create.*
 import dev.kord.core.entity.channel.*
+import dev.kord.core.behavior.channel.*
 import flarogus.*
 import flarogus.util.*
 
@@ -22,7 +23,10 @@ object Log {
 			try {
 				val prefix = if (logLevel == LogLevel.ERROR) "! ERROR !" else logLevel.toString()
 				
-				logChannel.createMessage("**[$prefix]**: ${message()}".stripEveryone().take(1999))
+				logChannel.createMessage {
+					content = "**[$prefix]**: ${message()}".stripEveryone().take(1999)
+					allowedMentions()
+				}
 			} catch (e: Exception) {
 				e.printStackTrace()
 			}
