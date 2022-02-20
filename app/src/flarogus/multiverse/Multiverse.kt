@@ -37,7 +37,7 @@ object Multiverse {
 	val settingsChannel = Snowflake(937781472394358784UL)
 	
 	val systemName = "Multiverse"
-	val systemAvatar = "https://lh6.googleusercontent.com/-m_Vgb1-Jm1e2nPTWHKLAh7s8pGmwMnzfWXw0QvygrDmmHE3rJRWzGd8QNFw65U3OfF19O7gPBtRYuqZP4mw=w1400-h2712"
+	val systemAvatar = "https://drive.google.com/uc?export=download&id=197qxkXH2_b0nZyO6XzMC8VeYTuYwcai9"
 	
 	/** Sets up the multiverse */
 	suspend fun start() {
