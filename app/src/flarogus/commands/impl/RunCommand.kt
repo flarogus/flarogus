@@ -101,8 +101,13 @@ val RunCommand = flarogus.commands.Command(
 			val engine = ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts");
 			launch {
 				try {
-					val result = engine.eval(script)?.toString() ?: "null"
-					replyWith(message, "```\n${result.take(1950)}\n```")
+					val result = engine.eval(script)
+					val resultString = when (result) {
+						is Deferred<*> -> result.await().toString()
+						null -> "no output"
+						else -> result.toString()
+					}
+					replyWith(message, "```\n${resultString.take(1950)}\n```")
 					
 					Log.info { "${message.author?.tag} has successfully executed a kotlin script (see fetchMessage(${message.channel.id}UL, ${message.id}UL))" }
 				} catch (e: Exception) { 

@@ -264,7 +264,7 @@ object Multiverse {
 							allowedMentions() //forbid all mentions
 						}
 					} else {
-						it.webhook!!.execute(it.webhook!!.token!!) {
+						it.webhook!!.executeIgnored(it.webhook!!.token!!) {
 							message()
 							content = content?.take(1999)?.stripEveryone()
 							allowedMentions() //forbid all mentions
