@@ -215,6 +215,8 @@ object Multiverse {
 				}
 				entry.webhook = webhook
 			} catch (e: Exception) {
+				if (!entry.hasReported) Log.error { "Could not acquire webhook for ${universe.name} (${universe.id}): $e" }
+				
 				if (!entry.hasReported && e.toString().contains("Missing Permission")) {
 					try {
 						entry.channel.createEmbed { description = """
@@ -226,8 +228,6 @@ object Multiverse {
 						entry.hasReported = true
 					} catch (e: Exception) {}
 				}
-				
-				Log.error { "Could not acquire webhook for ${universe.name} (${universe.id}): $e" }
 			}
 			
 		}
