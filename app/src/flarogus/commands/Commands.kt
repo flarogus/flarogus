@@ -37,7 +37,7 @@ fun initCommands() {
 	}
 	.setDescription("Show the help message")
 	
-	@OptIn(kotlin.time.ExperimentalTime::class)
+	@OptIn(ExperimentalTime::class)
 	CommandHandler.register("sus") {
 		sendEdited(message, "sussificating", 50L) {
 			val ping = message.id.timeMark.elapsedNow().toLong(DurationUnit.MILLISECONDS)
@@ -196,7 +196,7 @@ fun initCommands() {
 			
 			replyWith(message, "Sent succefully")
 		} catch (e: Exception) {
-			replyWith(message, "Could not send a report: $e")
+			throw CommandException("report", "Could not send a report: $e")
 		}
 	}
 	.setHeader("message: String")

@@ -24,12 +24,15 @@ import flarogus.util.*
 object Multiverse {
 
 	/** All channels the multiverse works in */
-	val universes = ArrayList<MessageChannel>(50)
+	val universes = ArrayList<TextChannel>(50)
+	/** All webhooks multiverse retranslates to */
+	val universeWebhooks = ArrayList<UniverseEntry>(50)
 	
 	/** Rate limitation map */
 	val ratelimited = HashMap<Snowflake, Long>(150)
 	val ratelimit = 2000L
 	
+	val webhookName = "MultiverseWebhook"
 	val settingsPrefix = "@set"
 	val settingsChannel = Snowflake(937781472394358784UL)
 	
@@ -141,7 +144,7 @@ object Multiverse {
 					
 					val beginTime = System.currentTimeMillis()
 					
-					brodcast(event.message.channel.id.value) {
+					brodcast(event.message.channel.id.value, event.message.author) {
 						content = finalMessage
 						
 						/* TODO: this doesn't work and never did
@@ -193,6 +196,39 @@ object Multiverse {
 				}
 			}
 		}
+		
+		//find webhooks of these channels
+		universes.forEach { universe ->
+			val entry = universeWebhooks.find { it.channel.id == universe.id } ?: UniverseEntry(null, universe).also { universeWebhooks.add(it) }
+			
+			if (entry.webhook != null) return@forEach
+			
+			try {
+				var webhook: Webhook? = null	
+				universe.webhooks.collect {
+					if (it.name == webhookName) webhook = it
+				}
+				if (webhook == null) {
+					webhook = universe.createWebhook(webhookName)
+				}
+				entry.webhook = webhook
+			} catch (e: Exception) {
+				if (!entry.hasReported && e.toString().contains("Missing Permission")) {
+					try {
+						entry.channel.createEmbed { description = """
+							[ERROR] Could not acquire a webhook: missing 'MANAGE_WEBHOOKS' permission! 
+							You should allow the bot to manage webhooks!
+							***Using fallback strategy for this channel: messages will be sent in the classic way!***
+						""".trimIndent() }
+						
+						entry.hasReported = true
+					} catch (e: Exception) {}
+				}
+				
+				Log.error { "Could not acquire webhook for ${universe.name} (${universe.id}): $e" }
+			}
+			
+		}
 	};
 	
 	/** Updates everything */
@@ -205,19 +241,27 @@ object Multiverse {
 	}
 	
 	/** Sends a message into every multiverse channel expect blacklisted and the one with id == exclude  */
-	inline suspend fun brodcast(exclude: ULong = 0UL, crossinline message: suspend MessageCreateBuilder.() -> Unit) {
-		universes.forEach {
-			if (exclude != it.id.value && Lists.canReceive(it)) {
+	inline suspend fun brodcast(exclude: ULong = 0UL, user: User? = null, crossinline message: suspend MessageCreateBuilder.() -> Unit) {
+		universeWebhooks.forEach {
+			if (exclude != it.channel.id.value && Lists.canReceive(it.channel)) {
 				try {
-					it.createMessage {
-						message()
-						
-						content = content?.take(1999)?.stripEveryone()
-						
-						allowedMentions() //forbid all mentions
+					if (it.webhook == null) {
+						it.channel.createMessage {
+							message()
+							content = content?.take(1999)?.stripEveryone()
+							allowedMentions() //forbid all mentions
+						}
+					} else {
+						it.webhook!!.execute(it.webhook!!.token!!) {
+							message()
+							content = content?.take(1999)?.stripEveryone()
+							allowedMentions() //forbid all mentions
+							username = user?.tag ?: "unknown user"
+							avatarUrl = user?.getAvatarUrl()
+						}
 					}
 				} catch (e: Exception) {
-					e.printStackTrace()
+					Log.error { "failed to retranslate a message into ${it.channel.id}: $e" }
 				}
 			}
 		}
@@ -297,3 +341,5 @@ object Multiverse {
 	}
 	
 }
+
+data class UniverseEntry(var webhook: Webhook?, val channel: TextChannel, var hasReported: Boolean = false)
