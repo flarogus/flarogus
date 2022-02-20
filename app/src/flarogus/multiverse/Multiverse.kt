@@ -64,7 +64,7 @@ object Multiverse {
 				val userid = event.message.author?.id
 				val guild = event.getGuild()
 				
-				if (event.message.webhookId != null && universeWebhooks.any { it.webhook != null && it.webhook.id == event.message.webhookId }) return@onEach
+				if (event.message.webhookId != null && universeWebhooks.any { it.webhook != null && it.webhook!!.id == event.message.webhookId }) return@onEach
 				
 				if (!Lists.canTransmit(guild, event.message.author)) {
 					replyWith(event.message, """
