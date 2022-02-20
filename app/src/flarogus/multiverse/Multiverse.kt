@@ -129,7 +129,7 @@ object Multiverse {
 						append(author)
 					}
 					
-					val finalMessage = buildString {
+					var finalMessage = buildString {
 						val reply = event.message.referencedMessage
 						
 						if (reply != null) {
@@ -145,6 +145,10 @@ object Multiverse {
 						append(original)
 					}.take(1999)
 					
+					if (finalMessage.isEmpty() && event.message.data.attachments.isEmpty()/* && event.message.data.stickers.isEmpty*/) {
+						finalMessage = "<no content>"
+					}
+					
 					val beginTime = System.currentTimeMillis()
 					
 					brodcast(event.message.channel.id.value, username, event.message.author?.getAvatarUrl() ?: webhook?.data?.avatar) {
@@ -159,7 +163,7 @@ object Multiverse {
 									else -> throw Exception()
 								}
 								
-								val url = "https://discord.com/api/v9/stickers/${it.id.value}.${extension}"
+								val url = "https://cdn.discordapp.com/api/v9/stickers/${it.id.value}.${extension}"
 								addFile("sticker-${it.id.value}.${extension}", URL(url).openStream())
 							}
 						} catch (e: Exception) {} //ignored: stickers are not so uh i forgor
