@@ -123,10 +123,9 @@ object Multiverse {
 						} else if (userid?.value in Vars.runWhitelist) {
 							append("[Admin]")
 						}
-						append("[")
-						append(guild?.name ?: "<DISCORD>")
-						append("] ")
 						append(author)
+						append(" — ")
+						append(guild?.name ?: "<DISCORD>")
 					}
 					
 					var finalMessage = buildString {
