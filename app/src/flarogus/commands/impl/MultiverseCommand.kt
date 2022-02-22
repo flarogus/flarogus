@@ -84,11 +84,21 @@ private val subcommands: Map<String, CustomCommand> = mapOf(
 			val rule = category[it.getOrNull(2)?.toInt() ?: throw CommandException("warn", "you must specify the rule number")]
 			Lists.warn(user, rule)
 			
-			Multiverse.brodcastSystem { content = "user ${Vars.supplier.getUserOrNull(user)?.tag} was warned for rule '$category.${it[2]}: $rule'" }
+			Multiverse.brodcastSystem { content = "user ${Vars.supplier.getUserOrNull(user)?.tag} was warned for rule '$rule'" }
 		},
 		condition = CustomCommand.adminOnly,
 		header = "id: Snowflake, rule: Int, rule category: [general]?",
 		description = "Warn a user (or a guild if you're mad enough)."
+	),
+	
+	"unwarn" to CustomCommand(
+		handler = {
+			val warns = Lists.warns.getOrDefault(Snowflake(it.getOrNull(1) ?: throw CommandException("unwarn", "no uid specified")), null)
+			warns?.clear()?.also { replyWith(message, "cleared succefully") } ?: replyWith(message, "this user has no warnings")
+		},
+		condition = CustomCommand.adminOnly,
+		header = "id: Snowflake",
+		description = "unwarn a user"
 	),
 	
 	"mywarnings" to CustomCommand(

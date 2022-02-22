@@ -183,7 +183,7 @@ object Multiverse {
 	}
 	
 	/** Searches for channels with "multiverse" in their names in all guilds this bot is in */
-	fun findChannels() = Vars.client.launch {
+	suspend fun findChannels() {
 		//todo: this code is unoptimized AS FUCK and I don't know why I've choosen these exact solutions.
 		//this method is to be rewritten
 		Vars.client.rest.user.getCurrentUserGuilds().forEach { 
