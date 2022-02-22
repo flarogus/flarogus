@@ -233,7 +233,8 @@ object Multiverse {
 						entry.channel.createEmbed { description = """
 							[ERROR] Could not acquire a webhook: $reason
 							----------
-							Webhookless 
+							Webhookless communication is deprecated and IS NO LONGER SUPPORTED.
+							Contact the server staff or allow the bot to manage webhooks yourself.
 						""".trimIndent() }
 						
 						entry.hasReported = true
