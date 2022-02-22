@@ -10,6 +10,7 @@ object Vars {
 	
 	/** The kord client instance */
 	lateinit var client: Kord
+	val supplier get() = client.defaultSupplier
 	/** The unique bot id used for shutdown command */
 	lateinit var ubid: String
 	/** The moment the bot has started */

@@ -77,13 +77,28 @@ private val subcommands: Map<String, CustomCommand> = mapOf(
 		description = "Ban a user or a guild"
 	),
 	
-	"tempban" to CustomCommand(
+	"warn" to CustomCommand(
 		handler = {
-			Lists.blacklist += (Snowflake(it.getOrNull(1)?.toULong() ?: throw CommandException("ban", "no uid specified")))
+			val user = Snowflake(it.getOrNull(1) ?: throw CommandException("warn", "you must specify the user id!"))
+			val category = it.getOrNull(3)?.let { RuleCategory.valueOf(it.uppercase()) } ?: RuleCategory.GENERAL
+			val rule = category[it.getOrNull(2)?.toInt() ?: throw CommandException("warn", "you must specify the rule number")]
+			Lists.warn(user, rule)
+			
+			Multiverse.brodcastSystem { content = "user ${Vars.supplier.getUserOrNull(user)?.tag} was warned for rule '$category.${it[2]}: $rule'" }
 		},
 		condition = CustomCommand.adminOnly,
-		header = "id: Snowflake",
-		description = "Ban a user or a guild __from the current instance__. The next instance will not have this user banned."
+		header = "id: Snowflake, rule: Int, rule category: [general]?",
+		description = "Warn a user (or a guild if you're mad enough)."
+	),
+	
+	"mywarnings" to CustomCommand(
+		handler = {
+			message.channel.createEmbed {
+				val warnings = Lists.warns.getOrDefault(message.author!!.id, null)?.fold(0) { a, v -> a + v.points }?.toString() ?: "no"
+				description = "User ${message?.author?.tag} has $warnings warning points"
+			}
+		},
+		description = "list warnings of the caller"
 	),
 	
 	"whitelist" to CustomCommand(
@@ -107,7 +122,7 @@ private val subcommands: Map<String, CustomCommand> = mapOf(
 		handler = {
 			replyWith(message, Multiverse.ratelimited.keys.map {
 				try {
-					return@map "[${Vars.client.defaultSupplier.getUser(it).tag}]: $it"
+					return@map "[${Vars.supplier.getUser(it).tag}]: $it"
 				} catch (e: Exception) {
 					return@map "[error]: $it"
 				}
@@ -152,12 +167,8 @@ private val subcommands: Map<String, CustomCommand> = mapOf(
 		handler = {
 			message.channel.createMessage {
 				messageReference = message.id
-				
-				for (i in Lists.rules.size - 1 downTo 0) {
-					embed {
-						title = "Part #${Lists.rules.size - i}"
-						description = Lists.rules[i]
-					}
+				RuleCategory.values().forEach {
+					embed { description = it.toString() }
 				}
 			}
 		},

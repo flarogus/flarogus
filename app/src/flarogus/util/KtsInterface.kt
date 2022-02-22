@@ -13,5 +13,5 @@ inline fun createMessage(channel: ULong, message: String) = launch {
 };
 
 inline fun fetchMessage(channel: ULong, message: ULong) = Vars.client.async {
-	Vars.client.defaultSupplier.getMessage(Snowflake(channel), Snowflake(message))
+	Vars.supplier.getMessage(Snowflake(channel), Snowflake(message))
 }

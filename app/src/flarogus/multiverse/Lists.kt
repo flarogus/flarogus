@@ -17,17 +17,21 @@ object Lists {
 	val whitelist = ArrayList<Snowflake>(50)
 	/** Guilds / users that are blacklisted from multiverse */
 	val blacklist = ArrayList<Snowflake>(50)
+	/** Warned users */
+	val warns = HashMap<Snowflake, MutableList<Rule>>(50)
 	/** Custom user tags */
 	val usertags = HashMap<Snowflake, String>(50)
-	/** Multiversal ruleset */
-	val rules = ArrayList<String>(10)
 	
 	val whitelistChannel = Snowflake(932632370354475028UL)
 	val blacklistChannel = Snowflake(932524242707308564UL)
 	val usertagsChannel = Snowflake(932690515667849246UL)
 	val rulesChannel = Snowflake(940551409307377684UL)
 	
+	/** Amount of warns required for the user to be auto-banned */
+	val criticalWarns = 5
+	
 	val rulesPrefix = "@rules:\n"
+	val ruleRegex = """^(\d+)\.\s?(\d+\*)?\s?([^\n]+)\n?""".toRegex() //$1 is number, $2 is points, $3 is rule description
 	
 	fun updateLists() = Vars.client.launch {
 		//add blacklisted users and guilds
@@ -56,14 +60,6 @@ object Lists {
 			val tag = groups[2].trim()
 			usertags[id] = tag
 		}
-		
-		//read ruleset
-		rules.clear()
-		fetchMessages(rulesChannel) {
-			if (it.content.startsWith(rulesPrefix)) {
-				rules += it.content.substring(rulesPrefix.length)
-			}
-		}
 	};
 	
 	/** Adds an id to the blacklist and sends a message in the blacklist channel (to save the entry) */
@@ -88,9 +84,82 @@ object Lists {
 		 } catch (ignored: Exception) {}
 	};
 	
+	/** Warn a user */
+	fun warn(user: Snowflake, rule: Rule) {
+		if (rule.points < 0) return;
+		
+		val entry = warns.getOrDefault(user, null) ?: ArrayList<Rule>(3).also { warns[user] = it }
+		entry.add(rule)
+		
+		val points = entry.fold(0) { a, r -> a + r.points }
+		if (points >= criticalWarns) {
+			blacklist(user)
+			Vars.client.launch { Multiverse.brodcastSystem {
+				embed { description = "User ${Vars.supplier.getUserOrNull(user)?.tag} was auto-banned for having too many warn points ($points > $criticalWarns)" }
+			} }
+		}
+	}
+	
 	/** Returns whether it's allowed for this pair of guild + user to send messages in multiverse */
-	fun canTransmit(guild: Guild?, user: User?) = guild == null || (guild.id !in blacklist && guild.id in whitelist && user?.id !in blacklist)
+	fun canTransmit(guild: Guild?, user: User?) = guild == null || (guild.id !in blacklist && guild.id in whitelist && user?.id !in blacklist);
 	
 	/** Returns whether this channel is allowed to receive messages from multiverse */
-	fun canReceive(channel: Channel?) = channel != null && channel.data.guildId?.value !in blacklist
+	fun canReceive(channel: Channel?) = channel != null && channel.data.guildId.value !in blacklist
+	
+}
+
+
+enum class RuleCategory(val index: Int, val description: String, val rules: List<Rule>) {
+	GENERAL(1, "list of multiversal rules", listOf(
+		Rule(1, "Do not insult, harrass, discriminate other people. This should be obvious."),
+		Rule(1, "Do not spam / flood the multiverse. Meme dumps are allowed as long as they don't disturb other users."),
+		Rule(4, "Posting scam links is strongely prohibited and can result in an immediate ban, unless the link was successfully blocked by the filter."),
+		Rule(2, "Avoid posting nsfw-content. Posting explicit images / videos / gifs is prohibited. Videos with a questionable preview are counted too."),
+		Rule(2, "Do not advertise discord servers without consent."),
+		Rule(1, "Avoid speaking foreign languages that other users can't understand (if they can understand it, it's fine) and do not encode text messages."),
+		Rule(10, "Spam raids are forbidden, any raider is to be banned immediately.")
+	)),
+	
+	ADDITIONAL(2, "notes", listOf(
+		Rule(-1, "Guilds with @еveryone / @hеre in their names are automatically banned until the next restart"),
+		Rule(-1, "Multiversal admins are Mnemotechnician#9967, SMOLKEYS#4156, real sushi#0001"),
+		Rule(-1, "Your multiversal channels are your responsibility, it doesn't matter whether you connect a general channel of a popular server or an admin-only channel, rules still apply."),
+		Rule(-1, "The fact that 2 of 3 admins are furries __does not__ mean you can post yiff in multiverse!")
+	)),
+	
+	PUNISHMENT(3, "the following punishments can be applied by the admins", listOf(
+		Rule(-1, "A verbal warning"),
+		Rule(-1, "A physical warning (the amount of warning points depends on the rule)"),
+		Rule(-1, "A temporary ban (applied automatically when the user has 5 warn points)"),
+		Rule(-1, "A permanent ban")
+	));
+	
+	init {
+		rules.forEachIndexed { ruleIndex: Int, it ->
+			it.category = index
+			it.index = ruleIndex
+		}
+	}
+
+	override fun toString() = buildString {
+		append(this).append(": ").append(description).append("\n\n")
+		rules.forEachIndexed { i: Int, it -> append(i + 1).append(". ").append(it).append('\n') }
+	};
+	
+	operator fun get(number: Int): Rule = (rules.getOrNull(number - 1) ?: throw IllegalArgumentException("rule '$this.$index' doesn't exist!"))
+	
+	companion object {
+		fun of(category: Int, rule: Int) = RuleCategory.values().find { it.index == category }?.get(rule)
+	}
+}
+
+class Rule(val points: Int = -1, val description: String) {
+	//these two are init right after creation
+	var category = -1
+	var index = -1
+	
+	override fun toString() = buildString {
+		append(description)
+		if (points > 0) append(" [").append(points).append("warning points]")
+	}
 }

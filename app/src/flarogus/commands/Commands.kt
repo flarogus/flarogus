@@ -187,10 +187,10 @@ fun initCommands() {
 		try {
 			Vars.client.unsafe.messageChannel(reportsChannel).createMessage {
 				content = """
-					${message.author?.tag} (${message.author?.id}) reports:
-					```
-					${it[0].stripEveryone().take(1800)}
-					```
+				${message.author?.tag} (${message.author?.id}) reports:
+				```
+				${it[0].stripEveryone().take(1800)}
+				```
 				""".trimIndent()
 			}
 			

@@ -2,6 +2,7 @@ package flarogus.multiverse
 
 import java.io.*
 import java.net.*
+import kotlin.math.*
 import kotlin.concurrent.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -111,7 +112,7 @@ object Multiverse {
 					
 					//actual retranslation
 					val original = event.message.content
-					val webhook = event.message.webhookId?.let { Vars.client.defaultSupplier.getWebhookOrNull(it) }
+					val webhook = event.message.webhookId?.let { Vars.supplier.getWebhookOrNull(it) }
 					val author = event.message.author?.tag?.replace("*", "\\*") ?: "webhook<${webhook?.name}>"
 					val customTag = Lists.usertags.getOrDefault(userid, null)
 						
@@ -232,7 +233,7 @@ object Multiverse {
 						entry.channel.createEmbed { description = """
 							[ERROR] Could not acquire a webhook: $reason
 							----------
-							***Using fallback strategy for this channel: messages will be sent in the classic way!***
+							Webhookless 
 						""".trimIndent() }
 						
 						entry.hasReported = true
@@ -261,11 +262,12 @@ object Multiverse {
 			if (exclude != it.channel.id.value && Lists.canReceive(it.channel)) {
 				try {
 					if (it.webhook == null) {
-						it.channel.createMessage {
+						//deprecated
+						/*it.channel.createMessage {
 							message()
 							content = "$user: $content".take(1999).stripEveryone()
 							allowedMentions() //forbid all mentions
-						}
+						}*/
 					} else {
 						it.webhook!!.executeIgnored(it.webhook!!.token!!) {
 							message()
@@ -311,6 +313,23 @@ object Multiverse {
 						Vars.flarogusEpoch = map.getOrDefault("epoch", null)?.asOrNull<Long>() ?: System.currentTimeMillis()
 						
 						Log.level = Log.LogLevel.of(map.getOrDefault("log", null)?.asOrNull<Int>() ?: -1)
+						
+						//TODO: native nested map support?
+						val k = map.getOrDefault("warnsK", null)?.asOrNull<Array<ULong>>()
+						val v = map.getOrDefault("warnsV", null)?.asOrNull<Array<String>>()
+						if (k != null && v != null) {
+							for (i in 0..max(k.size, v.size) - 1) {
+								//any invalid entries will just be logged
+								try {
+									val id = Snowflake(k[i])
+									val rule = v[i].split(':').let { RuleCategory.of(it[0].toInt(), it[1].toInt())!! }
+									(Lists.warns.getOrDefault(id, null) ?: ArrayList<Rule>(3).also { Lists.warns[id] = it }).add(rule)
+								} catch (e: Exception) {
+									Log.error { "Could not read warn entry: $e" }
+								}
+							}
+						}
+						
 					}
 				}
 				
@@ -333,13 +352,25 @@ object Multiverse {
 			"runWhitelist" to Vars.runWhitelist.toTypedArray(),
 			"started" to Vars.startedAt,
 			"epoch" to Vars.flarogusEpoch,
-			"log" to Log.level.level
+			"log" to Log.level.level,
+			//warns is a map and SSS doesn't support maps... yet
+			"warnsK" to Lists.warns.keys.map { it.value }.toTypedArray(),
+			//todo: this is as inefficient as it looks like
+			"warnsV" to Lists.warns.`values`.map { it.map { "${it.category}:${it.index}" }.toTypedArray() }.toTypedArray()
 		)
 		
 		fetchMessages(settingsChannel) {
 			if (it.author?.id?.value == Vars.botId && it.content.startsWith(settingsPrefix)) {
-				it.edit {
-					content = settingsPrefix + SimpleMapSerializer.serialize(map)
+				try {
+					it.edit {
+						val serialized = SimpleMapSerializer.serialize(map)
+						content = settingsPrefix + serialized
+						
+						if (serialized.length > 1200) Log.info { "WARNING: the length of serialized settings has exceeded 1200 symbols: ${serialized.length}" }
+					}
+				} catch (e: SimpleMapSerializer.DeserializationContext.MalformedInputException) {
+					Log.error { "exception has occurred during settings serialization: $e" }
+					throw e
 				}
 				
 				throw Error() //exit from fetchMessages. this is dumb, yes. but I'm too lazy to find a better way
