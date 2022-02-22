@@ -68,7 +68,7 @@ object Multiverse {
 				val userid = event.message.author?.id
 				val guild = event.getGuild()
 				
-				if (event.message.webhookId != null && universeWebhooks.any { it.webhook != null && it.webhook!!.id == event.message.webhookId }) return@onEach
+				if (isOwnMessage(event.message)) return@onEach
 				
 				if (!Lists.canTransmit(guild, event.message.author)) {
 					replyWith(event.message, """
@@ -224,7 +224,7 @@ object Multiverse {
 				
 				if (!entry.hasReported) {
 					val reason = if (e.toString().contains("Missing Permission")) {
-						"missing 'MANAGE_WEBHOOKS' permission!\nYou should allow the bot to manage webhooks or ask the guild's admin(s) to do that!"
+						"missing 'MANAGE_WEBHOOKS' permission!"
 					} else {
 						e.toString()
 					}
@@ -233,8 +233,8 @@ object Multiverse {
 						entry.channel.createEmbed { description = """
 							[ERROR] Could not acquire a webhook: $reason
 							----------
-							Webhookless communication is deprecated and IS NO LONGER SUPPORTED.
-							Contact the server staff or allow the bot to manage webhooks yourself.
+							Webhookless communication is deprecated and __IS NO LONGER SUPPORTED__.
+							Contact the server's staff or allow the bot to manage webhooks yourself.
 						""".trimIndent() }
 						
 						entry.hasReported = true
@@ -284,6 +284,11 @@ object Multiverse {
 			}
 		}
 	};
+	
+	/** Returns whether this message was sent by flarogus */
+	fun isOwnMessage(message: Message): Boolean {
+		return message.author?.id?.value == Vars.botId || (message.webhookId != null && universeWebhooks.any { it.webhook != null && it.webhook!!.id == message.webhookId })
+	}
 	
 	//i / o region
 	/** reads state from settings channel, shuts the bot down if there's a newer instance running */
