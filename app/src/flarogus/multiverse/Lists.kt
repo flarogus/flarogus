@@ -142,7 +142,7 @@ enum class RuleCategory(val index: Int, val description: String, val rules: List
 	}
 
 	override fun toString() = buildString {
-		append(this).append(": ").append(description).append("\n\n")
+		append(super.toString()).append(": ").append(description).append("\n\n")
 		rules.forEachIndexed { i: Int, it -> append(i + 1).append(". ").append(it).append('\n') }
 	};
 	
@@ -160,6 +160,6 @@ class Rule(val points: Int = -1, val description: String) {
 	
 	override fun toString() = buildString {
 		append(description)
-		if (points > 0) append(" [").append(points).append("warning points]")
+		if (points > 0) append(" [").append(points).append(" warning points]")
 	}
 }

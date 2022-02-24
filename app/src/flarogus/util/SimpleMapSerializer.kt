@@ -1,6 +1,6 @@
 package flarogus.util
 
-typealias SimpleMap = Map<String, Any>
+typealias SimpleMap = MutableMap<String, Any>
 
 /**
  * Serializes simple maps into discord-safe strings. Made for internal usage.
