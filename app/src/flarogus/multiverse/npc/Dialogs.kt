@@ -1,7 +1,7 @@
 package flarogus.multiverse.npc
 
-typealias IF = (origin: String) -> Boolean
 typealias Builder = (builder: StringBuilder, origin: String) -> Unit
+fun interface If { operator fun invoke(origin: String): Boolean }
 
 /* Expected usage:
 import flarogus.multiverse.npc.*
@@ -9,8 +9,8 @@ import flarogus.multiverse.npc.*
 buildDialog {
 	+ random {
 		- "hi"
-		- condition { b, o ->
-			IF { o.contains("bye") } then "goodbye"
+		- condition {
+			If { it.contains("bye") } then "goodbye"
 		}
 		- "amogus" + " aaaa " + random {
 			- " is sus"
@@ -30,7 +30,7 @@ fun Node.random(block: RandomNode.() -> Unit) = RandomNode(ArrayList<Node>(8)).a
 	block()
 };
 
-fun Node.condition(block: ConditionalNode.() -> Unit) = ConditionalNode(ArrayList<Pair<IF, Node>>(5)).apply {
+fun Node.condition(block: ConditionalNode.() -> Unit) = ConditionalNode(ArrayList<Pair<If, Node>>(5)).apply {
 	block()
 };
 
@@ -78,12 +78,12 @@ open class RandomNode(override open val children: MutableList<Node>) : TreeNode<
 	open operator fun <T : Node> T.unaryMinus() = this.also { this@RandomNode.children.add(it) };
 }
 
-open class ConditionalNode(override open val children: MutableList<Pair<IF, Node>>) : TreeNode<Pair<IF, Node>>() {
+open class ConditionalNode(override open val children: MutableList<Pair<If, Node>>) : TreeNode<Pair<If, Node>>() {
 	override open fun construct(builder: StringBuilder, origin: String) {
 		children.find { it.first(origin) }?.second?.construct(builder, origin)
 	}
 
-	open infix fun IF.then(result: String) = FollowNode(result, null).also { this@ConditionalNode.children.add(this to it) };
+	open infix fun If.then(result: String) = FollowNode(result, null).also { this@ConditionalNode.children.add(this to it) };
 	
-	open infix fun <T : Node> IF.then(result: T) = result.also { this@ConditionalNode.children.add(this to it) };
+	open infix fun <T : Node> If.then(result: T) = result.also { this@ConditionalNode.children.add(this to it) };
 }
