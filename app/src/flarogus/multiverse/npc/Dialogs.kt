@@ -4,18 +4,19 @@ typealias Builder = (builder: StringBuilder, origin: String) -> Unit
 fun interface If { operator fun invoke(origin: String): Boolean }
 
 /* Expected usage:
+import kotlin.random.*
 import flarogus.multiverse.npc.*
 
-buildDialog {
-	- random {
-		- "hi"
-		- condition {
-			If { it.contains("bye") } then "goodbye"
-		}
-		- "amogus" - " aaaa " - random {
-			- " is sus"
-			- ""
-		} - " and that's da story"
+val tree = buildDialog {
+	- condition {
+		If { it.contains("sus") } then "when the " and random {
+			- "amogus is sus"
+			- "the"
+			- "you"
+		} and " amogg" and "!";
+		If { it.contains("scream") } then run { "aaa".repeat(Random.nextInt(1, 10)) } and "!"
+		//else
+		If { true } then "wtf none of these conditions were met illegal"
 	}
 }
 */
@@ -26,10 +27,10 @@ inline fun buildDialog(block: FollowNode.() -> Unit) = RootNode().apply {
 };
 
 /** Creates an executable node that's supposed to append some text */
-fun Node.run(executable: Builder) = ExecutableNode(executable);
+fun Node.runBuild(executable: Builder) = ExecutableNode(executable);
 
 /** Creates an executable node that's supposed to return some text which will be appended to the builder */
-inline fun Node.run(crossinline executable: (origin: String) -> String?) = run { builder, origin ->
+inline fun Node.run(crossinline executable: (origin: String) -> String?) = runBuild { builder, origin ->
 	builder.append(executable(origin))
 };
 
@@ -44,16 +45,16 @@ inline fun Node.condition(block: ConditionalNode.() -> Unit) = ConditionalNode(A
 };
 
 /** Adds a trailing string to the node */
-operator fun FollowNode.minus(node: String) = FollowNode(node, null).also { this.next = it };
+infix fun FollowNode.and(node: String) = FollowNode(node, null).also { this.next = it };
 
 /** Adds a trailing node to the node */
-operator fun <T: Node> FollowNode.minus(node: T) = DoubleNode(node, null).also { this.next = it };
+infix fun <T: Node> FollowNode.and(node: T) = DoubleNode(node, null).also { this.next = it };
 
 /** Adds a trailing string to the node */
-operator fun DoubleNode.minus(node: String) = FollowNode(node, null).also { this.second = it };
+infix fun DoubleNode.and(node: String) = FollowNode(node, null).also { this.second = it };
 
 /** Adds a trailing node to the node */
-operator fun <T: Node> DoubleNode.minus(node: T) = DoubleNode(node, null).also { this.second = it };
+infix fun <T: Node> DoubleNode.and(node: T) = DoubleNode(node, null).also { this.second = it };
 
 //classes region
 abstract class Node {
@@ -92,8 +93,8 @@ open class RootNode : FollowNode("", null) {
 
 open class DoubleNode(var first: Node?, var second: Node?) : Node() {
 	override open fun construct(builder: StringBuilder, origin: String) {
-		if (first != null) builder.append(first!!.construct(builder, origin))
-		if (second != null) builder.append(second!!.construct(builder, origin))
+		if (first != null) first!!.construct(builder, origin)
+		if (second != null) second!!.construct(builder, origin)
 	}
 	
 }
