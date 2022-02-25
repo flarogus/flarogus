@@ -7,36 +7,53 @@ fun interface If { operator fun invoke(origin: String): Boolean }
 import flarogus.multiverse.npc.*
 
 buildDialog {
-	+ random {
+	- random {
 		- "hi"
 		- condition {
 			If { it.contains("bye") } then "goodbye"
 		}
-		- "amogus" + " aaaa " + random {
+		- "amogus" - " aaaa " - random {
 			- " is sus"
 			- ""
-		}
+		} - " and that's da story"
 	}
 }
 */
 
-fun buildDialog(begin: String = "", block: FollowNode.() -> Unit) = FollowNode(begin, null).apply {
+/** Constructs the root of a dialog tree */
+inline fun buildDialog(block: FollowNode.() -> Unit) = RootNode().apply {
 	block()
 };
 
+/** Creates an executable node that's supposed to append some text */
 fun Node.run(executable: Builder) = ExecutableNode(executable);
 
-fun Node.random(block: RandomNode.() -> Unit) = RandomNode(ArrayList<Node>(8)).apply {
+/** Creates an executable node that's supposed to return some text which will be appended to the builder */
+inline fun Node.run(crossinline executable: (origin: String) -> String?) = run { builder, origin ->
+	builder.append(executable(origin))
+};
+
+/** Creates a node that delegates it's construction to one of it's child */
+inline fun Node.random(block: RandomNode.() -> Unit) = RandomNode(ArrayList<Node>(8)).apply {
 	block()
 };
 
-fun Node.condition(block: ConditionalNode.() -> Unit) = ConditionalNode(ArrayList<Pair<If, Node>>(5)).apply {
+/** Creates a node that, upon construction, finds the first true condition and delegates the construction to it */
+inline fun Node.condition(block: ConditionalNode.() -> Unit) = ConditionalNode(ArrayList<Pair<If, Node>>(5)).apply {
 	block()
 };
 
-operator fun FollowNode.plus(node: String) = FollowNode(node, null).also { this.next = it };
-	
-operator fun <T: Node> FollowNode.plus(node: T) = node.also { this.next = it };
+/** Adds a trailing string to the node */
+operator fun FollowNode.minus(node: String) = FollowNode(node, null).also { this.next = it };
+
+/** Adds a trailing node to the node */
+operator fun <T: Node> FollowNode.minus(node: T) = DoubleNode(node, null).also { this.next = it };
+
+/** Adds a trailing string to the node */
+operator fun DoubleNode.minus(node: String) = FollowNode(node, null).also { this.second = it };
+
+/** Adds a trailing node to the node */
+operator fun <T: Node> DoubleNode.minus(node: T) = DoubleNode(node, null).also { this.second = it };
 
 //classes region
 abstract class Node {
@@ -63,9 +80,22 @@ open class FollowNode(string: String, var next: Node?) : TerminalNode(string) {
 		next?.construct(builder, origin)
 	}
 	
-	open operator fun String.unaryPlus() = FollowNode(this, null).also { this@FollowNode.next = it };
+	open operator fun String.unaryMinus() = FollowNode(this, null).also { this@FollowNode.next = it };
 	
-	open operator fun <T: Node> T.unaryPlus() = this.also { this@FollowNode.next = it };
+	open operator fun <T: Node> T.unaryMinus() = DoubleNode(this, null).also { this@FollowNode.next = it };
+}
+
+
+open class RootNode : FollowNode("", null) {
+	open fun construct(origin: String) = StringBuilder(100).also { construct(it, origin) }.toString()
+}
+
+open class DoubleNode(var first: Node?, var second: Node?) : Node() {
+	override open fun construct(builder: StringBuilder, origin: String) {
+		if (first != null) builder.append(first!!.construct(builder, origin))
+		if (second != null) builder.append(second!!.construct(builder, origin))
+	}
+	
 }
 
 open class RandomNode(override open val children: MutableList<Node>) : TreeNode<Node>() {
@@ -73,17 +103,21 @@ open class RandomNode(override open val children: MutableList<Node>) : TreeNode<
 	
 	open fun selectChild(): Node = children.random();
 	
+	/** Adds a child string node */
 	open operator fun String.unaryMinus() = FollowNode(this, null).also { this@RandomNode.children.add(it) };
 	
-	open operator fun <T : Node> T.unaryMinus() = this.also { this@RandomNode.children.add(it) };
+	/** Adds a child node */
+	open operator fun <T : Node> T.unaryMinus() = DoubleNode(this, null).also { this@RandomNode.children.add(it) };
 }
 
 open class ConditionalNode(override open val children: MutableList<Pair<If, Node>>) : TreeNode<Pair<If, Node>>() {
 	override open fun construct(builder: StringBuilder, origin: String) {
 		children.find { it.first(origin) }?.second?.construct(builder, origin)
 	}
-
+	
+	/** Adds the if-then-string pair to this conditional node */
 	open infix fun If.then(result: String) = FollowNode(result, null).also { this@ConditionalNode.children.add(this to it) };
 	
-	open infix fun <T : Node> If.then(result: T) = result.also { this@ConditionalNode.children.add(this to it) };
+	/** Adds the if-then-node pair to this conditional node */
+	open infix fun <T : Node> If.then(result: T) = DoubleNode(result, null).also { this@ConditionalNode.children.add(this to it) };
 }
