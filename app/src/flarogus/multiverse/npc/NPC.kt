@@ -3,6 +3,7 @@ package flarogus.multiverse.npc
 import kotlinx.coroutines.*
 import dev.kord.core.entity.*
 import flarogus.*
+import flarogus.util.*
 import flarogus.multiverse.*
 
 /** Represents a multiversal NPC. */
@@ -15,14 +16,16 @@ abstract class NPC(open val cooldown: Long = 20000L, open val replyDelay: Long =
 	
 	var lastMessage = 0L
 	
+	var lastProcessed: Message? = null
+	
 	/** Should be called when there's a multiversal message received */
 	open fun multiversalMessageReceived(message: Message) {
 		val origin = buildString {
-			append(message.content)
 			message.attachments.forEach { append('\n').append(it.filename) }
 		}
 		
 		if (!origin.isEmpty()) {
+			lastProcessed = message
 			val reply = processMessage(origin)
 			
 			if (reply != null) Vars.client.launch {
@@ -30,7 +33,8 @@ abstract class NPC(open val cooldown: Long = 20000L, open val replyDelay: Long =
 				
 				if (reply != null) {
 					Multiverse.brodcast(0UL, obtainUsertag(), avatar) {
-						content = Multiverse.quoteMessage(message) + reply
+						content = reply
+						quoteMessage(message)
 					}
 				}
 			}

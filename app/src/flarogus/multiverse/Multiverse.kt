@@ -140,10 +140,13 @@ object Multiverse {
 					}
 					
 					var finalMessage = buildString {
-						val reply = event.message.referencedMessage
-						
-						append(quoteMessage(reply))
 						append(original)
+						
+						event.message.data.attachments.forEach { attachment ->
+							if (attachment.size >= maxFileSize) {
+								append('\n').append(attachment.url)
+							}
+						}
 					}.take(1999)
 					
 					if (finalMessage.isEmpty() && event.message.data.attachments.isEmpty()/* && event.message.data.stickers.isEmpty*/) {
@@ -155,30 +158,15 @@ object Multiverse {
 					brodcast(event.message.channel.id.value, username, event.message.author?.getAvatarUrl() ?: webhook?.data?.avatar) {
 						var finalContent = finalMessage
 						
+						quoteMessage(event.message.referencedMessage)
+						
 						event.message.data.attachments.forEach { attachment ->
 							if (attachment.size < maxFileSize) {
 								addFile(attachment.filename, URL(attachment.url).openStream())
-							} else {
-								finalContent += "\n" + attachment.url
 							}
 						}
 						
 						content = finalContent
-						
-						/* TODO: this doesn't work and never did
-						try {
-							event.message.stickers.forEach {
-								val extension = when (it.formatType.value) {
-									1 -> "png"
-									2 -> "apng"
-									else -> throw Exception()
-								}
-								
-								val url = "https://cdn.discordapp.com/api/v9/stickers/${it.id.value}.${extension}"
-								addFile("sticker-${it.id.value}.${extension}", URL(url).openStream())
-							}
-						} catch (e: Exception) {} //ignored: stickers are not so uh i forgor
-						*/
 					}
 					
 					npcs.forEach { it.multiversalMessageReceived(event.message) }
@@ -292,23 +280,6 @@ object Multiverse {
 		//wait for every deferred to finish
 		deferreds.forEach { if (it != null) it.await() }
 	};
-	
-	fun quoteMessage(message: Message?): String {
-		return if (message != null) {
-			buildString {
-				val replyOrigin = "(> .+\n)?((?s).+)".toRegex().find(message.content)?.groupValues?.getOrNull(2)?.replace('\n', ' ') ?: "unknown"
-				
-				append("> ")
-				append(replyOrigin.take(100).replace("/", "\\/"))
-				
-				if (replyOrigin.length > 100) append("...")
-				
-				append("\n")
-			}
-		} else {
-			""
-		}
-	}
 	
 	/** Returns whether this message was sent by flarogus */
 	fun isOwnMessage(message: Message): Boolean {

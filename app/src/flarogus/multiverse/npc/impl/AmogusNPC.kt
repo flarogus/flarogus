@@ -11,22 +11,28 @@ class AmogusNPC : NPC(1000L * 60 * 10) {
 	
 	override val dialog = buildDialog {
 		- condition {
-			If { it.contains(":sus:") } then "STOP " and random {
-				- "POSTING"
-				- "TALKING"
-				- "SPEAKING"
-			} and " ABOUT " and random {
-				- "AMONG US"
-				- "AMONGUS"
-				- "AMOGUS"
-				- "SUS"
-			} and "! I" and random {
-				- "'M TIRED OF SEEING IT"
-				- " HATE IT"
-				- " SEE IT EVERYWHERE"
-			} and "!!!"
+			If { it.contains(":sus:") } then random {
+				- "STOP " and random {
+					- "POSTING"
+					- "TALKING"
+					- "SPEAKING"
+				} and " ABOUT " and random {
+					- "AMONG US"
+					- "AMONGUS"
+					- "AMOGUS"
+					- "SUS"
+				} and "! I" and random {
+					- "'M TIRED OF SEEING IT"
+					- " HATE IT"
+					- " SEE IT EVERYWHERE"
+				} and "!!!"
+				
+				- "no"
+				- "NO!"
+				- "stop"
+			}
 			
-			If { it.contains("amogus") && it.length < 10 } then random {
+			If { it.contains("amogus") && it.length < 15 } then random {
 				- "no" and random {
 					- ""
 					- " u"
@@ -42,9 +48,11 @@ class AmogusNPC : NPC(1000L * 60 * 10) {
 					- "amogus"
 					- "mogus"
 					- "sugoma"
-					- "momgus"
+					- "momogus"
 				}
 			}
+			
+			//If { it.contains("")
 			
 			If { it.contains("what") && it.contains("is") && it.contains("flarogus") } then random {
 				- "flar"

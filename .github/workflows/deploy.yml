@@ -17,16 +17,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Cache
-        id: cache
-        if: always()
-        uses: actions/cache@v1
-        with:
-          path: ./saves
-          key: ${{ runner.OS }}-build-${{ hashFiles('app/src/**') }}
-          restore-keys: |
-            ${{ runner.OS }}-build-${{ hashFiles('app/src/**') }}
       
       - name: Compile
         run: |

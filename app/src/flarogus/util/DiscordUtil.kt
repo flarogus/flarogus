@@ -5,6 +5,7 @@ import java.awt.image.*
 import javax.imageio.*
 import kotlinx.coroutines.*;
 import kotlinx.coroutines.flow.*
+import dev.kord.rest.builder.message.create.*
 import dev.kord.core.entity.*;
 import dev.kord.core.*
 import dev.kord.core.event.*
@@ -177,3 +178,21 @@ inline suspend fun fetchMessages(channelId: Snowflake, crossinline handler: susp
 		//e.printStackTrace()
 	}
 };
+
+/** Adds an embed referencing the original message */
+fun MessageCreateBuilder.quoteMessage(message: Message?) {
+	if (message != null) {
+		val author = User(message.data.author, Vars.client) //gotta construct one myself if the default api doesn't allow that
+		
+		embed {
+			title = "(reply to ${author.username})"
+			description = buildString {
+				val replyOrigin = "(> .+\n)?((?s).+)".toRegex().find(message.content)?.groupValues?.getOrNull(2)?.replace('\n', ' ') ?: "<no content>"
+				append(replyOrigin.take(100).replace("/", "\\/"))
+				if (replyOrigin.length > 100) append("...")
+			}
+			
+			thumbnail { url = author.getAvatarUrl() }
+		}
+	}
+}
