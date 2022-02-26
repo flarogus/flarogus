@@ -33,7 +33,8 @@ object Multiverse {
 	val ratelimited = HashMap<Snowflake, Long>(150)
 	val ratelimit = 2000L
 	
-	val maxFilesize = 1024 * 1024 * 8 - 1024
+	/** Files with size exceeding this limit will be sent in the form of links */
+	val maxFileSize = 1024 * 1024 * 3 - 1024
 	
 	val webhookName = "MultiverseWebhook"
 	val systemName = "Multiverse"
@@ -77,11 +78,13 @@ object Multiverse {
 					return@onEach
 				}
 				
+				/*
 				//block messages with oversize files: most servers don't accept >=8mb files
 				if (event.message.data.attachments.any { it.size > maxFilesize }) {
 					replyWith(event.message, "Cannot retranslate this message: file size ≥ 8mb")
 					return@onEach
 				}
+				*/
 				
 				try {
 					//instaban spammers
@@ -136,16 +139,7 @@ object Multiverse {
 					var finalMessage = buildString {
 						val reply = event.message.referencedMessage
 						
-						if (reply != null) {
-							val replyOrigin = "(> .+\n)?((?s).+)".toRegex().find(reply.content)?.groupValues?.getOrNull(2)?.replace('\n', ' ') ?: "unknown"
-							
-							append("> ")
-							append(replyOrigin.take(100).replace("/", "\\/"))
-							
-							if (replyOrigin.length > 100) append("...")
-							
-							append("\n")
-						}
+						append(quoteMessage(reply))
 						append(original)
 					}.take(1999)
 					
@@ -156,6 +150,14 @@ object Multiverse {
 					val beginTime = System.currentTimeMillis()
 					
 					brodcast(event.message.channel.id.value, username, event.message.author?.getAvatarUrl() ?: webhook?.data?.avatar) {
+						event.message.data.attachments.forEach { attachment ->
+							if (attachment.size < maxFileSize) {
+								addFile(attachment.filename, URL(attachment.url).openStream())
+							} else {
+								finalMessage += "\n" + attachment.url
+							}
+						}
+						
 						content = finalMessage
 						
 						/* TODO: this doesn't work and never did
@@ -172,10 +174,6 @@ object Multiverse {
 							}
 						} catch (e: Exception) {} //ignored: stickers are not so uh i forgor
 						*/
-						
-						event.message.data.attachments.forEach { attachment ->
-							addFile(attachment.filename, URL(attachment.url).openStream())
-						}
 					}
 					
 					val time = System.currentTimeMillis() - beginTime
@@ -287,6 +285,23 @@ object Multiverse {
 		//wait for every deferred to finish
 		deferreds.forEach { if (it != null) it.await() }
 	};
+	
+	fun quoteMessage(message: Message?): String {
+		return if (message != null) {
+			buildString {
+				val replyOrigin = "(> .+\n)?((?s).+)".toRegex().find(message.content)?.groupValues?.getOrNull(2)?.replace('\n', ' ') ?: "unknown"
+				
+				append("> ")
+				append(replyOrigin.take(100).replace("/", "\\/"))
+				
+				if (replyOrigin.length > 100) append("...")
+				
+				append("\n")
+			}
+		} else {
+			""
+		}
+	}
 	
 	/** Returns whether this message was sent by flarogus */
 	fun isOwnMessage(message: Message): Boolean {
