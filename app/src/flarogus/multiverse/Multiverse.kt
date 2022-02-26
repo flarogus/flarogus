@@ -15,6 +15,7 @@ import dev.kord.core.behavior.*
 import dev.kord.core.behavior.channel.*
 import flarogus.*
 import flarogus.util.*
+import flarogus.multiverse.npc.impl.*
 
 /**
  * Retranslates messages sent in any channel of guild network, aka Multiverse, into other multiverse channels
@@ -39,6 +40,8 @@ object Multiverse {
 	val webhookName = "MultiverseWebhook"
 	val systemName = "Multiverse"
 	val systemAvatar = "https://drive.google.com/uc?export=download&id=197qxkXH2_b0nZyO6XzMC8VeYTuYwcai9"
+	
+	val npcs = mutableListOf(AmogusNPC())
 	
 	/** Sets up the multiverse */
 	suspend fun start() {
@@ -150,15 +153,17 @@ object Multiverse {
 					val beginTime = System.currentTimeMillis()
 					
 					brodcast(event.message.channel.id.value, username, event.message.author?.getAvatarUrl() ?: webhook?.data?.avatar) {
+						var finalContent = finalMessage
+						
 						event.message.data.attachments.forEach { attachment ->
 							if (attachment.size < maxFileSize) {
 								addFile(attachment.filename, URL(attachment.url).openStream())
 							} else {
-								finalMessage += "\n" + attachment.url
+								finalContent += "\n" + attachment.url
 							}
 						}
 						
-						content = finalMessage
+						content = finalContent
 						
 						/* TODO: this doesn't work and never did
 						try {
@@ -175,6 +180,8 @@ object Multiverse {
 						} catch (e: Exception) {} //ignored: stickers are not so uh i forgor
 						*/
 					}
+					
+					npcs.forEach { it.multiversalMessageReceived(event.message) }
 					
 					val time = System.currentTimeMillis() - beginTime
 					Log.lifecycle { "$author's multiversal message was retranslated in $time ms." }
