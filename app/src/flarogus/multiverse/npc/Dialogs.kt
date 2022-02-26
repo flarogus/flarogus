@@ -58,7 +58,11 @@ infix fun <T: Node> DoubleNode.and(node: T) = DoubleNode(node, null).also { this
 
 //classes region
 abstract class Node {
+	/** Constructs a phrase */
 	abstract fun construct(builder: StringBuilder, origin: String)
+	
+	/** Counts the amount of possible combinations */
+	open fun count() = 1
 }
 
 abstract class TreeNode<T> : Node() {
@@ -81,6 +85,8 @@ open class FollowNode(string: String, var next: Node?) : TerminalNode(string) {
 		next?.construct(builder, origin)
 	}
 	
+	override open fun count() = if (next != null) next!!.count() else 1;
+	
 	open operator fun String.unaryMinus() = FollowNode(this, null).also { this@FollowNode.next = it };
 	
 	open operator fun <T: Node> T.unaryMinus() = DoubleNode(this, null).also { this@FollowNode.next = it };
@@ -97,10 +103,18 @@ open class DoubleNode(var first: Node?, var second: Node?) : Node() {
 		if (second != null) second!!.construct(builder, origin)
 	}
 	
+	override open fun count() = (if (first != null) first!!.count() else 1) * (if (second != null) second!!.count() else 1);
+	
 }
 
 open class RandomNode(override open val children: MutableList<Node>) : TreeNode<Node>() {
 	override open fun construct(builder: StringBuilder, origin: String) = selectChild().construct(builder, origin);
+	
+	override open fun count(): Int {
+		var c = 0;
+		children.forEach { c += it.count() }
+		return c
+	}
 	
 	open fun selectChild(): Node = children.random();
 	
@@ -114,6 +128,12 @@ open class RandomNode(override open val children: MutableList<Node>) : TreeNode<
 open class ConditionalNode(override open val children: MutableList<Pair<If, Node>>) : TreeNode<Pair<If, Node>>() {
 	override open fun construct(builder: StringBuilder, origin: String) {
 		children.find { it.first(origin) }?.second?.construct(builder, origin)
+	}
+	
+	override open fun count(): Int {
+		var c = 0;
+		children.forEach { c += it.second.count() }
+		return c
 	}
 	
 	/** Adds the if-then-string pair to this conditional node */

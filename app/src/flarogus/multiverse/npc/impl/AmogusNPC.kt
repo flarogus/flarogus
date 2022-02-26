@@ -4,7 +4,7 @@ import kotlin.random.*
 import dev.kord.core.*
 import flarogus.multiverse.npc.*
 
-class AmogusNPC : NPC(1000L * 60 * 10) {
+class AmogusNPC : NPC(1000L * 60 * 4) {
 	override val name = "local amogus"
 	override val location = "oblivion settlement"
 	override val avatar = "https://drive.google.com/uc?export=download&id=19jMVrZwOuWpe7vJ1Gb3Uj0tzi27kXeEY"
@@ -52,7 +52,12 @@ class AmogusNPC : NPC(1000L * 60 * 10) {
 				}
 			}
 			
-			//If { it.contains("")
+			//when someone replies something like "you're amogus"
+			If { it.contains("you") && it.contains("amogus") && lastProcessed?.referencedMessage?.data?.author?.username?.contains(name) ?: false } then random {
+				- "that's a lie"
+				- "lies"
+				- "no"
+			}
 			
 			If { it.contains("what") && it.contains("is") && it.contains("flarogus") } then random {
 				- "flar"

@@ -21,8 +21,9 @@ abstract class NPC(open val cooldown: Long = 20000L, open val replyDelay: Long =
 	/** Should be called when there's a multiversal message received */
 	open fun multiversalMessageReceived(message: Message) {
 		val origin = buildString {
+			append(message.content)
 			message.attachments.forEach { append('\n').append(it.filename) }
-		}
+		}.lowercase()
 		
 		if (!origin.isEmpty()) {
 			lastProcessed = message
@@ -31,11 +32,9 @@ abstract class NPC(open val cooldown: Long = 20000L, open val replyDelay: Long =
 			if (reply != null) Vars.client.launch {
 				delay(replyDelay)
 				
-				if (reply != null) {
-					Multiverse.brodcast(0UL, obtainUsertag(), avatar) {
-						content = reply
-						quoteMessage(message)
-					}
+				Multiverse.brodcast(0UL, obtainUsertag(), avatar) {
+					content = reply
+					quoteMessage(message)
 				}
 			}
 		}
