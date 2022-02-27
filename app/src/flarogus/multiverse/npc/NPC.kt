@@ -15,6 +15,7 @@ abstract class NPC(open val cooldown: Long = 20000L, open val replyDelay: Long =
 	abstract val dialog: RootNode
 	
 	var lastMessage = 0L
+	val history = ArrayList<List<WebhookMessageBehavior>>(30)
 	
 	var lastProcessed: Message? = null
 	
@@ -35,12 +36,16 @@ abstract class NPC(open val cooldown: Long = 20000L, open val replyDelay: Long =
 				lastMessage = System.currentTimeMillis() + replyDelay
 				delay(replyDelay)
 				
-				Multiverse.brodcast(0UL, obtainUsertag(), avatar) {
-					content = reply
-					quoteMessage(message)
-				}
+				sendMessage(reply, message)
 			}
 		}
+	}
+	
+	open suspend fun sendMessage(message: String, reference: Message?) {
+		Multiverse.brodcast(0UL, obtainUsertag(), avatar) {
+			content = message
+			if (reference != null) quoteMessage(reference)
+		}.also { history.add(it) }
 	}
 	
 	/** If this method returns null, there is no message */

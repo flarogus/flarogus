@@ -60,22 +60,6 @@ class AmogusNPC : NPC(1000L * 60 * 4) {
 				}
 			}
 			
-			//when someone replies something like "you're amogus"
-			If { it.contains("you") && it.contains("amogus") && isOwnMessage(lastProcessed?.referencedMessage) } then random {
-				- "that's a lie"
-				- "lies"
-				- "no"
-			}
-			
-			//when someone asks something like "who are you"
-			If { it.contains("who") && it.contains("you") && isOwnMessage(lastProcessed?.referencedMessage) } then "I'm " and random {
-				- "your local amogus"
-				- "just a normal fella"
-				- "totally a human"
-				- "a crewmate"
-				- "an impostor"
-			}
-			
 			If { it.contains("what") && it.contains("is") && it.contains("flarogus") } then random {
 				- "flar"
 				- "flarogus"
@@ -85,6 +69,31 @@ class AmogusNPC : NPC(1000L * 60 * 4) {
 				- "frien"
 				- "friend"
 			} and "!"
+			
+			If { isOwnMessage(lastProcessed?.referencedMessage) } then condition {
+				//when someone replies something like "you're amogus"
+				If { it.contains("you") && it.contains("amogus") } then random {
+					- "that's a lie"
+					- "lies"
+					- "no"
+				}
+				
+				//when someone asks something like "who are you"
+				If { it.contains("who") && it.contains("you") } then "I'm " and random {
+					- "your local amogus"
+					- "just a normal fella"
+					- "totally a human"
+					- "a crewmate"
+					- "an impostor"
+				}
+				
+				//just a generic answer
+				If { it.contains("you") } then random {
+					- "idc"
+					- "I don't care"
+					- "ok"
+				}
+			}
 			
 			//else
 			If { true } then ""

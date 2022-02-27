@@ -139,8 +139,13 @@ object Settings {
 		
 		if (!found) {
 			try {
-				//this message will be used on the next call of updateState()
+				//this message will or will not be used on the next call of updateState()
 				Vars.client.unsafe.messageChannel(settingsChannel).createMessage(settingsPrefix)
+				
+				//wait for 30 seconds and try again — this might have been a discord issue.
+				//this instance must not start until we notify other instances about it's existence.
+				delay(1000L * 30)
+				updateState()
 			} catch (ignored: Exception) {}
 		}
 	}

@@ -8,7 +8,10 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import dev.kord.common.entity.*
 import dev.kord.rest.builder.message.create.*
+import dev.kord.rest.builder.message.modify.*
+import dev.kord.core.*
 import dev.kord.core.event.message.*
+import dev.kord.core.supplier.*
 import dev.kord.core.entity.*
 import dev.kord.core.entity.channel.*
 import dev.kord.core.behavior.*
@@ -165,7 +168,7 @@ object Multiverse {
 					}
 					
 					//save to history
-					val multimessage = Multimessage(MessageBehavior(event.message), messages)
+					val multimessage = Multimessage(MessageBehavior(event.message.channelId, event.message.id, event.message.kord), messages)
 					history.add(multimessage)
 					
 					//notify npcs
@@ -253,22 +256,29 @@ object Multiverse {
 	 *
 	 * @return array containing ids of all created messages
 	 **/
-	inline suspend fun brodcast(exclude: ULong = 0UL, user: String? = null, avatar: String? = null, crossinline message: suspend MessageCreateBuilder.() -> Unit): List<MessageBehavior> {
-		val messages = ArrayList<MessageBehavior>(universeWebhooks.size)
-		val deferreds = arrayOfNulls<Deferred<Message?>>(universeWebhooks.size) //todo: can i avoid this array allocation?
+	inline suspend fun brodcast(
+		exclude: ULong = 0UL,
+		user: String? = null,
+		avatar: String? = null,
+		crossinline message: suspend MessageCreateBuilder.() -> Unit
+	): List<WebhookMessageBehavior> {
+		val messages = ArrayList<WebhookMessageBehavior>(universeWebhooks.size)
+		val deferreds = arrayOfNulls<Deferred<WebhookMessageBehavior?>>(universeWebhooks.size) //todo: can i avoid this array allocation?
 		
 		universeWebhooks.forEachIndexed { index, it ->
 			if (exclude != it.channel.id.value && Lists.canReceive(it.channel)) {
 				deferreds[index] = Vars.client.async {
 					try {
 						if (it.webhook != null) {
-							return@async it.webhook!!.execute(it.webhook!!.token!!) {
+							val message = it.webhook!!.execute(it.webhook!!.token!!) {
 								message()
 								content = content?.take(1999)?.stripEveryone()
 								allowedMentions() //forbid all mentions
 								username = user ?: "unknown user"
 								avatarUrl = avatar
 							}
+							
+							return@async WebhookMessageBehavior(it.webhook!!, message)
 						}
 					} catch (e: Exception) {
 						Log.error { "failed to retranslate a message into ${it.channel.id}: $e" }
@@ -280,8 +290,7 @@ object Multiverse {
 		}
 		
 		deferreds.forEach { def ->
-			//even though Message implements MessageBehavior, it's too heavy to be stored in the history forever.
-			def?.await()?.let { messages.add(MessageBehavior(it)) }
+			def?.await()?.let { messages.add(it) }
 		}
 		
 		return messages
@@ -294,14 +303,29 @@ object Multiverse {
 	
 }
 
-/** Utility: copies a MessageBehavior */
-fun MessageBehavior(message: MessageBehavior) = MessageBehavior(channelId = message.channelId, messageId = message.id, kord = message.kord)
-
 data class UniverseEntry(var webhook: Webhook?, val channel: TextChannel, var hasReported: Boolean = false)
+
+data class WebhookMessageBehavior(
+	val webhook: Webhook,
+	override val channelId: Snowflake,
+	override val id: Snowflake,
+	override val kord: Kord = Vars.client,
+	override val supplier: EntitySupplier = Vars.supplier
+) : MessageBehavior {
+	constructor(webhook: Webhook, message: Message) : this(webhook, message.channelId, message.id, message.kord)
+	
+	suspend open inline fun edit(builder: WebhookMessageModifyBuilder.() -> Unit): Message {
+		return edit(webhookId = webhook.id, token = webhook.token!!, builder = builder) //have to specify the parameter name in order for kotlinc to understand me
+	}
+	
+	override suspend open fun delete(ignored: String?) {
+		delete(webhook.id, webhook.token!!, null)
+	}
+}
 
 data class Multimessage(
 	val origin: MessageBehavior,
-	val retranslated: List<MessageBehavior>
+	val retranslated: List<WebhookMessageBehavior>
 ) {
 	operator fun contains(other: MessageBehavior) = other.id == origin.id || retranslated.any { other.id == it.id };
 	
