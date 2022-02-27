@@ -68,12 +68,11 @@ object Multiverse {
 		Vars.client.events
 			.filterIsInstance<MessageCreateEvent>()
 			.filter { it.message.author?.id?.value != Vars.botId }
+			.filter { event -> !isOwnMessage(event.message) }
 			.filter { event -> universes.any { event.message.channel.id == it.id } }
 			.onEach { event ->
 				val userid = event.message.author?.id
 				val guild = event.getGuild()
-				
-				if (isOwnMessage(event.message)) return@onEach
 				
 				if (!Lists.canTransmit(guild, event.message.author)) {
 					replyWith(event.message, """
@@ -166,7 +165,7 @@ object Multiverse {
 					}
 					
 					//save to history
-					val multimessage = Multimessage(event.message.id, messages)
+					val multimessage = Multimessage(MessageBehavior(event.message), messages)
 					history.add(multimessage)
 					
 					//notify npcs
@@ -254,8 +253,8 @@ object Multiverse {
 	 *
 	 * @return array containing ids of all created messages
 	 **/
-	inline suspend fun brodcast(exclude: ULong = 0UL, user: String? = null, avatar: String? = null, crossinline message: suspend MessageCreateBuilder.() -> Unit): List<Snowflake> {
-		val messages = ArrayList<Snowflake?>(universeWebhooks.size)
+	inline suspend fun brodcast(exclude: ULong = 0UL, user: String? = null, avatar: String? = null, crossinline message: suspend MessageCreateBuilder.() -> Unit): List<MessageBehavior> {
+		val messages = ArrayList<MessageBehavior>(universeWebhooks.size)
 		val deferreds = arrayOfNulls<Deferred<Message?>>(universeWebhooks.size) //todo: can i avoid this array allocation?
 		
 		universeWebhooks.forEachIndexed { index, it ->
@@ -280,12 +279,13 @@ object Multiverse {
 			}
 		}
 		
-		deferreds.forEachIndexed { index: Int, def ->
-			messages[index] = def?.await()?.id
+		deferreds.forEach { def ->
+			//even though Message implements MessageBehavior, it's too heavy to be stored in the history forever.
+			def?.await()?.let { messages.add(MessageBehavior(it)) }
 		}
 		
-		return messages.also { it.removeAll { it == null } } as ArrayList<Snowflake>
-	};
+		return messages
+	}
 	
 	/** Returns whether this message was sent by flarogus */
 	fun isOwnMessage(message: Message): Boolean {
@@ -294,10 +294,16 @@ object Multiverse {
 	
 }
 
+/** Utility: copies a MessageBehavior */
+fun MessageBehavior(message: MessageBehavior) = MessageBehavior(channelId = message.channelId, messageId = message.id, kord = message.kord)
+
 data class UniverseEntry(var webhook: Webhook?, val channel: TextChannel, var hasReported: Boolean = false)
 
-data class Multimessage(val origin: Snowflake, val retranslated: List<Snowflake>) {
-	operator fun contains(other: MessageBehavior) = other.id == origin || retranslated.any { other.id == it };
+data class Multimessage(
+	val origin: MessageBehavior,
+	val retranslated: List<MessageBehavior>
+) {
+	operator fun contains(other: MessageBehavior) = other.id == origin.id || retranslated.any { other.id == it.id };
 	
-	operator fun contains(other: Snowflake) = origin == other || other in retranslated;
+	operator fun contains(other: Snowflake) = origin.id == other || retranslated.any { other == it.id };
 }
