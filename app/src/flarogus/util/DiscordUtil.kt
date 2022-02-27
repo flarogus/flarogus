@@ -179,13 +179,16 @@ inline suspend fun fetchMessages(channelId: Snowflake, crossinline handler: susp
 	}
 };
 
+val nameRegex = """^([.*])?(.*#\d\d\d\d) — .*""".toRegex()
+
 /** Adds an embed referencing the original message */
 fun MessageCreateBuilder.quoteMessage(message: Message?) {
 	if (message != null) {
 		val author = User(message.data.author, Vars.client) //gotta construct one myself if the default api doesn't allow that
+		val authorName = nameRegex.find(author.username)?.groupValues?.getOrNull(2) ?: "${author.username}#${author.discriminator}"
 		
 		embed {
-			title = "(reply to ${author.username})"
+			title = "(reply to ${authorName})"
 			description = buildString {
 				val replyOrigin = "(> .+\n)?((?s).+)".toRegex().find(message.content)?.groupValues?.getOrNull(2)?.replace('\n', ' ') ?: "<no content>"
 				append(replyOrigin.take(100).replace("/", "\\/"))
