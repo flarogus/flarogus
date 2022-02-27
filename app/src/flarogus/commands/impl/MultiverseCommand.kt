@@ -105,7 +105,7 @@ private val subcommands: Map<String, CustomCommand> = mapOf(
 		handler = {
 			message.channel.createEmbed {
 				val warnings = Lists.warns.getOrDefault(message.author!!.id, null)?.fold(0) { a, v -> a + v.points }?.toString() ?: "no"
-				description = "User ${message?.author?.tag} has $warnings warning points"
+				description = "User ${message.author?.tag} has $warnings warning points"
 			}
 		},
 		description = "list warnings of the caller"

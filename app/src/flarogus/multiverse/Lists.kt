@@ -121,7 +121,6 @@ enum class RuleCategory(val index: Int, val description: String, val rules: List
 	)),
 	
 	ADDITIONAL(2, "notes", listOf(
-		Rule(-1, "Guilds with @еveryone / @hеre in their names are automatically banned until the next restart."),
 		Rule(-1, "Multiversal admins are Mnemotechnician#9967, SMOLKEYS#4156, real sushi#0001."),
 		Rule(-1, "Your multiversal channels are your responsibility, it doesn't matter whether you connect a general channel of a popular server or an admin-only channel, rules still apply."),
 		Rule(-1, "The fact that 2 of 3 admins are furries __does not__ mean you can post yiff in multiverse!")
@@ -146,7 +145,7 @@ enum class RuleCategory(val index: Int, val description: String, val rules: List
 		rules.forEachIndexed { i: Int, it -> append(i + 1).append(". ").append(it).append('\n') }
 	};
 	
-	operator fun get(number: Int): Rule = (rules.getOrNull(number - 1) ?: throw IllegalArgumentException("rule '$this.$index' doesn't exist!"))
+	operator fun get(number: Int): Rule = (rules.getOrNull(number - 1) ?: throw IllegalArgumentException("rule '${super.toString()}.$index' doesn't exist!"))
 	
 	companion object {
 		fun of(category: Int, rule: Int) = RuleCategory.values().find { it.index == category }?.get(rule)

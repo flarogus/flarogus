@@ -12,6 +12,8 @@ class AmogusNPC : NPC(1000L * 60 * 4) {
 	override val dialog = buildDialog {
 		- condition {
 			If { it.contains(":sus:") } then random {
+				- ""
+				
 				- "STOP " and random {
 					- "POSTING"
 					- "TALKING"
@@ -30,6 +32,12 @@ class AmogusNPC : NPC(1000L * 60 * 4) {
 				- "no"
 				- "NO!"
 				- "stop"
+				
+				- "shut up" and random {
+					- ""
+					- "!"
+					- " amogus poster"
+				}
 			}
 			
 			If { it.contains("amogus") && it.length < 15 } then random {
@@ -53,10 +61,19 @@ class AmogusNPC : NPC(1000L * 60 * 4) {
 			}
 			
 			//when someone replies something like "you're amogus"
-			If { it.contains("you") && it.contains("amogus") && lastProcessed?.referencedMessage?.data?.author?.username?.contains(name) ?: false } then random {
+			If { it.contains("you") && it.contains("amogus") && isOwnMessage(lastProcessed?.referencedMessage) } then random {
 				- "that's a lie"
 				- "lies"
 				- "no"
+			}
+			
+			//when someone asks something like "who are you"
+			If { it.contains("who") && it.contains("you") && isOwnMessage(lastProcessed?.referencedMessage) } then "I'm " and random {
+				- "your local amogus"
+				- "just a normal fella"
+				- "totally a human"
+				- "a crewmate"
+				- "an impostor"
 			}
 			
 			If { it.contains("what") && it.contains("is") && it.contains("flarogus") } then random {
@@ -65,7 +82,8 @@ class AmogusNPC : NPC(1000L * 60 * 4) {
 			} and " is my " and random {
 				- "favorite bot"
 				- "beloved"
-				- "frien" and run { if (Random.nextInt(0, 1) == 1) "d" else "" }
+				- "frien"
+				- "friend"
 			} and "!"
 			
 			//else

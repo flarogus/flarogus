@@ -34,6 +34,9 @@ object Multiverse {
 	val ratelimited = HashMap<Snowflake, Long>(150)
 	val ratelimit = 2000L
 	
+	/** Array containing all messages sent in this instance */
+	val history = ArrayList<Multimessage>(1000)
+	
 	/** Files with size exceeding this limit will be sent in the form of links */
 	val maxFileSize = 1024 * 1024 * 3 - 1024
 	
@@ -61,7 +64,7 @@ object Multiverse {
 		
 		fixedRateTimer("update state", true, initialDelay = 5000L, period = 45 * 1000L) { updateState() }
 		
-		//retranslate any messages in multiverse channels
+		//retranslate meesages sent into multiversal channels
 		Vars.client.events
 			.filterIsInstance<MessageCreateEvent>()
 			.filter { it.message.author?.id?.value != Vars.botId }
@@ -80,14 +83,6 @@ object Multiverse {
 					Log.info { "${event.message.author?.tag}'s multiversal message was not retranslated: `${event.message.content.take(200)}`" }
 					return@onEach
 				}
-				
-				/*
-				//block messages with oversize files: most servers don't accept >=8mb files
-				if (event.message.data.attachments.any { it.size > maxFilesize }) {
-					replyWith(event.message, "Cannot retranslate this message: file size ≥ 8mb")
-					return@onEach
-				}
-				*/
 				
 				try {
 					//instaban spammers
@@ -120,7 +115,7 @@ object Multiverse {
 						}
 					}
 					
-					//actual retranslation
+					//actual retranslation region
 					val original = event.message.content
 					val webhook = event.message.webhookId?.let { Vars.supplier.getWebhookOrNull(it) }
 					val author = event.message.author?.tag?.replace("*", "\\*") ?: "webhook<${webhook?.name}>"
@@ -155,7 +150,8 @@ object Multiverse {
 					
 					val beginTime = System.currentTimeMillis()
 					
-					brodcast(event.message.channel.id.value, username, event.message.author?.getAvatarUrl() ?: webhook?.data?.avatar) {
+					//actually brodcast
+					val messages = brodcast(event.message.channel.id.value, username, event.message.author?.getAvatarUrl() ?: webhook?.data?.avatar) {
 						var finalContent = finalMessage
 						
 						quoteMessage(event.message.referencedMessage)
@@ -169,6 +165,11 @@ object Multiverse {
 						content = finalContent
 					}
 					
+					//save to history
+					val multimessage = Multimessage(event.message.id, messages)
+					history.add(multimessage)
+					
+					//notify npcs
 					npcs.forEach { it.multiversalMessageReceived(event.message) }
 					
 					val time = System.currentTimeMillis() - beginTime
@@ -181,27 +182,21 @@ object Multiverse {
 	
 	/** Searches for channels with "multiverse" in their names in all guilds this bot is in */
 	suspend fun findChannels() {
-		//todo: this code is unoptimized AS FUCK and I don't know why I've choosen these exact solutions.
-		//this method is to be rewritten
-		Vars.client.rest.user.getCurrentUserGuilds().forEach { 
-			if (it.name.contains("@everyone") || it.name.contains("@here")) {
-				//instant blacklist, motherfucker
-				Lists.blacklist.add(it.id)
-				return@forEach
-			}
+		Vars.client.rest.user.getCurrentUserGuilds().forEach {
+			val guild = Vars.supplier.getGuildOrNull(it.id) //gCUG() returns a flow of partial discord guilds.
 			
-			Vars.client.unsafe.guild(it.id).asGuild().channelBehaviors.forEach {
+			if (guild != null && guild.id !in Lists.blacklist) guild.channelBehaviors.forEach {
 				var c = it.asChannel()
 				
 				if (c.data.type == ChannelType.GuildText && c.data.name.toString().contains("multiverse")) {
 					if (!universes.any { it.id.value == c.id.value }) {
-						universes += TextChannel(c.data, Vars.client)
+						universes += TextChannel(c.data, Vars.client) //todo: a simple cast should be enough but I'm afraid of breaking everything
 					}
 				}
 			}
 		}
 		
-		//find webhooks of these channels
+		//acquire webhooks for these channels
 		universes.forEach { universe ->
 			val entry = universeWebhooks.find { it.channel.id == universe.id } ?: UniverseEntry(null, universe).also { universeWebhooks.add(it) }
 			
@@ -253,16 +248,22 @@ object Multiverse {
 	/** Same as normal brodcast but uses system pfp & name */
 	inline suspend fun brodcastSystem(crossinline message: suspend MessageCreateBuilder.() -> Unit) = brodcast(0UL, systemName, systemAvatar, message)
 	
-	/** Sends a message into every multiverse channel expect blacklisted and the one with id == exclude  */
-	inline suspend fun brodcast(exclude: ULong = 0UL, user: String? = null, avatar: String? = null, crossinline message: suspend MessageCreateBuilder.() -> Unit) {
-		val deferreds = arrayOfNulls<Deferred<Any>>(universeWebhooks.size) //todo: can i avoid array allocation?
+	/**
+	 * Sends a message into every multiverse channel except the ones that are blacklisted and the one sith id == exclude
+	 * Accepts username and pfp url parameters
+	 *
+	 * @return array containing ids of all created messages
+	 **/
+	inline suspend fun brodcast(exclude: ULong = 0UL, user: String? = null, avatar: String? = null, crossinline message: suspend MessageCreateBuilder.() -> Unit): List<Snowflake> {
+		val messages = ArrayList<Snowflake?>(universeWebhooks.size)
+		val deferreds = arrayOfNulls<Deferred<Message?>>(universeWebhooks.size) //todo: can i avoid this array allocation?
 		
 		universeWebhooks.forEachIndexed { index, it ->
 			if (exclude != it.channel.id.value && Lists.canReceive(it.channel)) {
 				deferreds[index] = Vars.client.async {
 					try {
 						if (it.webhook != null) {
-							it.webhook!!.executeIgnored(it.webhook!!.token!!) {
+							return@async it.webhook!!.execute(it.webhook!!.token!!) {
 								message()
 								content = content?.take(1999)?.stripEveryone()
 								allowedMentions() //forbid all mentions
@@ -273,12 +274,17 @@ object Multiverse {
 					} catch (e: Exception) {
 						Log.error { "failed to retranslate a message into ${it.channel.id}: $e" }
 					}
+					
+					null
 				}
 			}
 		}
 		
-		//wait for every deferred to finish
-		deferreds.forEach { if (it != null) it.await() }
+		deferreds.forEachIndexed { index: Int, def ->
+			messages[index] = def?.await()?.id
+		}
+		
+		return messages.also { it.removeAll { it == null } } as ArrayList<Snowflake>
 	};
 	
 	/** Returns whether this message was sent by flarogus */
@@ -289,3 +295,9 @@ object Multiverse {
 }
 
 data class UniverseEntry(var webhook: Webhook?, val channel: TextChannel, var hasReported: Boolean = false)
+
+data class Multimessage(val origin: Snowflake, val retranslated: List<Snowflake>) {
+	operator fun contains(other: MessageBehavior) = other.id == origin || retranslated.any { other.id == it };
+	
+	operator fun contains(other: Snowflake) = origin == other || other in retranslated;
+}

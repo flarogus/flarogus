@@ -39,7 +39,7 @@ suspend fun main(vararg args: String) = runBlocking {
 	
 	initCommands()
 	
-	//shutdown after 5.5 hours. This should never happen: the instance should shut itself down after noticing there's another instance running
+	//shutdown after 5.5 hours. This should never happen: the instance should shut itself down after noticing that there's another instance running
 	Timer(true).schedule(1000 * 60 * 60 * 5L + 1000 * 60 * 30L) {
 		Vars.client.launch {
 			Log.info { "a multiverse instance is shutting down" }

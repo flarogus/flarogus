@@ -25,11 +25,14 @@ abstract class NPC(open val cooldown: Long = 20000L, open val replyDelay: Long =
 			message.attachments.forEach { append('\n').append(it.filename) }
 		}.lowercase()
 		
-		if (!origin.isEmpty()) {
+		val timePassed = System.currentTimeMillis() - lastMessage
+		
+		if (timePassed > cooldown && !origin.isEmpty()) {
 			lastProcessed = message
 			val reply = processMessage(origin)
 			
 			if (reply != null) Vars.client.launch {
+				lastMessage = System.currentTimeMillis() + replyDelay
 				delay(replyDelay)
 				
 				Multiverse.brodcast(0UL, obtainUsertag(), avatar) {
@@ -40,21 +43,17 @@ abstract class NPC(open val cooldown: Long = 20000L, open val replyDelay: Long =
 		}
 	}
 	
-	/** If this method returns null, there is no reply */
+	/** If this method returns null, there is no message */
 	open fun processMessage(message: String): String? {
-		val passed = System.currentTimeMillis() - lastMessage
-		lastMessage = System.currentTimeMillis()
-		
-		return if (passed > cooldown) {
-			dialog.construct(message).let { if (it.isEmpty()) null else it }
-		} else {
-			null
-		}
+		return dialog.construct(message).let { if (it.isEmpty()) null else it }
 	}
 	
 	open fun obtainUsertag(): String {
 		val hash = name.hashCode() xor 0b010101010101
-		val discriminator = hash.toString().takeLast(4).padStart(4, '0')
+		val discriminator = hash.toString().padStart(4, '0').takeLast(4)
 		return "$name#$discriminator — $location"
 	}
+	
+	/** This method assumes that the message was sent via a webhook (just like a normal multiversal message) */
+	open fun isOwnMessage(message: Message?) = message != null && message.data.author.username.contains(obtainUsertag())
 }
