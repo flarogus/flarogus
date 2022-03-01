@@ -201,6 +201,15 @@ fun initCommands() {
 	}
 	.setHeader("message: String")
 	.setDescription("Send a message that will be visible to admins")
+	
+	register("server") {
+		try {
+			message.author?.getDmChannel()?.createMessage()
+		} catch (e: Exception) {
+			
+		}
+	}
+	.setDescription("Get an invite to the official server")
 }
 
 suspend fun MessageChannelBehavior.sendHelp(user: User, origin: Map<out Any, flarogus.commands.Command>) {

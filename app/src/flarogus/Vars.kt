@@ -33,6 +33,7 @@ object Vars {
 	fun loadState() {
 		ubid = Random.nextInt(0, 1000000000).toString()
 		startedAt = System.currentTimeMillis()
+		flarogusEpoch = startedAt
 	}
 	
 	fun saveState() {

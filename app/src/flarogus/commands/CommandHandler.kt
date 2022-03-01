@@ -8,13 +8,15 @@ import flarogus.util.*
 import flarogus.commands.Command as FlarogusCommand
 import flarogus.multiverse.*
 
-object CommandHandler {
+val CommandHandler = FlarogusCommandHandler()
+
+open class FlarogusCommandHandler {
 	
 	val commands = HashMap<String, FlarogusCommand>(50)
 	
 	/** Invokes the command handler associated with the first word (command name) in the message.
 	 *  Provides an array or arguments to the handler, 0th element is the source message without the command name */
-	suspend fun handle(scope: CoroutineScope, message: String, event: MessageCreateEvent) = scope.launch {
+	open suspend fun handle(scope: CoroutineScope, message: String, event: MessageCreateEvent) = scope.launch {
 		val args = message.split(" ").filter { !it.isEmpty() }.toMutableList()
 		
 		val commandName = args.getOrNull(0)
@@ -57,18 +59,18 @@ object CommandHandler {
 		}
 	}
 	
-	fun register(name: String, command: FlarogusCommand): FlarogusCommand {
+	open fun register(name: String, command: FlarogusCommand): FlarogusCommand {
 		commands.put(name, command)
 		return command
 	}
 	
-	fun register(name: String, handler: suspend MessageCreateEvent.(List<String>) -> Unit): FlarogusCommand {
+	open fun register(name: String, handler: suspend MessageCreateEvent.(List<String>) -> Unit): FlarogusCommand {
 		val command = FlarogusCommand(handler)
 		commands.put(name, command)
 		return command
 	}
 	
-	fun remove(name: String) {
+	open fun remove(name: String) {
 		commands.remove(name)
 	}
 	

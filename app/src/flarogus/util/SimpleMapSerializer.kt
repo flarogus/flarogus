@@ -7,6 +7,7 @@ typealias SimpleMap = MutableMap<String, Any>
  * Supports Int, Long, UInt, ULong, String, Array as values.
  * arrays must not have > 65000 elements, but who would want to serialize such arrays into strings anyways?
  */
+@SuppressWarnings("IMPLICIT_CAST_TO_ANY")
 object SimpleMapSerializer {
 	
 	//constant types. these should NOT be modified, such action will make the serializer incompatible with older versions
@@ -36,7 +37,9 @@ object SimpleMapSerializer {
 	//serialization region
 	/** 
 	 * Serializes a map.
+	 
 	 * @throws NullPointerException if the map contains null values
+	 * @throws ClassCastException if the map contains unsupported value types
 	 */
 	fun serialize(from: SimpleMap): String {
 		val b = StringBuilder(500)
@@ -50,7 +53,6 @@ object SimpleMapSerializer {
 	
 	fun StringBuilder.writeMapEntry(k: String, v: Any): StringBuilder {
 		append(k).append(keyTypeSplitter)
-		
 		return writeValue(v)
 	}
 	
@@ -65,9 +67,9 @@ object SimpleMapSerializer {
 			ULONG -> append(other as ULong)
 			STRING -> append(other as String)
 			ARRAY -> append('0' + (other as Array<*>).size).writeArray(other)
-			//MAP -> append('0' + (other as SimpleMap).size).writeMap(other as SimpleMap)
+			MAP -> append('0' + (other as SimpleMap).size).writeMap(other)
 			
-			else -> throw IllegalArgumentException("unsupported value type: ${other::class}")
+			else -> throw ClassCastException("unsupported value type: ${other::class}")
 		}
 		
 		return append(valueEnd)
@@ -99,7 +101,7 @@ object SimpleMapSerializer {
 		is UInt -> UINT
 		is ULong -> ULONG
 		is Array<*> -> ARRAY
-		//is Map<*, *> -> MAP //can't use SimpleMap here.
+		is Map<*, *> -> MAP //can't use SimpleMap here. Shouldn't appear nonetheless.
 		is String -> STRING
 		else -> UNKNOWN
 	};
@@ -129,8 +131,7 @@ object SimpleMapSerializer {
 					tempbuilder.append(c)
 				}
 				
-				//executed upon meeting a key value splitter
-				
+				//executed upon meeting a key type splitter
 				output[tempbuilder.toString()] = processValue()
 				
 				expect(entrySplitter)
@@ -139,7 +140,6 @@ object SimpleMapSerializer {
 			return output
 		}
 		
-		//todo: repeating code?
 		fun processValue(): Any {
 			//type
 			val type = (input[++index] - 'a').toInt()
@@ -166,18 +166,38 @@ object SimpleMapSerializer {
 					expect(valueEnd)
 					array
 				}
-				/*MAP -> {
-					idk
+				MAP -> {
+					val size = input[++index] - '0'
+					val map = HashMap<String, Any>(size)
+					var element = 0
+					
+					expect(mapBegin)
+					
+					while (element < size) {
+						val key = tempbuilder.let {
+							it.clear()
+							while (true) {
+								val c = input[++index]
+								if (c == valueEnd) break
+								it.append(c)
+							}
+							it.toString()
+						}
+						expect(keyTypeSplitter)
+						map[key] = processValue()
+						expect(mapSplitter)
+						element++
+					}
+					
+					expect(mapEnd)
 					expect(valueEnd)
-				}*/
+				}
 				STRING -> {
 					tempbuilder.clear()
 					
 					while (true) {
 						val c = input[++index]
-						
 						if (c == valueEnd) break
-						
 						tempbuilder.append(c)
 					}
 					

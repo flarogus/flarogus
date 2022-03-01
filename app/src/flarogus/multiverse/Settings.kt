@@ -37,13 +37,13 @@ object Settings {
 		}
 		onSave { it["runWhitelist"] = Vars.runWhitelist.toTypedArray() }
 		
-		onLoad {	
-			Vars.flarogusEpoch = it.getOrDefault("epoch", null)?.asOrNull<Long>() ?: System.currentTimeMillis()
+		onLoad {
+			it.getOrDefault("epoch", null)?.asOrNull<Long>() ?: System.currentTimeMillis()?.let { Vars.flarogusEpoch = it }
 		}
 		onSave { it["epoch"] = Vars.flarogusEpoch }
 		
 		onLoad {
-			Log.level = Log.LogLevel.of(it.getOrDefault("log", null)?.asOrNull<Int>() ?: -1)
+			Log.LogLevel.of(it.getOrDefault("log", null)?.asOrNull<Int>() ?: -1)?.let { Log.level = it }
 		}
 		onSave { it["log"] = Log.level.level }
 		
@@ -87,8 +87,8 @@ object Settings {
 				val map = SimpleMapSerializer.deserialize(it.content.substring(settingsPrefix.length))
 				
 				//throwing an exception is perfectly fine here
-				if (map["ubid"] as String? != Vars.ubid) {
-					if (map.getOrDefault("started", 0L) as Long > Vars.startedAt) {
+				if (map.getOrDefault("ubid", Vars.ubid) as? String != Vars.ubid) {
+					if (map.getOrDefault("started", 0L) as? Long ?: 0L > Vars.startedAt) {
 						//shutdown if there's a newer instance running
 						Multiverse.brodcastSystem {
 							embed { description = "another instance is running, shutting the current one down" }

@@ -1,5 +1,7 @@
 package flarogus.multiverse.npc
 
+import kotlin.random.*
+
 typealias Builder = (builder: StringBuilder, origin: String) -> Unit
 fun interface If { operator fun invoke(origin: String): Boolean }
 
@@ -44,6 +46,14 @@ inline fun Node.condition(block: ConditionalNode.() -> Unit) = ConditionalNode(A
 	block()
 };
 
+inline fun Node.repeat(times: Int, node: Node) = RepeatNode(times, node);
+
+inline fun Node.repeat(minTimes: Int, maxTimes: Int, node: Node) = RandomRepeatNode(minTimes, maxTimes, node);
+
+inline fun Node.repeat(times: Int, node: String) = RepeatNode(times, TerminalNode(node));
+
+inline fun Node.repeat(minTimes: Int, maxTimes: Int, node: String) = RandomRepeatNode(minTimes, maxTimes, TerminalNode(node));
+
 /** Adds a trailing string to the node */
 infix fun FollowNode.and(node: String) = FollowNode(node, null).also { this.next = it };
 
@@ -56,7 +66,10 @@ infix fun DoubleNode.and(node: String) = FollowNode(node, null).also { this.seco
 /** Adds a trailing node to the node */
 infix fun <T: Node> DoubleNode.and(node: T) = DoubleNode(node, null).also { this.second = it };
 
-//classes region
+/*
+ * classes region
+ */
+
 abstract class Node {
 	/** Constructs a phrase */
 	abstract fun construct(builder: StringBuilder, origin: String)
@@ -105,6 +118,20 @@ open class DoubleNode(var first: Node?, var second: Node?) : Node() {
 	
 	override open fun count() = (if (first != null) first!!.count() else 1) * (if (second != null) second!!.count() else 1);
 	
+}
+
+open class RepeatNode(open val times: Int, open var repeat: Node) : Node() {
+	override open fun construct(builder: StringBuilder, origin: String) {
+		for (i in 1..times) repeat.construct(builder, origin)
+	}
+	
+	override fun count() = repeat.count()
+}
+
+open class RandomRepeatNode(open var minTimes: Int, open var maxTimes: Int, repeat: Node) : RepeatNode(maxTimes, repeat) {
+	override open val times get() = Random.nextInt(0, maxTimes - minTimes)
+	
+	override fun count() = (maxTimes - minTimes) * repeat.count()
 }
 
 open class RandomNode(override open val children: MutableList<Node>) : TreeNode<Node>() {

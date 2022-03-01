@@ -4,7 +4,7 @@ import kotlin.random.*
 import dev.kord.core.*
 import flarogus.multiverse.npc.*
 
-class AmogusNPC : NPC(1000L * 60 * 4) {
+class AmogusNPC : NPC(1000L * 60 * 1) {
 	override val name = "local amogus"
 	override val location = "oblivion settlement"
 	override val avatar = "https://drive.google.com/uc?export=download&id=19jMVrZwOuWpe7vJ1Gb3Uj0tzi27kXeEY"
@@ -45,12 +45,12 @@ class AmogusNPC : NPC(1000L * 60 * 4) {
 					- ""
 					- " u"
 					- "shut up"
-					- " I'm ain't no " and random {
+					/*- " I'm ain't no " and random {
 						- "impostor"
 						- "impasta"
 						- "sus"
-					}
-				} and run { "!".repeat(Random.nextInt(1, 5)) }
+					}*/
+				} and repeat(1, 5, "!")
 				
 				- "s" and run { "us".repeat(Random.nextInt(1, 5)) } and " " and random {
 					- "amogus"
@@ -85,6 +85,19 @@ class AmogusNPC : NPC(1000L * 60 * 4) {
 					- "totally a human"
 					- "a crewmate"
 					- "an impostor"
+				}
+				
+				If { it.contains("you") && it.contains("sus") } then random {
+					- "shut up"
+					- "no"
+					- "no u"
+				} and repeat(1, 5, "!")
+				
+				If { it.contains("shut") } then random {
+					- "no"
+					- "i won't"
+					- "why"
+					- "no u"
 				}
 				
 				//just a generic answer
