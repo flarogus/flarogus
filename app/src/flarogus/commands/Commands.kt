@@ -58,8 +58,8 @@ fun initCommands() {
 		launch {
 			val image = if (message.attachments.size == 0) {
 				userOrAuthor(it.getOrNull(1), this@register)?.getAvatarUrl()
-			} else { //idk it thinks .jpg is not an image format
-				message.attachments.find { (it.isImage || it.filename.endsWith(".jpg")) && it.width!! < 2000 && it.height!! < 2000 }?.url
+			} else {
+				message.attachments.find { it.isImage && it.width!! < 2000 && it.height!! < 2000 }?.url
 			}
 			if (image == null) throw CommandException("flaroficate", "failed to process: unable to retrieve image url. this can be caused by non-image files attached to the message.")
 			
@@ -202,11 +202,11 @@ fun initCommands() {
 	.setHeader("message: String")
 	.setDescription("Send a message that will be visible to admins")
 	
-	register("server") {
+	CommandHandler.register("server") {
 		try {
-			message.author?.getDmChannel()?.createMessage()
+			message.author?.getDmChannel()?.createMessage("ivite to the core guild: https://discord.gg/kgGaUPx2D2")
 		} catch (e: Exception) {
-			
+			replyWith(message, "couldn't send a DM. make sure you have DMs open ($e)")
 		}
 	}
 	.setDescription("Get an invite to the official server")
