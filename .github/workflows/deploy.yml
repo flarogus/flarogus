@@ -25,3 +25,4 @@ jobs:
       
       - name: Run
         run: java -jar -Dkotlin.script.classpath=./build/app.jar ./build/app.jar ${{ secrets.TOKEN }}
+
