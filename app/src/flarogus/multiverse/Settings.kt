@@ -38,7 +38,7 @@ object Settings {
 		onSave { it["runWhitelist"] = Vars.runWhitelist.toTypedArray() }
 		
 		onLoad {
-			it.getOrDefault("epoch", null)?.asOrNull<Long>() ?: System.currentTimeMillis()?.let { Vars.flarogusEpoch = it }
+			it.getOrDefault("epoch", null)?.asOrNull<Long>()?.let { Vars.flarogusEpoch = it }
 		}
 		onSave { it["epoch"] = Vars.flarogusEpoch }
 		
