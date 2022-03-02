@@ -74,7 +74,7 @@ object ScamDetector {
 	).map { it.toRegex() }
 	
 	fun hasScam(message: String): Boolean {
-		var processed = message
+		var processed = message.lowercase()
 		
 		trustedPatterns.forEach { processed = processed.replace(it, "--TRUSTED--") }
 		

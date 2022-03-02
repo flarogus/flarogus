@@ -11,48 +11,15 @@ class AmogusNPC : NPC(1000L * 60 * 1) {
 	
 	override val dialog = buildDialog {
 		- condition {
-			If { it.contains(":sus:") } then random {
-				- ""
-				
-				- "STOP " and random {
-					- "POSTING"
-					- "TALKING"
-					- "SPEAKING"
-				} and " ABOUT " and random {
-					- "AMONG US"
-					- "AMONGUS"
-					- "AMOGUS"
-					- "SUS"
-				} and "! I" and random {
-					- "'M TIRED OF SEEING IT"
-					- " HATE IT"
-					- " SEE IT EVERYWHERE"
-				} and "!!!"
-				
-				- "no"
-				- "NO!"
-				- "stop"
-				
-				- "shut up" and random {
-					- ""
-					- "!"
-					- " amogus poster"
-				}
-			}
-			
 			If { it.contains("amogus") && it.length < 15 } then random {
 				- "no" and random {
 					- ""
 					- " u"
 					- "shut up"
-					/*- " I'm ain't no " and random {
-						- "impostor"
-						- "impasta"
-						- "sus"
-					}*/
 				} and repeat(1, 5, "!")
 				
-				- "s" and run { "us".repeat(Random.nextInt(1, 5)) } and " " and random {
+				- "s" and repeat(1, 3, "us") and " " and random {
+					- ""
 					- "amogus"
 					- "mogus"
 					- "sugoma"
@@ -85,6 +52,7 @@ class AmogusNPC : NPC(1000L * 60 * 1) {
 					- "totally a human"
 					- "a crewmate"
 					- "an impostor"
+					- "a fan of flarogus corporation"
 				}
 				
 				If { it.contains("you") && it.contains("sus") } then random {
@@ -100,6 +68,15 @@ class AmogusNPC : NPC(1000L * 60 * 1) {
 					- "no u"
 				}
 				
+				//shut up please
+				If { it.contains(":sus:") } then random {
+					- "I TOLD YOU TO STOP"
+					- "don't you dare"
+					- "staaahp"
+					- "go away"
+					- "touch grass"
+				}
+				
 				//just a generic answer
 				If { it.contains("you") } then random {
 					- "idc"
@@ -108,8 +85,51 @@ class AmogusNPC : NPC(1000L * 60 * 1) {
 				}
 			}
 			
+			If { it.contains(":sus:") } then random {
+				- ""
+				
+				- "STOP " and random {
+					- "POSTING"
+					- "TALKING"
+					- "SPEAKING"
+				} and " ABOUT " and random {
+					- "AMONG US"
+					- "AMONGUS"
+					- "AMOGUS"
+					- "SUS"
+				} and "! I" and random {
+					- "'M TIRED OF SEEING IT"
+					- " HATE IT"
+					- " SEE IT EVERYWHERE"
+				} and "!!!"
+				
+				- "no"
+				- "NO!"
+				- "stop"
+				
+				- "shut up" and random {
+					- ""
+					- "!"
+					- " amogus poster"
+					- " crewmate"
+					- " impostor"
+					- " mortal"
+				} and repeat(1, 2, "!")
+				
+				- "s" and repeat(0, 7, "us")
+				- "sussy"
+				- "SHUT BEFORE I BAN U"
+				- run { phrasegen(6, 's', 's', 'u', 'u', 'a', 'm', 'o', 'g') } and repeat(1, 4, "!")
+			}
+			
 			//else
 			If { true } then ""
 		}
+	}
+}
+
+inline fun phrasegen(length: Int, vararg letters: Char) = buildString {
+	repeat(length) {
+		append(letters.random())
 	}
 }

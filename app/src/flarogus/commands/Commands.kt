@@ -204,7 +204,7 @@ fun initCommands() {
 	
 	CommandHandler.register("server") {
 		try {
-			message.author?.getDmChannel()?.createMessage("ivite to the core guild: https://discord.gg/kgGaUPx2D2")
+			message.author?.getDmChannel()?.createMessage("invite to the core guild: https://discord.gg/kgGaUPx2D2")
 		} catch (e: Exception) {
 			replyWith(message, "couldn't send a DM. make sure you have DMs open ($e)")
 		}

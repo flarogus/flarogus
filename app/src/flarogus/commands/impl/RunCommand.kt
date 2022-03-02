@@ -11,7 +11,7 @@ import flarogus.multiverse.*
 val defaultImports = arrayOf(
 	"flarogus.*", "flarogus.util.*", "flarogus.multiverse.*", "ktsinterface.*", "dev.kord.core.entity.*", "dev.kord.core.entity.channel.*",
 	"dev.kord.common.entity.*", "dev.kord.rest.builder.*", "dev.kord.rest.builder.message.*", "dev.kord.rest.builder.message.create.*",
-	"dev.kord.core.behavior.*", "dev.kord.core.behavior.channel.*", "kotlinx.coroutines.*"
+	"dev.kord.core.behavior.*", "dev.kord.core.behavior.channel.*", "kotlinx.coroutines.*", "kotlinx.coroutines.flow.*"
 ).map { "import $it;" }.joinToString("")
 
 val RunCommand = flarogus.commands.Command(
@@ -80,17 +80,6 @@ val RunCommand = flarogus.commands.Command(
 			illegal(cause = "can be used only by the owner", "runWhitelist")
 		}
 		
-		/*if (!isAdmin) {
-			illegal(
-				cause = "can only be used in conjunction with argument '-su'!\n",
-				
-				"Thread", "System", "java.lang.Thread", "java.lang.System",
-				"Class", "KClass", "::class", ".getClass", "ClassLoader",
-				"dev.kord", "KtsObjectLoader", "ScriptEngine", "flarogus.",
-				"java.io",
-				"Process"
-			)
-		}*/
 		if (errCount > 0) {
 			throw CommandException("run", "$errCount errors:\n```\n${errors.take(1500)}\n```")
 		}
