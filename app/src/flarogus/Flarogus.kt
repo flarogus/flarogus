@@ -15,7 +15,6 @@ import flarogus.commands.*;
 import flarogus.multiverse.*
 
 suspend fun main(vararg args: String) = runBlocking {
-	
 	val token = args.getOrNull(0)
 	if (token == null) {
 		println("[ERROR] no token specified")

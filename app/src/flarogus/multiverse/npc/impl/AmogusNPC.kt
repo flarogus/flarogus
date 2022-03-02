@@ -15,7 +15,7 @@ class AmogusNPC : NPC(1000L * 60 * 1) {
 				- "no" and random {
 					- ""
 					- " u"
-					- "shut up"
+					- " shut up"
 				} and repeat(1, 5, "!")
 				
 				- "s" and repeat(1, 3, "us") and " " and random {
