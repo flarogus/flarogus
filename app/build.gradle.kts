@@ -5,7 +5,7 @@ plugins {
 }
 
 kotlin.sourceSets["main"].apply {
-	kotlin.srcDir("src/flarogus")
+	kotlin.srcDirs("src/flarogus")
 	resources.srcDirs("resources")
 }
 
@@ -42,6 +42,9 @@ tasks.jar {
 	}
 	
 	from(*configurations.runtimeClasspath.files.map { if (it.isDirectory()) it else zipTree(it) }.toTypedArray())
+	from(".") {
+		include("resources/**")
+	}
 }
 
 tasks.register<Copy>("deploy") {

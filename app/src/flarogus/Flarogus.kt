@@ -61,5 +61,7 @@ suspend fun main(vararg args: String) = runBlocking {
 		}
 	}
 	
-	Vars.client.login()
+	Vars.client.login {
+		presence { competing("execute `flarogus help` to see the list of available commands.") }
+	}
 }
