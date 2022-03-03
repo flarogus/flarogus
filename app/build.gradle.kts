@@ -4,11 +4,6 @@ plugins {
 	application
 }
 
-kotlin.sourceSets["main"].apply {
-	kotlin.srcDirs("src/flarogus")
-	resources.srcDirs("resources")
-}
-
 repositories {
 	mavenCentral()
 	maven("https://jitpack.io")
@@ -42,9 +37,6 @@ tasks.jar {
 	}
 	
 	from(*configurations.runtimeClasspath.files.map { if (it.isDirectory()) it else zipTree(it) }.toTypedArray())
-	from(".") {
-		include("resources/**")
-	}
 }
 
 tasks.register<Copy>("deploy") {
