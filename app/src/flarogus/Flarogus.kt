@@ -27,7 +27,6 @@ suspend fun main(vararg args: String) = runBlocking {
 	Vars.client.events
 		.filterIsInstance<MessageCreateEvent>()
 		.filter { it.message.data.author.id.value != Vars.botId && it.message.data.webhookId.value == null }
-		.filter { it.message.content.startsWith(Vars.prefix) }
 		.onEach { 
 			try {
 				val isCommand = CommandHandler.handle(it)

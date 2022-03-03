@@ -190,7 +190,7 @@ object Multiverse {
 			if (guild != null && guild.id !in Lists.blacklist) guild.channelBehaviors.forEach {
 				var c = it.asChannel()
 				
-				if (c.data.type == ChannelType.GuildText && c.data.name.toString().contains("multiverse")) {
+				if (c.data.type == ChannelType.GuildText && c.data.name.toString().contains("multiverse") && c.id !in Lists.blacklist) {
 					if (!universes.any { it.id.value == c.id.value }) {
 						universes += TextChannel(c.data, Vars.client) //todo: a simple cast should be enough but I'm afraid of breaking everything
 					}

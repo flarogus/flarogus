@@ -22,8 +22,6 @@ object Vars {
 	val botId: ULong get() = client.selfId.value;
 	/** Mnemotechnican#9967 — discord */
 	val ownerId = 502871063223336990UL
-	/** Bot prefix used for command handling */
-	var prefix = "flarogus"
 	
 	val threadPool = Executors.newFixedThreadPool(5)
 	

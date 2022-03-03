@@ -31,7 +31,7 @@ val MultiverseCommand = CustomCommand(
 	description = "Execute a multiversal subcommand. Use flarogus multiverse help to see all available commands"
 )
 
-private val MultiverseCommandHandler = object : FlarogusCommandHandler() {
+private val MultiverseCommandHandler = object : FlarogusCommandHandler(true, "") {
 	init {
 		val selfRef = this //idk how to reference this anonymous class from register()
 		

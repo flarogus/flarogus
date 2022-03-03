@@ -11,19 +11,23 @@ import flarogus.commands.Command as FlarogusCommand
 import flarogus.multiverse.*
 
 /** Main command handler */
-val CommandHandler = FlarogusCommandHandler(false)
+val CommandHandler = FlarogusCommandHandler(false, "flarogus")
 
 /** Handles discord chat commands */
-open class FlarogusCommandHandler(val ignoreBots: Boolean = true) {
-	
+open class FlarogusCommandHandler(val ignoreBots: Boolean = true, val prefix: String) {
 	val commands = HashMap<String, FlarogusCommand>(50)
 	
-	/** Invokes the command handler associated with the first word (command name) in the message.
-	 *  Provides an array or arguments to the handler, 0th element is the source message without the command name */
+	/** 
+	 * Invokes the command handler associated with the first word (command name) in the message.
+	 * Provides an array or arguments to the handler, 0th element is the source message without the command name 
+	 *
+	 * @return whether the message contained a command that was executed
+	 **/
 	open suspend fun handle(event: MessageCreateEvent): Boolean {
 		if (ignoreBots && event.message.author?.isBot ?: true) return false
+		if (!event.message.content.startsWith(prefix)) return false
 		
-		val message = event.message.content.substring(Vars.prefix.length)
+		val message = event.message.content.substring(prefix.length)
 		val args = message.split(" ").filter { !it.isEmpty() }.toMutableList()
 		
 		val commandName = args.getOrNull(0)
@@ -84,5 +88,4 @@ open class FlarogusCommandHandler(val ignoreBots: Boolean = true) {
 	open fun remove(name: String) {
 		commands.remove(name)
 	}
-	
 }
