@@ -6,6 +6,7 @@ import javax.imageio.*
 import kotlinx.coroutines.*;
 import kotlinx.coroutines.flow.*
 import dev.kord.rest.builder.message.create.*
+import dev.kord.core.cache.data.*
 import dev.kord.core.entity.*;
 import dev.kord.core.*
 import dev.kord.core.event.*
@@ -16,7 +17,7 @@ import dev.kord.common.entity.*
 import flarogus.*
 
 /** Sends a message, waits delayMs, edits it to the output of the lambda */
-fun sendEdited(origin: Message, message: String, delayMs: Long = 0, newMessage: (String) -> String) = Vars.client.launch {
+fun sendEdited(origin: MessageBehavior, message: String, delayMs: Long = 0, newMessage: (String) -> String) = Vars.client.launch {
 	try {
 		val msg = origin.channel.createMessage(message.take(1999).stripEveryone())
 		if (delayMs > 0) delay(delayMs)
@@ -24,16 +25,16 @@ fun sendEdited(origin: Message, message: String, delayMs: Long = 0, newMessage: 
 	} catch (e: Exception) {
 		println(e)
 	}
-}
+};
 
 /** Replies to the message, optionally deletes the message in selfdestructIn ms */
-fun replyWith(origin: Message, message: String, selfdestructIn: Long = -1) = Vars.client.launch {
+fun replyWith(origin: MessageBehavior, message: String, selfdestructIn: Long = -1) = Vars.client.launch {
 	try {
 		val msg = origin.channel.createMessage {
 			content = message.take(1999).stripEveryone()
 			messageReference = origin.id
 		}
-		if (selfdestructIn != -1L) {
+		if (selfdestructIn > 0L) {
 			delay(selfdestructIn)
 			msg.delete()
 		}
@@ -43,15 +44,15 @@ fun replyWith(origin: Message, message: String, selfdestructIn: Long = -1) = Var
 }
 
 /** Sends the message into the same channel the original message was sent into */
-fun sendMessage(to: Message, content: String) = Vars.client.launch {
+/*fun sendMessage(to: MessageBehavior, content: String) = Vars.client.launch {
 	try {
 		to.channel.createMessage(content.take(1999).stripEveryone())
 	} catch (e: Exception) {
 		println(e)
 	}
-}
+}*/
 
-fun sendImage(origin: Message, text: String = "", image: BufferedImage) = Vars.client.launch {
+fun sendImage(origin: MessageBehavior, text: String = "", image: BufferedImage) = Vars.client.launch {
 	try {
 		ByteArrayOutputStream().use {
 			ImageIO.write(image, "png", it);
@@ -199,3 +200,16 @@ fun MessageCreateBuilder.quoteMessage(message: Message?) {
 		}
 	}
 }
+
+/** Creates a message with different content */
+fun fakeMessage(message: Message, newContent: String) = with(message.data) {
+	Message(MessageData(
+		id, channelId, guildId, author, 
+		newContent, timestamp, editedTimestamp, tts,
+		mentionEveryone, mentions, mentionRoles, mentionedChannels,
+		attachments, embeds, reactions, nonce,
+		pinned, webhookId, type, activity,
+		application, applicationId, messageReference, flags,
+		stickers, referencedMessage, interaction
+	), message.kord)
+};

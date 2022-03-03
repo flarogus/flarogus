@@ -11,17 +11,17 @@ data class Command(
 	var header: String? = null,
 	var description: String? = null
 ) {
-	fun setHeader(header: String): Command {
+	fun header(header: String): Command {
 		this.header = header
 		return this
 	}
 	
-	fun setDescription(description: String): Command {
+	fun description(description: String): Command {
 		this.description = description
 		return this
 	}
 	
-	fun setCondition(condition: (User) -> Boolean): Command {
+	fun condition(condition: (User) -> Boolean): Command {
 		this.condition = condition
 		return this
 	}

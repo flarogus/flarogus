@@ -30,9 +30,6 @@ object Lists {
 	/** Amount of warns required for the user to be auto-banned */
 	val criticalWarns = 5
 	
-	val rulesPrefix = "@rules:\n"
-	val ruleRegex = """^(\d+)\.\s?(\d+\*)?\s?([^\n]+)\n?""".toRegex() //$1 is number, $2 is points, $3 is rule description
-	
 	fun updateLists() = Vars.client.launch {
 		//add blacklisted users and guilds
 		fetchMessages(blacklistChannel) {
@@ -154,7 +151,7 @@ enum class RuleCategory(val index: Int, val description: String, val rules: List
 }
 
 class Rule(val points: Int = -1, val description: String) {
-	//these two are init right after creation
+	//these two are inited right after creation
 	var category = -1
 	var index = -1
 	

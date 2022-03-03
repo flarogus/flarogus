@@ -3,6 +3,7 @@ package flarogus.multiverse
 import java.io.*
 import java.net.*
 import kotlin.math.*
+import kotlin.random.*
 import kotlin.concurrent.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -66,121 +67,120 @@ object Multiverse {
 		}
 		
 		fixedRateTimer("update state", true, initialDelay = 5000L, period = 45 * 1000L) { updateState() }
-		
-		//retranslate meesages sent into multiversal channels
-		Vars.client.events
-			.filterIsInstance<MessageCreateEvent>()
-			.filter { it.message.author?.id?.value != Vars.botId }
-			.filter { event -> !isOwnMessage(event.message) }
-			.filter { event -> universes.any { event.message.channel.id == it.id } }
-			.onEach { event ->
-				val userid = event.message.author?.id
-				val guild = event.getGuild()
-				
-				if (!Lists.canTransmit(guild, event.message.author)) {
-					replyWith(event.message, """
-						[!] You're not allowed to send messages in multiverse. Please contact one of admins to find out why.
-						You can do that using `flarogus report`.
-					""".trimIndent())
-					Log.info { "${event.message.author?.tag}'s multiversal message was not retranslated: `${event.message.content.take(200)}`" }
-					return@onEach
-				}
-				
-				try {
-					//instaban spammers
-					if (countPings(event.message.content) > 7) {
-						Lists.blacklist += event.message.author!!.id //we don't need to ban permanently
-						replyWith(event.message, "[!] You've been auto-banned from this multiverse instance. please wait 'till the next restart.")
-						Log.info { "${event.message.author?.tag} was auto-tempbanned for attempting to ping too many people at once" }
-						return@onEach
-					}
-					
-					//block potential spam messages
-					if (ScamDetector.hasScam(event.message.content)) {
-						replyWith(event.message, "[!] your message contains a potential scam. if you're not a bot, remove any links and try again")
-						Log.info { "a potential scam message sent by ${event.message.author?.tag} was blocked: ```${event.message.content.take(200)}```" }
-						return@onEach
-					}
-					
-					//rate limitation
-					if (userid != null) {
-						val current = System.currentTimeMillis()
-						val lastMessage = ratelimited.getOrDefault(userid, 0L)
-						
-						if (current - lastMessage < ratelimit) {
-							Vars.client.launch {
-								replyWith(event.message, "[!] You are being rate limited. Please wait ${ratelimit + lastMessage - current} milliseconds.")
-							}
-							return@onEach
-						} else {
-							ratelimited[userid] = current
-						}
-					}
-					
-					//actual retranslation region
-					val original = event.message.content
-					val webhook = event.message.webhookId?.let { Vars.supplier.getWebhookOrNull(it) }
-					val author = event.message.author?.tag?.replace("*", "\\*") ?: "webhook<${webhook?.name}>"
-					val customTag = Lists.usertags.getOrDefault(userid, null)
-						
-					val username = buildString {
-						if (customTag != null) {
-							append('[')
-							append(customTag)
-							append(']')
-						} else if (userid?.value in Vars.runWhitelist) {
-							append("[Admin]")
-						}
-						append(author)
-						append(" — ")
-						append(guild?.name ?: "<DISCORD>")
-					}
-					
-					var finalMessage = buildString {
-						append(original)
-						
-						event.message.data.attachments.forEach { attachment ->
-							if (attachment.size >= maxFileSize) {
-								append('\n').append(attachment.url)
-							}
-						}
-					}.take(1999)
-					
-					if (finalMessage.isEmpty() && event.message.data.attachments.isEmpty()/* && event.message.data.stickers.isEmpty*/) {
-						finalMessage = "<no content>"
-					}
-					
-					val beginTime = System.currentTimeMillis()
-					
-					//actually brodcast
-					val messages = brodcast(event.message.channel.id.value, username, event.message.author?.getAvatarUrl() ?: webhook?.data?.avatar) {
-						var finalContent = finalMessage
-						
-						quoteMessage(event.message.referencedMessage)
-						
-						event.message.data.attachments.forEach { attachment ->
-							if (attachment.size < maxFileSize) {
-								addFile(attachment.filename, URL(attachment.url).openStream())
-							}
-						}
-						
-						content = finalContent
-					}
-					
-					//save to history
-					val multimessage = Multimessage(MessageBehavior(event.message.channelId, event.message.id, event.message.kord), messages)
-					history.add(multimessage)
-					
-					//notify npcs
-					npcs.forEach { it.multiversalMessageReceived(event.message) }
-					
-					val time = System.currentTimeMillis() - beginTime
-					Log.lifecycle { "$author's multiversal message was retranslated in $time ms." }
-				} catch (e: Exception) {
-					e.printStackTrace()
-				}
-			}.launchIn(Vars.client)
 	}
+	
+	suspend fun messageReceived(event: MessageCreateEvent) {
+		if (isOwnMessage(event.message)) return
+		if (!universes.any { event.message.channel.id == it.id }) return
+		
+		val userid = event.message.author?.id
+		val guild = event.getGuild()
+		
+		if (!Lists.canTransmit(guild, event.message.author)) {
+			replyWith(event.message, """
+				[!] You're not allowed to send messages in multiverse. Please contact one of admins to find out why.
+				You can do that using `flarogus report`.
+			""".trimIndent())
+			Log.info { "${event.message.author?.tag}'s multiversal message was not retranslated: `${event.message.content.take(200)}`" }
+			return
+		}
+		
+		try {
+			//instaban spammers
+			if (countPings(event.message.content) > 7) {
+				Lists.blacklist += event.message.author!!.id //we don't need to ban permanently
+				replyWith(event.message, "[!] You've been auto-banned from this multiverse instance. please wait 'till the next restart.")
+				Log.info { "${event.message.author?.tag} was auto-tempbanned for attempting to ping too many people at once" }
+				return
+			}
+			
+			//block potential spam messages
+			if (ScamDetector.hasScam(event.message.content)) {
+				replyWith(event.message, "[!] your message contains a potential scam. if you're not a bot, remove any links and try again")
+				Log.info { "a potential scam message sent by ${event.message.author?.tag} was blocked: ```${event.message.content.take(200)}```" }
+				return
+			}
+			
+			//rate limitation
+			if (userid != null) {
+				val current = System.currentTimeMillis()
+				val lastMessage = ratelimited.getOrDefault(userid, 0L)
+				
+				if (current - lastMessage < ratelimit) {
+					Vars.client.launch {
+						replyWith(event.message, "[!] You are being rate limited. Please wait ${ratelimit + lastMessage - current} milliseconds.")
+					}
+					return
+				} else {
+					ratelimited[userid] = current
+				}
+			}
+			
+			//actual retranslation region
+			Vars.client.launch {
+				val original = event.message.content
+				val webhook = event.message.webhookId?.let { Vars.supplier.getWebhookOrNull(it) }
+				val author = event.message.author?.tag?.replace("*", "\\*") ?: "webhook<${webhook?.name}>"
+				val customTag = Lists.usertags.getOrDefault(userid, null)
+					
+				val username = buildString {
+					if (customTag != null) {
+						append('[')
+						append(customTag)
+						append(']')
+					} else if (userid?.value in Vars.runWhitelist) {
+						append("[Admin]")
+					}
+					append(author)
+					append(" — ")
+					append(guild?.name ?: "<DISCORD>")
+				}
+				
+				var finalMessage = buildString {
+					append(original)
+					
+					event.message.data.attachments.forEach { attachment ->
+						if (attachment.size >= maxFileSize) {
+							append('\n').append(attachment.url)
+						}
+					}
+				}.take(1999)
+				
+				if (finalMessage.isEmpty() && event.message.data.attachments.isEmpty()/* && event.message.data.stickers.isEmpty*/) {
+					finalMessage = "<no content>"
+				}
+				
+				val beginTime = System.currentTimeMillis()
+				
+				//actually brodcast
+				val messages = brodcast(event.message.channel.id.value, username, event.message.author?.getAvatarUrl() ?: webhook?.data?.avatar) {
+					var finalContent = finalMessage
+					
+					quoteMessage(event.message.referencedMessage)
+					
+					event.message.data.attachments.forEach { attachment ->
+						if (attachment.size < maxFileSize) {
+							addFile(attachment.filename, URL(attachment.url).openStream())
+						}
+					}
+					
+					content = finalContent
+				}
+				
+				//save to history
+				val multimessage = Multimessage(MessageBehavior(event.message.channelId, event.message.id, event.message.kord), messages)
+				history.add(multimessage)
+				
+				//notify npcs
+				npcs.forEach { it.multiversalMessageReceived(event.message) }
+				
+				val time = System.currentTimeMillis() - beginTime
+				Log.lifecycle { "$author's multiversal message was retranslated in $time ms." }
+			}
+		} catch (e: Exception) {
+			e.printStackTrace()
+		}
+	};
 	
 	/** Searches for channels with "multiverse" in their names in all guilds this bot is in */
 	suspend fun findChannels() {
@@ -244,6 +244,7 @@ object Multiverse {
 		findChannels()
 		Lists.updateLists()
 		
+		delay(Random.nextLong(0, 2000L)) //this is to ensure that there will never be situations in which two instances can't notice each other
 		Settings.updateState()
 	}
 	
@@ -318,7 +319,7 @@ data class WebhookMessageBehavior(
 		return edit(webhookId = webhook.id, token = webhook.token!!, builder = builder) //have to specify the parameter name in order for kotlinc to understand me
 	}
 	
-	override suspend open fun delete(ignored: String?) {
+	override suspend open fun delete(reason: String?) {
 		delete(webhook.id, webhook.token!!, null)
 	}
 }

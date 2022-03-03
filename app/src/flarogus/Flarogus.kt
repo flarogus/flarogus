@@ -26,11 +26,12 @@ suspend fun main(vararg args: String) = runBlocking {
 	
 	Vars.client.events
 		.filterIsInstance<MessageCreateEvent>()
-		.filter { it.message.author?.isBot == false }
+		.filter { it.message.data.author.id.value != Vars.botId && it.message.data.webhookId.value == null }
 		.filter { it.message.content.startsWith(Vars.prefix) }
 		.onEach { 
 			try {
-				CommandHandler.handle(this, it.message.content.substring(Vars.prefix.length), it)
+				val isCommand = CommandHandler.handle(it)
+				if (!isCommand) Multiverse.messageReceived(it)
 			} catch (e: Exception) {
 				Log.error { "an uncaught exception has occurred while evaluating a command ran by ${it.message.author?.tag}: $e" }
 			}

@@ -19,34 +19,11 @@ typealias CustomCommand = flarogus.commands.Command
 
 val MultiverseCommand = CustomCommand(
 	handler = {
-		MultiverseCommandHandler.handle(Vars.client, it[0], this)
-		/*
-		val commandName = it.getOrNull(1)?.lowercase()
-		
-		if (commandName == null) {
-			throw CommandException("multiverse", "you must specify a multiversal command")
-		}
-		
-		val command = subcommands.getOrDefault(commandName, null)
-		
-		if (command == null) {
-			throw CommandException("multiverse", "unknown subcommand: $commandName")
-		}
-		
-		if (command.condition(message.author!!)) {
-			val handler = command.handler
-			//turn ["subcommand arg1 arg2", "subcommand", "arg1", "arg2"] to ["arg1 arg2", "arg1", "arg2"]
-			val args = it.toMutableList()
-			args.removeAt(0)
-			args[0] = it[0].substring(commandName.length + 1)
-			
-			this.handler(args)
-			
-			Log.info { "${message.author?.tag} has successfully executed a multiversal subcommand: `${it[0]}`" }
-		} else {
-			throw CommandException("multiverse", "you're not allowed to execute command $commandName!")
-		}
-		*/
+		//create a fake event
+		val newMessage = fakeMessage(message, it[0].lowercase())
+		val event = MessageCreateEvent(newMessage, guildId, member, shard, supplier, coroutineScope)
+		   
+		MultiverseCommandHandler.handle(event)
 	},
 	
 	header = "subcommand",
@@ -69,15 +46,15 @@ private val MultiverseCommandHandler = object : FlarogusCommandHandler() {
 			
 			replyWith(message, "```\n" + msg + "\n```")
 		}
-		.setCondition(CustomCommand.adminOnly)
-		.setDescription("List all guilds multiverse works in")
+		.condition(CustomCommand.adminOnly)
+		.description("List all guilds multiverse works in")
 		
 		register("ban") {
 			Lists.blacklist(Snowflake(it.getOrNull(1)?.toULong() ?: throw CommandException("ban", "no uid specified")))
 		}
-		.setCondition(CustomCommand.adminOnly)
-		.setHeader("id: Snowflake")
-		.setDescription("Ban a user or a guild")
+		.condition(CustomCommand.adminOnly)
+		.header("id: Snowflake")
+		.description("Ban a user or a guild")
 	
 		register("warn") {
 			val user = Snowflake(it.getOrNull(1) ?: throw CommandException("warn", "you must specify the user id!"))
@@ -87,17 +64,17 @@ private val MultiverseCommandHandler = object : FlarogusCommandHandler() {
 			
 			Multiverse.brodcastSystem { content = "user ${Vars.supplier.getUserOrNull(user)?.tag} was warned for rule '$rule'" }
 		}
-		.setCondition(CustomCommand.adminOnly)
-		.setHeader("id: Snowflake, rule: Int, rule category: [general]?")
-		.setDescription("Warn a user (or a guild if you're mad enough).")
+		.condition(CustomCommand.adminOnly)
+		.header("id: Snowflake, rule: Int, rule category: [general]?")
+		.description("Warn a user (or a guild if you're mad enough).")
 		
 		register("unwarn") {
 			val warns = Lists.warns.getOrDefault(Snowflake(it.getOrNull(1) ?: throw CommandException("unwarn", "no uid specified")), null)
 			warns?.clear()?.also { replyWith(message, "cleared succefully") } ?: replyWith(message, "this user has no warnings")
 		}
-		.setCondition(CustomCommand.adminOnly)
-		.setHeader("id: Snowflake")
-		.setDescription("unwarn a user")
+		.condition(CustomCommand.adminOnly)
+		.header("id: Snowflake")
+		.description("unwarn a user")
 		
 		register("mywarnings") {
 			message.channel.createEmbed {
@@ -105,20 +82,20 @@ private val MultiverseCommandHandler = object : FlarogusCommandHandler() {
 				description = "User ${message.author?.tag} has $warnings warning points"
 			}
 		}
-		.setDescription("list warnings of the caller")
+		.description("list warnings of the caller")
 		
 		register("whitelist") {
 			Lists.whitelist(Snowflake(it.getOrNull(1)?.toULong() ?: throw CommandException("ban", "no uid specified")))
 		}
-		.setCondition(CustomCommand.adminOnly)
-		.setHeader("id: Snowflake")
-		.setDescription("Whitelist a guild.")
+		.condition(CustomCommand.adminOnly)
+		.header("id: Snowflake")
+		.description("Whitelist a guild.")
 		
 		register("banlist") {
 			replyWith(message, Lists.blacklist.joinToString(", "))
 		}
-		.setCondition(CustomCommand.adminOnly)
-		.setDescription("List banned users / guilds. Note that this shows IDs, not names.")
+		.condition(CustomCommand.adminOnly)
+		.description("List banned users / guilds. Note that this shows IDs, not names.")
 		
 		register("lastusers") {
 			replyWith(message, Multiverse.ratelimited.keys.map {
@@ -129,13 +106,13 @@ private val MultiverseCommandHandler = object : FlarogusCommandHandler() {
 				}
 			}.joinToString(",\n"))
 		}
-		.setCondition(CustomCommand.adminOnly)
-		.setDescription("List all users that have recently sent a message in multiverse")
+		.condition(CustomCommand.adminOnly)
+		.description("List all users that have recently sent a message in multiverse")
 		
 		register("help") {
 			message.channel.sendHelp(message.author!!, selfRef.commands)
 		}
-		.setDescription("Show the list of commands")
+		.description("Show the list of commands")
 	
 	
 		register("echo") {
@@ -145,9 +122,9 @@ private val MultiverseCommandHandler = object : FlarogusCommandHandler() {
 				content = it[0].take(1999)
 			}
 		}
-		.setCondition(CustomCommand.adminOnly)
-		.setHeader("text: String")
-		.setDescription("Send a system message in multiverse")
+		.condition(CustomCommand.adminOnly)
+		.header("text: String")
+		.description("Send a system message in multiverse")
 		
 		register("reload") {
 			Lists.blacklist.clear()
@@ -155,8 +132,8 @@ private val MultiverseCommandHandler = object : FlarogusCommandHandler() {
 			Lists.usertags.clear()
 			Multiverse.updateState()
 		}
-		.setCondition(CustomCommand.adminOnly)
-		.setDescription("Clear all lists and reload them from the respective channels. This command is to be called after unbanning removing an entry from white / black / other list.")
+		.condition(CustomCommand.adminOnly)
+		.description("Clear all lists and reload them from the respective channels. This command is to be called after unbanning removing an entry from white / black / other list.")
 		
 		register("rules") {
 			message.channel.createMessage {
@@ -166,7 +143,7 @@ private val MultiverseCommandHandler = object : FlarogusCommandHandler() {
 				}
 			}
 		}
-		.setDescription("Show the list of multiversal rules")
+		.description("Show the list of multiversal rules")
 		
 		register("setloglevel") {
 			Log.level = when (it.getOrNull(1)?.lowercase()) {
@@ -179,8 +156,31 @@ private val MultiverseCommandHandler = object : FlarogusCommandHandler() {
 				else -> throw CommandException("setLogLevel", "unknown log level")
 			}
 		}
-		.setCondition(CustomCommand.adminOnly)
-		.setHeader("level: [lifecycle, debug, info, error]")
-		.setDescription("Set the log level")
+		.condition(CustomCommand.adminOnly)
+		.header("level: [lifecycle, debug, info, error]")
+		.description("Set the log level")
+		
+		register("deletereply") {
+			val reply = message.referencedMessage
+			if (reply == null) throw CommandException("deleteReply", "you must reply to a multiversal message")
+			
+			val origin = Multiverse.history.find { reply.id in it } ?: throw CommandException("deleteReply", "this message wasn't found in the history. perhaps, it was sent in the previous instance?")
+			origin.let {
+				it.retranslated.forEach { 
+					try { it.delete() } catch (ignored: Exception) {}
+				}
+				
+				try {
+					it.origin.delete()
+				} catch (e: Exception) {
+					replyWith(it.origin, """
+						This message was deleted from other multiversal channel but this (original) message could not be deleted.
+						Check whether the bot has the necessary permissions.
+					""".trimIndent())
+				}
+			}
+		}
+		.condition(CustomCommand.adminOnly)
+		.description("reply to a multiversal message to delete it from __all__ channels")
 	}
 }

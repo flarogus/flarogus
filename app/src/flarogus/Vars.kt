@@ -18,10 +18,10 @@ object Vars {
 	/** The start of flarogus epoch, aka the last hard reset */
 	var flarogusEpoch = -1L
 	
+	/** Flarogus#0233 — discord */
+	val botId: ULong get() = client.selfId.value;
 	/** Mnemotechnican#9967 — discord */
 	val ownerId = 502871063223336990UL
-	/** Flarogus#0233 — discord */
-	val botId = 919995150502101042UL
 	/** Bot prefix used for command handling */
 	var prefix = "flarogus"
 	

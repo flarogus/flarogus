@@ -20,6 +20,7 @@ import dev.kord.common.entity.*
 import flarogus.*
 import flarogus.util.*;
 import flarogus.commands.*;
+import flarogus.commands.Command as CustomCommand
 import flarogus.commands.impl.*;
 import flarogus.multiverse.*
 
@@ -35,7 +36,7 @@ fun initCommands() {
 	CommandHandler.register("help") {
 		message.channel.sendHelp(message.author!!, CommandHandler.commands)
 	}
-	.setDescription("Show the help message")
+	.description("Show the help message")
 	
 	@OptIn(ExperimentalTime::class)
 	CommandHandler.register("sus") {
@@ -51,7 +52,7 @@ fun initCommands() {
 			message.delete()
 		} catch (ignored: Exception) {} //lack of "manage messages" permission
 	}
-	.setDescription("Show the bot status")
+	.description("Show the bot status")
 	
 	val flarsusBase = ImageIO.read({}::class.java.getResource("/flarsus.png") ?: throw RuntimeException("aaaaa le flar has escaped"))
 	CommandHandler.register("flaroficate") {
@@ -73,8 +74,8 @@ fun initCommands() {
 			}
 		}
 	}
-	.setHeader("user: User? / attachment: Image")
-	.setDescription("Flaroficate the providen image, avatar of the providen user or, if neither are present, avatar of the caller")
+	.header("user: User? / attachment: Image")
+	.description("Flaroficate the providen image, avatar of the providen user or, if neither are present, avatar of the caller")
 	
 	val vowels = listOf('a', 'A', 'e', 'E', 'i', 'I', 'o', 'O', 'u', 'U', 'y', 'Y')
 	CommandHandler.register("impostor") {
@@ -100,8 +101,8 @@ fun initCommands() {
 			}
 		})
 	}
-	.setHeader("user: User? / single_word: String?")
-	.setDescription("Amogusificate the providen word, name of the providen user or, if neither are present, name of the caller.")
+	.header("user: User? / single_word: String?")
+	.description("Amogusificate the providen word, name of the providen user or, if neither are present, name of the caller.")
 	
 	CommandHandler.register("shutdown") {
 		val target = it.getOrNull(1)
@@ -118,9 +119,9 @@ fun initCommands() {
 			throw Error("shutting down...") //Error won't be caught, will crash the application and make the workflow stop
 		}
 	}
-	.setCondition { it.id.value in Vars.runWhitelist }
-	.setHeader("ubid: Int")
-	.setDescription("shut down an instance by ubid.")
+	.condition(CustomCommand.adminOnly)
+	.header("ubid: Int")
+	.description("shut down an instance by ubid.")
 
 	flarogus.commands.CommandHandler.register("command") {
 		if (it.getOrNull(1) == null) return@register
@@ -152,8 +153,8 @@ fun initCommands() {
 		thread.cancel(true)
 		if (proc != null) proc!!.destroy()
 	}
-	.setHeader("bash script: String")
-	.setCondition { it.id.value == flarogus.Vars.ownerId }
+	.header("bash script: String")
+	.condition(CustomCommand.ownerOnly)
 	
 	CommandHandler.register("merge") {
 		val first = userOrNull(it.getOrNull(1), this)
@@ -176,8 +177,8 @@ fun initCommands() {
 			throw CommandException("merge", e.stackTraceToString())
 		}
 	}
-	.setHeader("first: User, second: User?")
-	.setDescription("Merge pfps of two users. If only one user is specified, uses the caller as the second.")
+	.header("first: User, second: User?")
+	.description("Merge pfps of two users. If only one user is specified, uses the caller as the second.")
 
 	val reportsChannel = Snowflake(944718226649124874UL)
 	
@@ -199,8 +200,8 @@ fun initCommands() {
 			throw CommandException("report", "Could not send a report: $e")
 		}
 	}
-	.setHeader("message: String")
-	.setDescription("Send a message that will be visible to admins")
+	.header("message: String")
+	.description("Send a message that will be visible to admins")
 	
 	CommandHandler.register("server") {
 		try {
@@ -209,7 +210,7 @@ fun initCommands() {
 			replyWith(message, "couldn't send a DM. make sure you have DMs open ($e)")
 		}
 	}
-	.setDescription("Get an invite to the official server")
+	.description("Get an invite to the official server")
 }
 
 suspend fun MessageChannelBehavior.sendHelp(user: User, origin: Map<out Any, flarogus.commands.Command>) {
