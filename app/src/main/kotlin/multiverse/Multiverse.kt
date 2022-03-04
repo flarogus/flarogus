@@ -48,11 +48,43 @@ object Multiverse {
 	val systemName = "Multiverse"
 	val systemAvatar = "https://drive.google.com/uc?export=download&id=197qxkXH2_b0nZyO6XzMC8VeYTuYwcai9"
 	
+	val internalShutdownChannel = Snowflake(949196179386814515UL)
+	var shutdownWebhook: Webhook? = null
+	
 	val npcs = mutableListOf(AmogusNPC())
 	
 	/** Sets up the multiverse */
 	suspend fun start() {
 		Settings.updateState()
+		
+		//send a shutdown message to forcefully stop other instances
+		try {
+			val sc = Vars.supplier.getChannelOrNull(internalShutdownChannel) as? TextChannel
+			sc?.webhooks?.collect {
+				if (it.name == webhookName) shutdownWebhook = it
+			}
+			if (shutdownWebhook == null) shutdownWebhook = sc?.createWebhook(webhookName)
+			
+			shutdownWebhook?.executeIgnored(shutdownWebhook!!.token!!) {
+				content = Vars.startedAt.toString()
+			}
+		} catch (e: Exception) {
+			Log.error { "FAILED TO SEND SHUTDOWN MESSAGE: $e" }
+		}
+		
+		//listen for shutdown messages
+		Vars.client.events
+			.filterIsInstance<MessageCreateEvent>()
+			.filter { it.message.channelId == internalShutdownChannel }
+			.filter { it.message.data.webhookId.value != null && it.message.data.webhookId.value == shutdownWebhook?.id }
+			.onEach {
+				try {
+					if (it.message.content.toLong() > Vars.startedAt) {
+						brodcastSystem { embed { description = "another instance is running, shutting this one down..." } }
+						Vars.client.shutdown()
+					}
+				} catch (ignored: NumberFormatException) {}
+			}.launchIn(Vars.client)
 		
 		findChannels()
 		
@@ -206,7 +238,7 @@ object Multiverse {
 			if (entry.webhook != null) return@forEach
 			
 			try {
-				var webhook: Webhook? = null	
+				var webhook: Webhook? = null
 				universe.webhooks.collect {
 					if (it.name == webhookName) webhook = it
 				}

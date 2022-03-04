@@ -165,10 +165,13 @@ private val MultiverseCommandHandler = object : FlarogusCommandHandler(true, "")
 			if (reply == null) throw CommandException("deleteReply", "you must reply to a multiversal message")
 			
 			val origin = Multiverse.history.find { reply.id in it } ?: throw CommandException("deleteReply", "this message wasn't found in the history. perhaps, it was sent in the previous instance?")
+			
 			origin.let {
 				it.retranslated.forEach { 
 					try { it.delete() } catch (ignored: Exception) {}
 				}
+				
+				Log.info { "${message.author?.tag} deleted a multiversal message ${it.origin.id}" }
 				
 				try {
 					it.origin.delete()

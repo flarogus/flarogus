@@ -213,6 +213,7 @@ fun initCommands() {
 	.description("Get an invite to the official server")
 }
 
+/** Sends a help message in the specified channel, lists all commands available to the user */
 suspend fun MessageChannelBehavior.sendHelp(user: User, origin: Map<out Any, flarogus.commands.Command>) {
 	createEmbed {
 		title = "List of commands"

@@ -88,7 +88,7 @@ object Settings {
 				
 				//throwing an exception is perfectly fine here
 				if (map.getOrDefault("ubid", Vars.ubid) as? String != Vars.ubid) {
-					if (map.getOrDefault("started", 0L) as? Long ?: 0L > Vars.startedAt) {
+					if (map.getOrDefault("started", null) as Long > Vars.startedAt) {
 						//shutdown if there's a newer instance running
 						Multiverse.brodcastSystem {
 							embed { description = "another instance is running, shutting the current one down" }

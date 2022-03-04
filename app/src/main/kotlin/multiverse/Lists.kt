@@ -10,7 +10,7 @@ import dev.kord.core.behavior.channel.*
 import flarogus.*
 import flarogus.util.*
 
-/** Contains lists related to multiverse and manages their updating */
+/** Contains lists related to multiverse and manages their updating. */
 object Lists {
 	
 	/** Guilds that are allowed to send messages in multiverse */
