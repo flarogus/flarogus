@@ -62,6 +62,7 @@ object Multiverse {
 				embed { description = """
 					***This channel is now a part of the Multiverse! There's ${universes.size - 1} channels!***
 					Call `flarogus multiverse rules` to see the rules
+					Use `flarogus report` to report an issue
 				""".trimIndent() }
 			}
 		}
