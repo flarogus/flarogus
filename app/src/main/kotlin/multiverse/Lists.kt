@@ -22,10 +22,9 @@ object Lists {
 	/** Custom user tags */
 	val usertags = HashMap<Snowflake, String>(50)
 	
-	val whitelistChannel = Snowflake(932632370354475028UL)
-	val blacklistChannel = Snowflake(932524242707308564UL)
-	val usertagsChannel = Snowflake(932690515667849246UL)
-	val rulesChannel = Snowflake(940551409307377684UL)
+	val whitelistChannel by lazy { Vars.client.unsafe.messageChannel(Snowflake(932632370354475028UL)) }
+	val blacklistChannel by lazy { Vars.client.unsafe.messageChannel(Snowflake(932524242707308564UL)) }
+	val usertagsChannel by lazy { Vars.client.unsafe.messageChannel(Snowflake(932690515667849246UL)) }
 	
 	/** Amount of warns required for the user to be auto-banned */
 	val criticalWarns = 5
@@ -64,7 +63,7 @@ object Lists {
 		 try {
 		 	blacklist.add(id)
 		 	
-		 	Vars.client.unsafe.messageChannel(blacklistChannel).createMessage {
+		 	blacklistChannel.createMessage {
 		 		content = "g${id.value}"
 		 	}
 		 } catch (ignored: Exception) {}
@@ -75,7 +74,7 @@ object Lists {
 		 try {
 		 	whitelist.add(id)
 		 	
-		 	Vars.client.unsafe.messageChannel(whitelistChannel).createMessage {
+		 	whitelistChannel.createMessage {
 		 		content = "${id.value}"
 		 	}
 		 } catch (ignored: Exception) {}
@@ -103,60 +102,4 @@ object Lists {
 	/** Returns whether this channel is allowed to receive messages from multiverse */
 	fun canReceive(channel: Channel?) = channel != null && channel.data.guildId.value !in blacklist
 	
-}
-
-
-enum class RuleCategory(val index: Int, val description: String, val rules: List<Rule>) {
-	GENERAL(1, "list of multiversal rules", listOf(
-		Rule(1, "Do not insult, harrass, discriminate other people. This should be obvious."),
-		Rule(1, "Do not spam / flood the multiverse. Meme dumps are allowed as long as they don't disturb other users."),
-		Rule(4, "Posting scam links is strictly prohibited and can result in an immediate ban, unless the link was successfully blocked by the filter."),
-		Rule(2, "Avoid posting nsfw-content. Posting explicit images / videos / gifs is prohibited. Videos with a questionable preview are counted too."),
-		Rule(2, "Do not advertise discord servers without consent."),
-		Rule(1, "Avoid speaking foreign languages that other users can't understand (if they can understand it, it's fine) and do not encode text messages."),
-		Rule(10, "Spam raids are forbidden, any raider is to be banned immediately.")
-	)),
-	
-	ADDITIONAL(2, "notes", listOf(
-		Rule(-1, "Multiversal admins are Mnemotechnician#9967, SMOLKEYS#4156, real sushi#0001."),
-		Rule(-1, "Your multiversal channels are your responsibility, it doesn't matter whether you connect a general channel of a popular server or an admin-only channel, rules still apply."),
-		Rule(-1, "The fact that 2 of 3 admins are furries __does not__ mean you can post yiff in multiverse!"),
-		Rule(-1, "Personal animosity is not a valid reason for any form of punishment, if an admin does that, report it to owner")
-	)),
-	
-	PUNISHMENT(3, "the following punishments can be applied by the admins", listOf(
-		Rule(-1, "A verbal warning."),
-		Rule(-1, "A physical warning (the amount of warning points depends on the rule)."),
-		Rule(-1, "A temporary ban (applied automatically when the user has 5 warn points)."),
-		Rule(-1, "A permanent ban.")
-	));
-	
-	init {
-		rules.forEachIndexed { ruleIndex: Int, it ->
-			it.category = index
-			it.index = ruleIndex
-		}
-	}
-
-	override fun toString() = buildString {
-		append(super.toString()).append(": ").append(description).append("\n\n")
-		rules.forEachIndexed { i: Int, it -> append(i + 1).append(". ").append(it).append('\n') }
-	};
-	
-	operator fun get(number: Int): Rule = (rules.getOrNull(number - 1) ?: throw IllegalArgumentException("rule '${super.toString()}.$index' doesn't exist!"))
-	
-	companion object {
-		fun of(category: Int, rule: Int) = RuleCategory.values().find { it.index == category }?.get(rule + 1)
-	}
-}
-
-class Rule(val points: Int = -1, val description: String) {
-	//these two are inited right after creation
-	var category = -1
-	var index = -1
-	
-	override fun toString() = buildString {
-		append(description)
-		if (points > 0) append(" [").append(points).append(" warning points]")
-	}
 }

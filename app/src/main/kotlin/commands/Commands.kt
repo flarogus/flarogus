@@ -188,7 +188,7 @@ fun initCommands() {
 		try {
 			Vars.client.unsafe.messageChannel(reportsChannel).createMessage {
 				content = """
-				${message.author?.tag} (${message.author?.id}) reports:
+				${message.author?.tag} (channel ${message.channelId}, guild ${message.data.guildId}) reports:
 				```
 				${it[0].stripEveryone().take(1800)}
 				```

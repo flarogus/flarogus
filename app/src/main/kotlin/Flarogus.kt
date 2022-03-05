@@ -1,10 +1,11 @@
 package flarogus
 
-import java.io.*;
 import java.util.*
 import kotlin.concurrent.*;
 import kotlinx.coroutines.*;
 import kotlinx.coroutines.flow.*;
+import dev.kord.rest.request.*
+import dev.kord.rest.ratelimit.*
 import dev.kord.rest.builder.message.create.*
 import dev.kord.core.*
 import dev.kord.core.event.*
@@ -15,14 +16,16 @@ import flarogus.commands.*;
 import flarogus.multiverse.*
 
 suspend fun main(vararg args: String) = runBlocking {
-	val token = args.getOrNull(0)
-	if (token == null) {
+	val botToken = args.getOrNull(0)
+	if (botToken == null) {
 		println("[ERROR] no token specified")
 		return@runBlocking
 	}
 	
 	Vars.loadState()
-	Vars.client = Kord(token)
+	Vars.client = Kord(botToken) {
+		requestHandler { KtorRequestHandler(it.httpClient, ParallelRequestRateLimiter(), token = botToken) }
+	}
 	
 	Vars.client.events
 		.filterIsInstance<MessageCreateEvent>()

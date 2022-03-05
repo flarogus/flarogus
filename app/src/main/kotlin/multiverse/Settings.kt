@@ -6,6 +6,11 @@ import kotlin.math.*
 import kotlin.concurrent.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.serialization.*
+import kotlinx.serialization.json.*
+import io.ktor.client.call.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import dev.kord.common.entity.*
 import dev.kord.rest.builder.message.create.*
 import dev.kord.core.event.message.*
@@ -21,7 +26,8 @@ typealias StateHandler = (SimpleMap) -> Unit
 object Settings {
 
 	val settingsPrefix = "@set"
-	val settingsChannel = Snowflake(937781472394358784UL)
+	val settingsChannel by lazy { Vars.client.unsafe.messageChannel(Snowflake(937781472394358784UL)) }
+	val fileStorageChannel by lazy { Vars.client.unsafe.messageChannel(Snowflake(949667466156572742UL)) }
 	
 	val loadHandlers = ArrayList<StateHandler>(50)
 	val saveHandlers = ArrayList<StateHandler>(50)
@@ -140,15 +146,28 @@ object Settings {
 		if (!found) {
 			try {
 				//this message will or will not be used on the next call of updateState()
-				Vars.client.unsafe.messageChannel(settingsChannel).createMessage(settingsPrefix)
+				settingsChannel.createMessage(settingsPrefix)
 				
-				//wait for 30 seconds and try again — this might have been a discord issue.
+				//wait 30 seconds and try again — this might have been a discord issue.
 				//this instance must not start until we notify other instances about it's existence.
 				delay(1000L * 30)
 				updateState()
 			} catch (ignored: Exception) {}
 		}
 	}
+	
+	/** Upload a string to the cdn. Returns the id of uploaded file */
+	suspend fun uploadToCdn(data: String) = uploadToCdn(ByteArrayInputStream(data.toByteArray()));
+	
+	/** Upload the contents of the input stream to the cdn. returns the id of uploaded file */
+	suspend fun uploadToCdn(data: InputStream): String {
+		fileStorageChannel.createMessage {
+			addFile("UPLOADED-DATA-${System.currentTimeMillis()}", data)
+		}.also { return it.data.attachments.first().url }
+	}
+	
+	/** Opposite of uploadToCdn(): downloads content from the uploaded file */
+	inline suspend fun <reified T> downloadFromCdn(url: String) = Vars.client.resources.httpClient.get<HttpResponse>(url).receive<T>()
 
 }
 	
@@ -167,3 +186,14 @@ inline fun <T> T.catchAny(block: (T) -> Unit): Unit {
 		block(this)
 	} catch (ignored: Exception) {}
 }
+
+/** TODO. */
+@kotlinx.serialization.Serializable
+data class State(
+	val ubid: String,
+	val startedAt: Long,
+	var runWhitelist: Set<ULong>,
+	var epoch: Long,
+	var logLevel: Int,
+	var warns: Map<Snowflake, List<Rule>>,
+)

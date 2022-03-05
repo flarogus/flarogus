@@ -164,9 +164,12 @@ fun formatTime(millis: Long): String {
 
 /** Utility function: calls the specified function for every message in the channel. Catches and ignores any exceptions, Errors can be used to stop execution */
 inline suspend fun fetchMessages(channelId: Snowflake, crossinline handler: suspend (Message) -> Unit) {
+	fetchMessages(Vars.client.unsafe.messageChannel(channelId), handler)
+}
+
+/** Utility function: calls the specified function for every message in the channel. Catches and ignores any exceptions, Errors can be used to stop execution */
+inline suspend fun fetchMessages(channel: MessageChannelBehavior, crossinline handler: suspend (Message) -> Unit) {
 	try {
-		val channel = Vars.client.unsafe.messageChannel(channelId)
-		
 		channel.messages
 			.onEach {
 				try {
