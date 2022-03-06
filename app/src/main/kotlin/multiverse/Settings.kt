@@ -33,6 +33,7 @@ object Settings {
 		while (true) {
 			try {
 				updateStateAttempt()
+				break
 			} catch (e: Exception) {
 				if (++attempt >= attempts) throw e
 			}
