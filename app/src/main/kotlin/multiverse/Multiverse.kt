@@ -256,6 +256,8 @@ object Multiverse {
 						e.toString()
 					}
 					
+					entry.hasReported = true
+					
 					try {
 						entry.channel.createEmbed { description = """
 							[ERROR] Could not acquire a webhook: $reason
@@ -263,8 +265,6 @@ object Multiverse {
 							Webhookless communication is deprecated and __IS NO LONGER SUPPORTED__.
 							Contact the server's staff or allow the bot to manage webhooks yourself.
 						""".trimIndent() }
-						
-						entry.hasReported = true
 					} catch (e: Exception) {}
 				}
 			}
@@ -316,6 +316,8 @@ object Multiverse {
 						}
 					} catch (e: Exception) {
 						Log.error { "failed to retranslate a message into ${it.channel.id}: $e" }
+						
+						if (e.toString().contains("404")) it.webhook = null; //invalid webhook
 					}
 					
 					null

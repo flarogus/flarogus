@@ -25,15 +25,21 @@ typealias StateHandler = (SimpleMap) -> Unit
 
 object Settings {
 
+	/** Legacy */
 	val settingsPrefix = "@set"
 	val settingsChannel by lazy { Vars.client.unsafe.messageChannel(Snowflake(937781472394358784UL)) }
+	var settingsMessage: Message? = null
 	val fileStorageChannel by lazy { Vars.client.unsafe.messageChannel(Snowflake(949667466156572742UL)) }
 	
+	/** Legacy */
 	val loadHandlers = ArrayList<StateHandler>(50)
+	/** Legacy */
 	val saveHandlers = ArrayList<StateHandler>(50)
 	
+	/** Legacy */
 	val tempMap = HashMap<String, Any>()
 	
+	//legacy
 	init {
 		//add default handlers
 		onLoad {
@@ -81,11 +87,44 @@ object Settings {
 		}
 	}
 	
+	/** Legeacy */
 	fun onLoad(action: StateHandler) = loadHandlers.add(action);
 	
+	/** Legacy */
 	fun onSave(action: StateHandler) = saveHandlers.add(action);
 	
 	suspend fun updateState() {
+		settingsMessage = settingsChannel.messages.first { (it.content.startsWith("http") || it.content == "placeholder") && it.data.author.id.value == Vars.botId }
+		
+		if (settingsMessage == null) legacyUpdateState()
+		
+		settingsMessage?.let {
+			if (it.content.startsWith("http")) {
+				val stateContent = downloadFromCdn<String>(it.content)
+				val state = Json.decodeFromString<State>(stateContent)
+				
+				if (state.ubid != Vars.ubid) {
+					//load if the save is from older instance, shut down this instance if it's from newer, ignore otherwise
+					if (state.startedAt > Vars.startedAt) {
+						Multiverse.brodcastSystem { embed { description = "another instance is running, shutting the current one down" } }
+						Vars.client.shutdown()
+					} else {
+						state.loadFromState()
+					}
+				}
+			}
+			
+			val newState = State()
+			val uploadedUrl = uploadToCdn(Json.encodeToString(newState))
+			
+			it.edit {
+				content = uploadedUrl
+			}
+		}
+	}
+	
+	/** Legacy method. left for backward compatibility */
+	suspend internal fun legacyUpdateState() {
 		var found = false
 		
 		fetchMessages(settingsChannel) {
@@ -95,12 +134,12 @@ object Settings {
 				//throwing an exception is perfectly fine here
 				if (map.getOrDefault("ubid", Vars.ubid) as? String != Vars.ubid) {
 					if (map.getOrDefault("started", null) as Long > Vars.startedAt) {
-						//shutdown if there's a newer instance running
-						Multiverse.brodcastSystem {
-							embed { description = "another instance is running, shutting the current one down" }
-						}
-						
-						Vars.client.shutdown()
+						//shut down if there's a newer instance running
+							Multiverse.brodcastSystem {
+								embed { description = "another instance is running, shutting the current one down" }
+							}
+							
+							Vars.client.shutdown()
 					} else {
 						//notify handlers
 						loadHandlers.forEach {
@@ -113,6 +152,13 @@ object Settings {
 					}
 				}
 				
+				it.edit {
+					content = "placeholder"
+				}
+				
+				settingsMessage = it
+				
+				/*
 				//save state. this must NOT happen if the current state couldn't be loaded from this message, as that will lead to save corruption
 				tempMap.clear()
 				
@@ -139,6 +185,7 @@ object Settings {
 				}
 				
 				found = true
+				*/
 				throw Error() //exit from fetchMessages if both loading and saving were succeful. peak comedy, yes. throwing an error on success.
 			}
 		}
@@ -146,7 +193,7 @@ object Settings {
 		if (!found) {
 			try {
 				//this message will or will not be used on the next call of updateState()
-				settingsChannel.createMessage(settingsPrefix)
+				settingsChannel.createMessage("placeholder")
 				
 				//wait 30 seconds and try again — this might have been a discord issue.
 				//this instance must not start until we notify other instances about it's existence.
@@ -187,13 +234,22 @@ inline fun <T> T.catchAny(block: (T) -> Unit): Unit {
 	} catch (ignored: Exception) {}
 }
 
-/** TODO. */
 @kotlinx.serialization.Serializable
 data class State(
-	val ubid: String,
-	val startedAt: Long,
-	var runWhitelist: Set<ULong>,
-	var epoch: Long,
-	var logLevel: Int,
-	var warns: Map<Snowflake, List<Rule>>,
-)
+	val ubid: String = Vars.ubid,
+	val startedAt: Long = Vars.startedAt,
+	var runWhitelist: Set<ULong> = Vars.runWhitelist,
+	var epoch: Long = Vars.flarogusEpoch,
+	var logLevel: Int = Log.level.level,
+	var warns: Map<Snowflake, MutableList<Rule>> = Lists.warns
+) {
+	/** Updates the current bot state in accordance with this state */
+	fun loadFromState() {
+		Vars.runWhitelist.addAll(runWhitelist)
+		Vars.flarogusEpoch = epoch
+		Log.level = Log.LogLevel.of(logLevel)
+		warns.forEach { user, warns ->
+			Lists.warns[user] = warns
+		}
+	}
+}
