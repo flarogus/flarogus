@@ -102,7 +102,7 @@ object Multiverse {
 		
 		isRunning = true
 		
-		fixedRateTimer("update state", true, initialDelay = 120 * 1000L, period = 60 * 1000L) { updateState() }
+		fixedRateTimer("update state", true, initialDelay = 5 * 1000L, period = 60 * 1000L) { updateState() }
 	}
 	
 	/** Shuts the multiverse down */
