@@ -94,7 +94,7 @@ object Settings {
 	fun onSave(action: StateHandler) = saveHandlers.add(action);
 	
 	suspend fun updateState() {
-		settingsMessage = settingsChannel.messages.first { (it.content.startsWith("http") || it.content == "placeholder") && it.data.author.id.value == Vars.botId }
+		settingsMessage = settingsChannel.messages.firstOrNull { (it.content.startsWith("http") || it.content == "placeholder") && it.data.author.id.value == Vars.botId }
 		
 		if (settingsMessage == null) legacyUpdateState()
 		
