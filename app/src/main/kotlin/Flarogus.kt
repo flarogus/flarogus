@@ -46,9 +46,10 @@ suspend fun main(vararg args: String) = runBlocking {
 		Vars.client.launch {
 			Log.info { "a multiverse instance is shutting down" }
 			
+			/* fuck Akine, but not in the good way.
 			Multiverse.brodcastSystem {
 				embed { description = "This workflow job cannot be continued anymore. Shutting down." }
-			}
+			} */
 			
 			Vars.client.shutdown();
 		}

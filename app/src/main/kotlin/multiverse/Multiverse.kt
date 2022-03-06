@@ -23,9 +23,6 @@ import flarogus.multiverse.npc.impl.*
 
 /**
  * Retranslates messages sent in any channel of guild network, aka Multiverse, into other multiverse channels
- *
- * The bot is hosted on github actions and it's really hard to make it save the state.
- * Thus, multiverse settings are stored on a discord server.
  */
 object Multiverse {
 
@@ -48,6 +45,8 @@ object Multiverse {
 	val systemName = "Multiverse"
 	val systemAvatar = "https://drive.google.com/uc?export=download&id=197qxkXH2_b0nZyO6XzMC8VeYTuYwcai9"
 	
+	/** If false, new messages will be ignored */
+	var isRunning = false
 	val internalShutdownChannel = Snowflake(949196179386814515UL)
 	var shutdownWebhook: Webhook? = null
 	
@@ -80,8 +79,8 @@ object Multiverse {
 			.onEach {
 				try {
 					if (it.message.content.toLong() > Vars.startedAt) {
+						shutdown()
 						Log.info { "multiverse instance ${Vars.ubid} is shutting down (a newer instance has sent a shutdown message)" }
-						brodcastSystem { embed { description = "another instance is running, shutting this one down..." } }
 						Vars.client.shutdown()
 					}
 				} catch (ignored: NumberFormatException) {}
@@ -90,21 +89,29 @@ object Multiverse {
 		findChannels()
 		
 		Vars.client.launch {
-			delay(10000L)
+			delay(40000L)
 			brodcastSystem {
+				val channels = universeWebhooks.fold(0) { v, it -> if (it.webhook != null && Lists.canReceive(it.channel)) v + 1 else v }
 				embed { description = """
-					***This channel is now a part of the Multiverse! There's ${universes.size - 1} channels!***
+					***This channel is a part of the Multiverse. There's ${channels - 1} other channels.***
 					Call `flarogus multiverse rules` to see the rules
 					Use `flarogus report` to report an issue
 				""".trimIndent() }
 			}
 		}
 		
-		fixedRateTimer("update state", true, initialDelay = 5000L, period = 45 * 1000L) { updateState() }
+		isRunning = true
+		
+		fixedRateTimer("update state", true, initialDelay = 120 * 1000L, period = 60 * 1000L) { updateState() }
+	}
+	
+	/** Shuts the multiverse down */
+	fun shutdown() {
+		isRunning = false
 	}
 	
 	suspend fun messageReceived(event: MessageCreateEvent) {
-		if (isOwnMessage(event.message)) return
+		if (!isRunning || isOwnMessage(event.message)) return
 		if (!universes.any { event.message.channel.id == it.id }) return
 		
 		val userid = event.message.author?.id
@@ -251,12 +258,7 @@ object Multiverse {
 				if (!entry.hasReported) Log.error { "Could not acquire webhook for ${universe.name} (${universe.id}): $e" }
 				
 				if (!entry.hasReported) {
-					val reason = if (e.toString().contains("Missing Permission")) {
-						"missing 'MANAGE_WEBHOOKS' permission!"
-					} else {
-						e.toString()
-					}
-					
+					val reason = if (e.toString().contains("Missing Permission")) "missing 'MANAGE_WEBHOOKS' permission!" else e.toString()
 					entry.hasReported = true
 					
 					try {

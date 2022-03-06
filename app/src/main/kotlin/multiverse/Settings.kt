@@ -56,8 +56,8 @@ object Settings {
 				if (state.ubid != Vars.ubid) {
 					//load if the save is from older instance, shut down this instance if it's from newer, ignore otherwise
 					if (state.startedAt > Vars.startedAt) {
+						Multiverse.shutdown()
 						Log.info { "multiverse instance ${Vars.ubid} is shutting down (newer state was detected)" }
-						Multiverse.brodcastSystem { embed { description = "another instance is running, shutting the current one down" } }
 						Vars.client.shutdown()
 					} else {
 						state.loadFromState()
