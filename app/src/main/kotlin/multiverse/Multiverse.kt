@@ -80,6 +80,7 @@ object Multiverse {
 			.onEach {
 				try {
 					if (it.message.content.toLong() > Vars.startedAt) {
+						Log.info { "multiverse instance ${Vars.ubid} is shutting down (a newer instance has sent a shutdown message)" }
 						brodcastSystem { embed { description = "another instance is running, shutting this one down..." } }
 						Vars.client.shutdown()
 					}

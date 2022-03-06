@@ -58,7 +58,7 @@ suspend fun main(vararg args: String) = runBlocking {
 		delay(15000L)
 		try {
 			Multiverse.start()
-			Log.info { "a mutliverse instance has started" }
+			Log.info { "mutliverse instance ${Vars.ubid} has started" }
 		} catch (e: Exception) {
 			Log.error { "FATAL EXCEPTION HAS OCCURRED DURING MULTIVERSE INTIALIZATION: `$e`" }
 		}
