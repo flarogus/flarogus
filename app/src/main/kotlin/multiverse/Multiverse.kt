@@ -64,7 +64,7 @@ object Multiverse {
 			}
 			if (shutdownWebhook == null) shutdownWebhook = sc?.createWebhook(webhookName)
 			
-			shutdownWebhook?.executeIgnored(shutdownWebhook!!.token!!) {
+			shutdownWebhook?.execute(shutdownWebhook!!.token!!) {
 				content = Vars.startedAt.toString()
 			}
 		} catch (e: Exception) {
