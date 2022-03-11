@@ -81,7 +81,7 @@ object Multiverse {
 					if (it.message.content.toLong() > Vars.startedAt) {
 						shutdown()
 						Log.info { "multiverse instance ${Vars.ubid} is shutting down (a newer instance has sent a shutdown message)" }
-						Vars.client.shutdown()
+						Vars.client.launch { delay(5000L); Vars.client.shutdown() }
 					}
 				} catch (e: NumberFormatException) {
 					Log.error { "a shutdown message was received but it's content could not be readen: $e" }

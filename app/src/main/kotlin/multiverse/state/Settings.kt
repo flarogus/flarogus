@@ -59,6 +59,7 @@ object Settings {
 					if (state.startedAt > Vars.startedAt) {
 						Multiverse.shutdown()
 						Log.info { "multiverse instance ${Vars.ubid} is shutting down (newer state was detected)" }
+						delay(5000L)
 						Vars.client.shutdown()
 					} else {
 						state.loadFromState()
