@@ -67,7 +67,7 @@ class Rule(val points: Int = -1, val description: String) {
 }
 
 class RuleSerializer : KSerializer<Rule> {
-	override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("rule", PrimitiveKind.STRING)
+	override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("RuleSerializer", PrimitiveKind.STRING)
 	
 	override fun serialize(encoder: Encoder, value: Rule) {
 		encoder.encodeString("${value.category}:${value.index}")

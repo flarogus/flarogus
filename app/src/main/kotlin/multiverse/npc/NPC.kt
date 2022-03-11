@@ -5,6 +5,7 @@ import dev.kord.core.entity.*
 import flarogus.*
 import flarogus.util.*
 import flarogus.multiverse.*
+import flarogus.multiverse.state.*
 
 /** Represents a multiversal NPC. */
 abstract class NPC(open val cooldown: Long = 20000L, open val replyDelay: Long = 10000L) {

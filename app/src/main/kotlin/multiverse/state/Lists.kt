@@ -9,6 +9,7 @@ import dev.kord.core.behavior.*
 import dev.kord.core.behavior.channel.*
 import flarogus.*
 import flarogus.util.*
+import flarogus.multiverse.*
 
 /** Contains lists related to multiverse and manages their updating. */
 object Lists {

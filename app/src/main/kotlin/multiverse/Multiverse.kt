@@ -9,7 +9,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import dev.kord.common.entity.*
 import dev.kord.rest.builder.message.create.*
-import dev.kord.rest.builder.message.modify.*
 import dev.kord.core.*
 import dev.kord.core.event.message.*
 import dev.kord.core.supplier.*
@@ -19,6 +18,7 @@ import dev.kord.core.behavior.*
 import dev.kord.core.behavior.channel.*
 import flarogus.*
 import flarogus.util.*
+import flarogus.multiverse.state.*
 import flarogus.multiverse.npc.impl.*
 
 /**
@@ -83,7 +83,9 @@ object Multiverse {
 						Log.info { "multiverse instance ${Vars.ubid} is shutting down (a newer instance has sent a shutdown message)" }
 						Vars.client.shutdown()
 					}
-				} catch (ignored: NumberFormatException) {}
+				} catch (e: NumberFormatException) {
+					Log.error { "a shutdown message was received but it's content could not be readen: $e" }
+				}
 			}.launchIn(Vars.client)
 		
 		findChannels()
@@ -228,7 +230,7 @@ object Multiverse {
 		Vars.client.rest.user.getCurrentUserGuilds().forEach {
 			val guild = Vars.supplier.getGuildOrNull(it.id) //gCUG() returns a flow of partial discord guilds.
 			
-			if (guild != null && guild.id !in Lists.blacklist) guild.channelBehaviors.forEach {
+			if (guild != null && it.id !in Lists.blacklist && guild.id !in Lists.blacklist) guild.channelBehaviors.forEach {
 				var c = it.asChannel()
 				
 				if (c.data.type == ChannelType.GuildText && c.data.name.toString().contains("multiverse") && c.id !in Lists.blacklist) {
@@ -340,33 +342,4 @@ object Multiverse {
 		return message.author?.id?.value == Vars.botId || (message.webhookId != null && universeWebhooks.any { it.webhook != null && it.webhook!!.id == message.webhookId })
 	}
 	
-}
-
-data class UniverseEntry(var webhook: Webhook?, val channel: TextChannel, var hasReported: Boolean = false)
-
-data class WebhookMessageBehavior(
-	val webhook: Webhook,
-	override val channelId: Snowflake,
-	override val id: Snowflake,
-	override val kord: Kord = Vars.client,
-	override val supplier: EntitySupplier = Vars.supplier
-) : MessageBehavior {
-	constructor(webhook: Webhook, message: Message) : this(webhook, message.channelId, message.id, message.kord)
-	
-	suspend open inline fun edit(builder: WebhookMessageModifyBuilder.() -> Unit): Message {
-		return edit(webhookId = webhook.id, token = webhook.token!!, builder = builder) //have to specify the parameter name in order for kotlinc to understand me
-	}
-	
-	override suspend open fun delete(reason: String?) {
-		delete(webhook.id, webhook.token!!, null)
-	}
-}
-
-data class Multimessage(
-	val origin: MessageBehavior,
-	val retranslated: List<WebhookMessageBehavior>
-) {
-	operator fun contains(other: MessageBehavior) = other.id == origin.id || retranslated.any { other.id == it.id };
-	
-	operator fun contains(other: Snowflake) = origin.id == other || retranslated.any { other == it.id };
 }

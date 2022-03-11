@@ -14,6 +14,7 @@ import flarogus.*
 import flarogus.util.*;
 import flarogus.commands.*
 import flarogus.multiverse.*
+import flarogus.multiverse.state.*
 
 typealias CustomCommand = flarogus.commands.Command
 
@@ -36,18 +37,21 @@ private val MultiverseCommandHandler = object : FlarogusCommandHandler(true, "")
 		val selfRef = this //idk how to reference this anonymous class from register()
 		
 		register("listguilds") {
-			val msg = Multiverse.universes.map {
-				try {
-					message.supplier.getGuild(it.data.guildId.value ?: return@map null)
-				} catch (ignored: Exception) {
+			val unwhitelisted = it.getOrNull(1)?.toBoolean() ?: false
+			
+			val msg = Multiverse.universeWebhooks.mapNotNull {
+				if (!unwhitelisted || it.channel.data.guildId.value?.let { it !in Lists.whitelist } ?: true) {
+					it.channel.data.guildId.value?.let { Vars.supplier.getGuildOrNull(it) }
+				} else {
 					null
 				}
-			}.filter { it != null }.toSet().map { "${it?.id?.value} - ${it?.name}" }.joinToString(",\n")
+			}.distinct().sortedBy { it.id }.map { "${it.id.value} - ${it.name}" }.joinToString(",\n")
 			
 			replyWith(message, "```\n" + msg + "\n```")
 		}
 		.condition(CustomCommand.adminOnly)
-		.description("List all guilds multiverse works in")
+		.header("unwhitelisted: Boolean?")
+		.description("List all guilds multiverse works in. If the argument is true, only lists unwhitelisted guilds")
 		
 		register("ban") {
 			Lists.blacklist(Snowflake(it.getOrNull(1)?.toULong() ?: throw CommandException("ban", "no uid specified")))
@@ -85,7 +89,7 @@ private val MultiverseCommandHandler = object : FlarogusCommandHandler(true, "")
 		.description("list warnings of the caller")
 		
 		register("whitelist") {
-			Lists.whitelist(Snowflake(it.getOrNull(1)?.toULong() ?: throw CommandException("ban", "no uid specified")))
+			Lists.whitelist(Snowflake(it.getOrNull(1)?.toULong() ?: throw CommandException("whitelist", "no uid specified")))
 		}
 		.condition(CustomCommand.adminOnly)
 		.header("id: Snowflake")
@@ -117,7 +121,6 @@ private val MultiverseCommandHandler = object : FlarogusCommandHandler(true, "")
 	
 		register("echo") {
 			if (it[0].isEmpty()) throw CommandException("echo", "can't send an empty message")
-			
 			Multiverse.brodcastSystem {
 				content = it[0].take(1999)
 			}
@@ -146,15 +149,7 @@ private val MultiverseCommandHandler = object : FlarogusCommandHandler(true, "")
 		.description("Show the list of multiversal rules")
 		
 		register("setloglevel") {
-			Log.level = when (it.getOrNull(1)?.lowercase()) {
-				//todo: maybe valueOf would be better?
-				"lifecycle" -> Log.LogLevel.LIFECYCLE
-				"debug" -> Log.LogLevel.DEBUG
-				"info" -> Log.LogLevel.INFO
-				"error" -> Log.LogLevel.ERROR
-				null -> throw CommandException("setLogLevel", "no log level specified")
-				else -> throw CommandException("setLogLevel", "unknown log level")
-			}
+			Log.level = Log.LogLevel.valueOf(it[1].uppercase())
 		}
 		.condition(CustomCommand.adminOnly)
 		.header("level: [lifecycle, debug, info, error]")
@@ -177,7 +172,7 @@ private val MultiverseCommandHandler = object : FlarogusCommandHandler(true, "")
 					it.origin.delete()
 				} catch (e: Exception) {
 					replyWith(it.origin, """
-						This message was deleted from other multiversal channel but this (original) message could not be deleted.
+						This message was deleted from other multiversal channels but this (original) message could not be deleted.
 						Check whether the bot has the necessary permissions.
 					""".trimIndent())
 				}

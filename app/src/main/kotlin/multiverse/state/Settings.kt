@@ -20,6 +20,7 @@ import dev.kord.core.behavior.*
 import dev.kord.core.behavior.channel.*
 import flarogus.*
 import flarogus.util.*
+import flarogus.multiverse.*
 
 object Settings {
 
