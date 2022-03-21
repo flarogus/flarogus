@@ -171,8 +171,6 @@ object Multiverse {
 						append('[')
 						append(customTag)
 						append(']')
-					} else if (userid?.value in Vars.runWhitelist) {
-						append("[Admin]")
 					}
 					append(author)
 					append(" — ")
