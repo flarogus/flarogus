@@ -101,6 +101,6 @@ object Lists {
 	fun canTransmit(guild: Guild?, user: User?) = guild == null || (guild.id !in blacklist && guild.id in whitelist && user?.id !in blacklist);
 	
 	/** Returns whether this channel is allowed to receive messages from multiverse */
-	fun canReceive(channel: Channel?) = channel != null && channel.data.guildId.value !in blacklist
+	fun canReceive(channel: Channel?) = channel != null && channel.data.guildId.value.let { it !in blacklist && it in whitelist }
 	
 }
