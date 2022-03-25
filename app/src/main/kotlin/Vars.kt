@@ -4,6 +4,7 @@ import java.util.concurrent.*
 import kotlin.random.*
 import kotlinx.coroutines.*
 import dev.kord.core.*
+import dev.kord.core.supplier.*
 
 /** An object declaration that stores variables/constants that are shared across the whole application */
 object Vars {
@@ -11,6 +12,8 @@ object Vars {
 	/** The kord client instance */
 	lateinit var client: Kord
 	val supplier get() = client.defaultSupplier
+	val restSupplier by lazy { RestEntitySupplier(client) }
+	
 	/** The unique bot id used for shutdown command */
 	lateinit var ubid: String
 	/** The moment the bot has started */
@@ -26,7 +29,7 @@ object Vars {
 	val threadPool = Executors.newFixedThreadPool(5)
 	
 	/** Superusers that are allowed to do most things */
-	val runWhitelist = mutableSetOf<ULong>(ownerId, 691650272166019164UL, 794686191467233280UL) //the first is smolkeys, second is real sushi
+	val superusers = mutableSetOf<ULong>(ownerId, 691650272166019164UL, 794686191467233280UL) //the first is smolkeys, second is real sushi
 	
 	fun loadState() {
 		ubid = Random.nextInt(0, 1000000000).toString()

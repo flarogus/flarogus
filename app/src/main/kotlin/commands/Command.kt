@@ -29,6 +29,6 @@ data class Command(
 	companion object {
 		val ownerOnly: (User) -> Boolean = { it.id.value == Vars.ownerId }
 		
-		val adminOnly: (User) -> Boolean = { it.id.value in Vars.runWhitelist }
+		val adminOnly: (User) -> Boolean = { it.id.value in Vars.superusers }
 	}
 }

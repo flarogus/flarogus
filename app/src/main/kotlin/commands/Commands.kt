@@ -6,6 +6,7 @@ import java.util.concurrent.*;
 import javax.imageio.*;
 import kotlin.random.*;
 import kotlin.time.*
+import kotlin.math.*
 import kotlinx.coroutines.*;
 import kotlinx.coroutines.flow.*;
 import dev.kord.rest.builder.message.create.*
@@ -32,11 +33,6 @@ fun initCommands() {
 	CommandHandler.register("run", RunCommand)
 	
 	CommandHandler.register("multiverse", MultiverseCommand)
-	
-	CommandHandler.register("help") {
-		message.channel.sendHelp(message.author!!, CommandHandler.commands)
-	}
-	.description("Show the help message")
 	
 	@OptIn(ExperimentalTime::class)
 	CommandHandler.register("sus") {
@@ -108,7 +104,16 @@ fun initCommands() {
 		val target = it.getOrNull(1)
 		if (target == null) throw CommandException("shutdown", "no unique bot id specified")
 		
-		if (target == Vars.ubid || target == "all") {
+		if (target == Vars.ubid) {
+			Multiverse.shutdown()
+			
+			//purge
+			it.getOrNull(2)?.toIntOrNull()?.let { purgeCount ->
+				Multiverse.history.takeLast(min(purgeCount, 20)).forEach {
+					it.retranslated.forEach { it.delete() } //origins are not deleted — use purge for that.
+				}
+			}
+			
 			Multiverse.brodcastSystem { 
 				embed { description = "A Multiverse instance is shutting down..." }
 			}
@@ -120,10 +125,10 @@ fun initCommands() {
 		}
 	}
 	.condition(CustomCommand.adminOnly)
-	.header("ubid: Int")
-	.description("shut down an instance by ubid.")
-
-	flarogus.commands.CommandHandler.register("command") {
+	.header("ubid: Int, purgeCount: Int?")
+	.description("shut down an instance by ubid, optionally deleting up to [purgeCount] last messages sent in this instance (use this to clear the consequences of double-instance periods)")
+	
+	CommandHandler.register("command") {
 		if (it.getOrNull(1) == null) return@register
 		
 		var proc: Process? = null
@@ -211,30 +216,4 @@ fun initCommands() {
 		}
 	}
 	.description("Get an invite to the official server")
-}
-
-/** Sends a help message in the specified channel, lists all commands available to the user */
-suspend fun MessageChannelBehavior.sendHelp(user: User, origin: Map<out Any, flarogus.commands.Command>) {
-	createEmbed {
-		title = "List of commands"
-		
-		var hidden = 0
-		for ((commandName, command) in origin) {
-			if (!command.condition(user)) {
-				hidden++
-				continue;
-			}
-			field {
-				name = commandName.toString()
-				value = command.description ?: "no description"
-				`inline` = true
-				
-				if (command.header != null) name += " [" + command.header + "]"
-			}
-		}
-		
-		if (hidden > 0) {
-			footer { text = "there's [$hidden] commands you are not allowed to run" }
-		}
-	}
 }

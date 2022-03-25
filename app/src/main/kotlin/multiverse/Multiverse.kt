@@ -104,7 +104,14 @@ object Multiverse {
 		
 		isRunning = true
 		
-		fixedRateTimer("update state", true, initialDelay = 5 * 1000L, period = 60 * 1000L) { updateState() }
+		fixedRateTimer("update state", true, initialDelay = 5 * 1000L, period = 180 * 1000L) { updateState() }
+		fixedRateTimer("update settings", true, initialDelay = 5 * 1000L, period = 20 * 1000L) {
+			//random delay is to ensure that there will never be situations when two instances can't detect each other
+			Vars.client.launch {
+				delay(Random.nextLong(0L, 5000L))
+				Settings.updateState()
+			}
+		}
 	}
 	
 	/** Shuts the multiverse down */
@@ -279,9 +286,6 @@ object Multiverse {
 	fun updateState() = Vars.client.launch {
 		findChannels()
 		Lists.updateLists()
-		
-		delay(Random.nextLong(0, 2000L)) //this is to ensure that there will never be situations in which two instances can't notice each other
-		Settings.updateState()
 	}
 	
 	/** Same as normal brodcast but uses system pfp & name */

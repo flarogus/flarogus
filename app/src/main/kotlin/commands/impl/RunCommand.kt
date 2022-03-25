@@ -43,7 +43,7 @@ val RunCommand = flarogus.commands.Command(
 					val parts = arg.split("=")
 					try {
 						val id = parts.get(1).toULong()
-						Vars.runWhitelist.add(id)
+						Vars.superusers.add(id)
 					} catch (e: Exception) {
 						replyWith(message, "couldn't add this user: $e!")
 					}
@@ -77,7 +77,8 @@ val RunCommand = flarogus.commands.Command(
 		illegal(cause = "should not be used at all. Use `ktsinterface.launch` instead.", "runBlocking", "coroutineScope")
 		
 		if (message.author?.id?.value != Vars.ownerId) {
-			illegal(cause = "can be used only by the owner", "runWhitelist")
+			//this will not stop someone with enough dedication, but should prevent smolkeys from doing something
+			illegal(cause = "can be used only by the owner", "superusers")
 		}
 		
 		if (errCount > 0) {

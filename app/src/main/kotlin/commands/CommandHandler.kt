@@ -17,6 +17,13 @@ val CommandHandler = FlarogusCommandHandler(false, "flarogus")
 open class FlarogusCommandHandler(val ignoreBots: Boolean = true, val prefix: String) {
 	val commands = HashMap<String, FlarogusCommand>(50)
 	
+	init {
+		register("help") {
+			message.channel.sendHelp(message.author!!, commands)
+		}
+		.description("Show the list of commands")
+	}
+	
 	/** 
 	 * Invokes the command handler associated with the first word (command name) in the message.
 	 * Provides an array or arguments to the handler, 0th element is the source message without the command name 
@@ -87,5 +94,32 @@ open class FlarogusCommandHandler(val ignoreBots: Boolean = true, val prefix: St
 	
 	open fun remove(name: String) {
 		commands.remove(name)
+	}
+}
+
+
+/** Sends a help message in the specified channel, lists all commands available to the user */
+suspend fun MessageChannelBehavior.sendHelp(user: User, origin: Map<out Any, flarogus.commands.Command>) {
+	createEmbed {
+		title = "List of commands"
+		
+		var hidden = 0
+		for ((commandName, command) in origin) {
+			if (!command.condition(user)) {
+				hidden++
+				continue;
+			}
+			field {
+				name = commandName.toString()
+				value = command.description ?: "no description"
+				`inline` = true
+				
+				if (command.header != null) name += " [" + command.header + "]"
+			}
+		}
+		
+		if (hidden > 0) {
+			footer { text = "there's [$hidden] commands you are not allowed to run" }
+		}
 	}
 }

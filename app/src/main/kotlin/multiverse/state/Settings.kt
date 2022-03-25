@@ -28,7 +28,7 @@ object Settings {
 	var settingsMessage: Message? = null
 	val fileStorageChannel by lazy { Vars.client.unsafe.messageChannel(Snowflake(949667466156572742UL)) }
 	
-	/** Tries to update the state. Retries up to $attempts - 1 times if an exception was thrown. */
+	/** Tries to update the state. Retries up to [attempts - 1] times if an exception was thrown. */
 	suspend fun updateState(attempts: Int = 3) {
 		var attempt = 0
 		while (true) {
@@ -49,7 +49,7 @@ object Settings {
 			settingsMessage = settingsChannel.createMessage("placeholder")
 		}
 		
-		settingsMessage?.let {
+		Vars.restSupplier.getMessage(channelId = settingsMessage!!.channelId, messageId = settingsMessage!!.id).let {
 			if (it.content.startsWith("http")) {
 				val stateContent = downloadFromCdn<String>(it.content)
 				val state = Json.decodeFromString<State>(stateContent)
@@ -96,14 +96,14 @@ object Settings {
 data class State(
 	val ubid: String = Vars.ubid,
 	val startedAt: Long = Vars.startedAt,
-	var runWhitelist: Set<ULong> = Vars.runWhitelist,
+	var runWhitelist: Set<ULong> = Vars.superusers,
 	var epoch: Long = Vars.flarogusEpoch,
 	var logLevel: Int = Log.level.level,
 	var warns: Map<Snowflake, MutableList<Rule>> = Lists.warns
 ) {
 	/** Updates the current bot state in accordance with this state */
 	fun loadFromState() {
-		Vars.runWhitelist.addAll(runWhitelist)
+		Vars.superusers.addAll(runWhitelist)
 		Vars.flarogusEpoch = epoch
 		Log.level = Log.LogLevel.of(logLevel)
 		warns.forEach { user, warns ->
