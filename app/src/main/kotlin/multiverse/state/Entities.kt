@@ -68,18 +68,18 @@ class HistorySerializer : KSerializer<Multimessage> {
 	}
 	
 	override fun serialize(encoder: Encoder, value: Multimessage) = encoder.encodeStructure(descriptor) {
-		encodeSerializableElement(snowflakeSerializer.descriptor, 0, snowflakeSerializer, value.origin.id)
-		encodeSerializableElement(snowflakeSerializer.descriptor, 1, snowflakeSerializer, value.origin.channelId)
-		encodeSerializableElement(wmblistSerializer.descriptor, 2, wmblistSerializer, value.retranslated)
+		encodeSerializableElement(descriptor, 0, snowflakeSerializer, value.origin.id)
+		encodeSerializableElement(descriptor, 1, snowflakeSerializer, value.origin.channelId)
+		encodeSerializableElement(descriptor, 2, wmblistSerializer, value.retranslated)
 	};
 	
 	override fun deserialize(decoder: Decoder): Multimessage = decoder.decodeStructure(descriptor) {
-		val id = decodeSerializableElement(snowflakeSerializer.descriptor, 0, snowflakeSerializer)
-		val channelId = decodeSerializableElement(snowflakeSerializer.descriptor, 1, snowflakeSerializer)
+		val id = decodeSerializableElement(descriptor, 0, snowflakeSerializer)
+		val channelId = decodeSerializableElement(descriptor, 1, snowflakeSerializer)
 		
 		val message = MessageBehavior(channelId = channelId, messageId = id, kord = Vars.client)
 		
-		val retranslated = decodeSerializableElement(wmblistSerializer.descriptor, 2, wmblistSerializer)
+		val retranslated = decodeSerializableElement(descriptor, 2, wmblistSerializer)
 		return Multimessage(message, retranslated)
 	}
 }
@@ -94,15 +94,15 @@ class HistoryEntrySerializer : KSerializer<WebhookMessageBehavior> {
 	}
 	
 	override fun serialize(encoder: Encoder, value: WebhookMessageBehavior) = encoder.encodeStructure(descriptor) {
-		encodeSerializableElement(snowflakeSerializer.descriptor, 0, snowflakeSerializer, value.webhookId)
-		encodeSerializableElement(snowflakeSerializer.descriptor, 1, snowflakeSerializer, value.channelId)
-		encodeSerializableElement(snowflakeSerializer.descriptor, 2, snowflakeSerializer, value.id)
+		encodeSerializableElement(descriptor, 0, snowflakeSerializer, value.webhookId)
+		encodeSerializableElement(descriptor, 1, snowflakeSerializer, value.channelId)
+		encodeSerializableElement(descriptor, 2, snowflakeSerializer, value.id)
 	};
 	
 	override fun deserialize(decoder: Decoder): WebhookMessageBehavior = decoder.decodeStructure(descriptor) {
-		val webhookId = decodeSerializableElement(snowflakeSerializer.descriptor, 0, snowflakeSerializer)
-		val channelId = decodeSerializableElement(snowflakeSerializer.descriptor, 1, snowflakeSerializer)
-		val messageId = decodeSerializableElement(snowflakeSerializer.descriptor, 2, snowflakeSerializer)
+		val webhookId = decodeSerializableElement(descriptor, 0, snowflakeSerializer)
+		val channelId = decodeSerializableElement(descriptor, 1, snowflakeSerializer)
+		val messageId = decodeSerializableElement(descriptor, 2, snowflakeSerializer)
 		
 		return WebhookMessageBehavior(webhookId, channelId, messageId)
 	}
