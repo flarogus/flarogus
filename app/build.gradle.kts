@@ -12,12 +12,13 @@ repositories {
 dependencies {
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
 	implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.10")
-	implementation("org.jetbrains.kotlin:kotlin-script-runtime:1.6.10")
-	implementation("org.jetbrains.kotlin:kotlin-script-util:1.6.10")
-	implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.6.10")
-	implementation("org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:1.6.10")
-	implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.6.10")
-	
+	//implementation("org.jetbrains.kotlin:kotlin-script-runtime:1.6.10")
+	//implementation("org.jetbrains.kotlin:kotlin-script-util:1.6.10")
+	//implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.6.10")
+	//implementation("org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:1.6.10")
+	//implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.6.10")
+	implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223-embeddable:1.3.72")
+
 	implementation("dev.kord:kord-core:0.8.0-M10")
 	implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
 	

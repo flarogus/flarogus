@@ -3,6 +3,7 @@ package flarogus
 import java.util.concurrent.*
 import kotlin.random.*
 import kotlinx.coroutines.*
+import dev.kord.common.entity.*
 import dev.kord.core.*
 import dev.kord.core.supplier.*
 
@@ -25,6 +26,8 @@ object Vars {
 	val botId: ULong get() = client.selfId.value;
 	/** Mnemotechnican#9967 — discord */
 	val ownerId = 502871063223336990UL
+	
+	val flarogusGuild = Snowflake(932524169034358877UL)
 	
 	val threadPool = Executors.newFixedThreadPool(5)
 	

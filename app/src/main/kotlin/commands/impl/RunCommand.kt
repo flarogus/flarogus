@@ -9,17 +9,18 @@ import flarogus.*
 import flarogus.util.*
 import flarogus.multiverse.*
 
+private val engine = ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts");
+private val context = SimpleScriptContext()
+
 val defaultImports = arrayOf(
 	"flarogus.*", "flarogus.util.*", "flarogus.multiverse.*", "ktsinterface.*", "dev.kord.core.entity.*", "dev.kord.core.entity.channel.*",
 	"dev.kord.common.entity.*", "dev.kord.rest.builder.*", "dev.kord.rest.builder.message.*", "dev.kord.rest.builder.message.create.*",
-	"dev.kord.core.behavior.*", "dev.kord.core.behavior.channel.*", "kotlinx.coroutines.*", "kotlinx.coroutines.flow.*"
+	"dev.kord.core.behavior.*", "dev.kord.core.behavior.channel.*", "kotlinx.coroutines.*", "kotlinx.coroutines.flow.*", "kotlin.system.*"
 ).map { "import $it;" }.joinToString("")
-
-val flarogusGuild = Snowflake(932524169034358877UL)
 
 val RunCommand = flarogus.commands.Command(
 	handler = handler@ {
-		if (message.data.author.id.value != Vars.ownerId && message.data.guildId.value != flarogusGuild) {
+		if (message.data.author.id.value != Vars.ownerId && message.data.guildId.value != Vars.flarogusGuild) {
 			throw IllegalAccessException("Due to security reasons, the `run` command can only be used within the flarogus guild.")
 		}
 		
@@ -95,13 +96,12 @@ val RunCommand = flarogus.commands.Command(
 		//execute
 		if (isAdmin) {
 			//application context
-			val engine = ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts");
 			launch {
 				try {
-					val ctx = SimpleScriptContext()
-					ctx.setAttribute("message", message, ScriptContext.ENGINE_SCOPE)
+					engine.put("message", message)
+					context.setAttribute("message", message, ScriptContext.ENGINE_SCOPE)
 					              
-					val result = engine.eval(script, ctx)
+					val result = engine.eval(script, context)
 					
 					val resultString = when (result) {
 						is Deferred<*> -> result.await().toString()
@@ -119,33 +119,7 @@ val RunCommand = flarogus.commands.Command(
 				}
 			}
 		} else {
-			//subprocess context
-			var proc: Process? = null
-			
-			val thread = Vars.threadPool.submit {
-				try {
-					File("/tmp/scriptfile.kts").writeText(script)
-					
-					val parts = "kotlinc -script scriptfile.kts".split("\\s".toRegex())
-					proc = ProcessBuilder(*parts.toTypedArray())
-						.directory(File("/tmp"))
-						.redirectOutput(ProcessBuilder.Redirect.PIPE)
-						.redirectError(ProcessBuilder.Redirect.PIPE)
-						.start()
-					proc!!.waitFor(stopAfter, TimeUnit.MILLISECONDS)
-					proc!!.errorStream.bufferedReader().use {
-						val error = it.readText()
-						proc!!.inputStream.bufferedReader().use {
-							replyWith(message, "output${if (error != "") " and errors:" else ""}:\n```\n$error\n\n${it.readText()}\n```")
-						}
-					}
-				} catch(e: IOException) {
-					replyWith(message, e.toString())
-				}
-			}
-			delay(stopAfter + 10000L) //additional 10 seconds
-			thread.cancel(true)
-			if (proc != null) proc!!.destroy()
+			throw RuntimeException("subprocess context is no longer supported, use the -su argment")
 		}
 	},
 	
