@@ -4,6 +4,7 @@ import java.io.*
 import java.util.concurrent.*
 import javax.script.*
 import kotlinx.coroutines.*;
+import dev.kord.common.entity.*
 import flarogus.*
 import flarogus.util.*
 import flarogus.multiverse.*
@@ -14,8 +15,14 @@ val defaultImports = arrayOf(
 	"dev.kord.core.behavior.*", "dev.kord.core.behavior.channel.*", "kotlinx.coroutines.*", "kotlinx.coroutines.flow.*"
 ).map { "import $it;" }.joinToString("")
 
+val flarogusGuild = Snowflake(932524169034358877UL)
+
 val RunCommand = flarogus.commands.Command(
 	handler = handler@ {
+		if (message.data.author.id.value != Vars.ownerId && message.data.guildId.value != flarogusGuild) {
+			throw IllegalAccessException("Due to security reasons, the `run` command can only be used within the flarogus guild.")
+		}
+		
 		val command = it[0]
 		val begin = command.indexOf("<<")
 		
@@ -91,7 +98,11 @@ val RunCommand = flarogus.commands.Command(
 			val engine = ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts");
 			launch {
 				try {
-					val result = engine.eval(script)
+					val ctx = SimpleScriptContext()
+					ctx.setAttribute("message", message, ScriptContext.ENGINE_SCOPE)
+					              
+					val result = engine.eval(script, ctx)
+					
 					val resultString = when (result) {
 						is Deferred<*> -> result.await().toString()
 						null -> "no output"
