@@ -17,6 +17,8 @@ dependencies {
 	//implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.6.10")
 	//implementation("org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:1.6.10")
 	//implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.6.10")
+	runtimeOnly("org.jetbrains.kotlin:kotlin-main-kts:1.6.10")
+	runtimeOnly("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.6.10")
 	implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223-embeddable:1.3.72")
 
 	implementation("dev.kord:kord-core:0.8.0-M10")
