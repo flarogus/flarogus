@@ -35,7 +35,7 @@ open class FlarogusCommandHandler(
 	
 	init {
 		if (generateHelp) {
-			tree("HELP_COMMAND", false) {
+			tree("help", false) {
 				register("tree") {
 					val tree = buildString(500) {
 						appendLine("```")
