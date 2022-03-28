@@ -19,7 +19,7 @@ enum class RuleCategory(val index: Int, val description: String, val rules: List
 	ADDITIONAL(2, "notes", listOf(
 		Rule(-1, "Multiversal admins are Mnemotechnician#9967, SMOLKEYS#4156, real sushi#0001."),
 		Rule(-1, "Your multiversal channels are your responsibility, it doesn't matter whether you connect a general channel of a popular server or an admin-only channel, rules still apply."),
-		Rule(-1, "The fact that 2 of 3 admins are furries __does not__ mean you can post yiff in multiverse!"),
+		Rule(-1, "The fact that 2 of 4 admins are furries __does not__ mean you can post yiff in multiverse!"),
 		Rule(-1, "Personal animosity is not a valid reason for any form of punishment, if an admin does that, report it to owner")
 	)),
 	
