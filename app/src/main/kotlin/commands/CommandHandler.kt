@@ -49,8 +49,13 @@ open class FlarogusCommandHandler(
 								append(' ')
 								appendLine(command.fancyName)
 
-								if (command is Supercommand && command.name != HELP_COMMAND) {
-									branch(level + 1, command.commands)
+								if (command is Supercommand) {
+									if (command.name != HELP_COMMAND) {
+										branch(level + 1, command.commands)
+									} else {
+										repeat(level) { append("┃ ") }
+										append("┗━━ ...")
+									}
 								}
 							}
 						}
@@ -71,7 +76,7 @@ open class FlarogusCommandHandler(
 						description = "Commands marked with [+] have subcommands. Use '<commandname> help' to see them."
 						
 						var hidden = 0
-						for (command in commands) {
+						for (command in this@FlarogusCommandHandler.commands) {
 							if (!command.condition(this@registerDefault.message.author!!)) {
 								hidden++
 								continue;
@@ -173,9 +178,9 @@ open class FlarogusCommandHandler(
 	open fun remove(name: String) {
 		commands.removeAll { it.name == name }
 	}
-
+	
 	companion object {
-		val DEFAULT_COMMAND = "_default-command_"
+		val DEFAULT_COMMAND = "__default__"
 		val HELP_COMMAND = "help"
 	}
 }
