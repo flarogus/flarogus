@@ -54,7 +54,7 @@ open class FlarogusCommandHandler(
 										branch(level + 1, command.commands)
 									} else {
 										repeat(level) { append("┃ ") }
-										append("┗━━ ...")
+										appendLine("┗━━ ...")
 									}
 								}
 							}
