@@ -235,7 +235,7 @@ object Multiverse {
 	suspend fun findChannels() {
 		Vars.client.rest.user.getCurrentUserGuilds().forEach {
 			//the following methods are way too costly to invoke them for every guild
-			if (universes.any { ch -> ch.data.guildId.value == it.id }) return@forEach
+			//if (universes.any { ch -> ch.data.guildId.value == it.id }) return@forEach
 
 			val guild = Vars.restSupplier.getGuildOrNull(it.id) //gCUG() returns a flow of partial discord guilds.
 			
