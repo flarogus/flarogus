@@ -35,21 +35,21 @@ open class FlarogusCommandHandler(
 	
 	init {
 		if (generateHelp) {
-			tree("help", false) {
+			tree("HELP_COMMAND", false) {
 				register("tree") {
 					val tree = buildString(500) {
-						appendln("```")
-						if (!prefix.isEmpty()) appendln(prefix)
+						appendLine("```")
+						if (!prefix.isEmpty()) appendLine(prefix)
 
 						fun branch(level: Int, handler: FlarogusCommandHandler) {
 							handler.commands.forEachIndexed { index, command ->
 								repeat(level - 1) { append("┃ ") }
 								append(if (index < handler.commands.size - 1) "┣" else "┗")
-								append(if (command is Supercommand) "┳" else "━")
-								append(command.fancyName)
-								append('\n')
+								append(if (command is Supercommand) "━┳" else "━━")
+								append(' ')
+								appendLine(command.fancyName)
 
-								if (command is Supercommand) {
+								if (command is Supercommand && command.name != HELP_COMMAND) {
 									branch(level + 1, command.commands)
 								}
 							}
@@ -108,8 +108,9 @@ open class FlarogusCommandHandler(
 		val message = event.message.content.substring(prefix.length)
 		val args = message.split(" ").filter { !it.isEmpty() }.toMutableList()
 		
-		val commandName = args.getOrNull(0) ?: DEFAULT_COMMAND
-		args[0] = message.substring(commandName.length + 1)
+		val commandName = args.getOrNull(0)?.also {
+			args[0] = message.substring(it.length + 1)
+		} ?: DEFAULT_COMMAND
 		
 		val command = commands.find { it.name.equals(commandName, true) }
 		
@@ -175,6 +176,7 @@ open class FlarogusCommandHandler(
 
 	companion object {
 		val DEFAULT_COMMAND = "_default-command_"
+		val HELP_COMMAND = "help"
 	}
 }
 
