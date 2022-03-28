@@ -12,7 +12,7 @@ open class Command(
 	var header: String? = null,
 	var description: String? = null
 ) {
-	open val fancyName get() = "$name [$header]"
+	open val fancyName get() = if (header != null && !header!!.isEmpty()) "$name [$header]" else "$name"
 
 	fun header(header: String): Command {
 		this.header = header

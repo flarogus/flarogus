@@ -29,7 +29,7 @@ open class FlarogusCommandHandler(
 	/** Executed if the command wasn't found */
 	var fallback: suspend MessageCreateEvent.(List<String>) -> Unit = {
 		it.getOrNull(1)?.let {
-			replyWith(message, "Unknown command: '${it.stripEveryone()}'. Please refer to the help subcommand of the current command.")
+			replyWith(message, "Command '${it.stripEveryone()}' does not exist. Please refer to the help subcommand of the current command.")
 		} ?: replyWith(message, "No command specified! Please refer to the help subcommand of the current command.")
 	}
 	
@@ -38,12 +38,13 @@ open class FlarogusCommandHandler(
 			tree("help", false) {
 				register("tree") {
 					val tree = buildString(500) {
-						append("flarogus\n")
+						appendln("```")
+						if (!prefix.isEmpty()) appendln(prefix)
 
 						fun branch(level: Int, handler: FlarogusCommandHandler) {
 							handler.commands.forEachIndexed { index, command ->
 								repeat(level - 1) { append("┃ ") }
-								append(if (index < handler.commands.size - 1) "┣━" else "┗")
+								append(if (index < handler.commands.size - 1) "┣" else "┗")
 								append(if (command is Supercommand) "┳" else "━")
 								append(command.fancyName)
 								append('\n')
@@ -54,6 +55,7 @@ open class FlarogusCommandHandler(
 							}
 						}
 						branch(1, this@FlarogusCommandHandler)
+						append("\n```")
 					}
 
 					message.channel.createEmbed {
@@ -63,14 +65,14 @@ open class FlarogusCommandHandler(
 				}
 				.description("Show a tree-like help")
 
-				fallback = fallback@ {
+				registerDefault {
 					message.channel.createEmbed {
 						title = "List of commands"
 						description = "Commands marked with [+] have subcommands. Use '<commandname> help' to see them."
 						
 						var hidden = 0
 						for (command in commands) {
-							if (!command.condition(this@fallback.message.author!!)) {
+							if (!command.condition(this@registerDefault.message.author!!)) {
 								hidden++
 								continue;
 							}
@@ -106,8 +108,7 @@ open class FlarogusCommandHandler(
 		val message = event.message.content.substring(prefix.length)
 		val args = message.split(" ").filter { !it.isEmpty() }.toMutableList()
 		
-		val commandName = args.getOrNull(0)
-		if (commandName == null || commandName == "" || commandName.length >= message.length) return false
+		val commandName = args.getOrNull(0) ?: DEFAULT_COMMAND
 		args[0] = message.substring(commandName.length + 1)
 		
 		val command = commands.find { it.name.equals(commandName, true) }
@@ -155,6 +156,11 @@ open class FlarogusCommandHandler(
 		return FlarogusCommand(name, handler).also { commands.add(it) }
 	}
 
+	/** Register a command with the default name. This command will be called when there's no arguments specified when calling a supercommand */
+	inline fun registerDefault(crossinline handler: suspend MessageCreateEvent.() -> Unit): FlarogusCommand {
+		return register(DEFAULT_COMMAND, { handler() })
+	}
+
 	/** Register a supercommand on-spot */
 	inline fun tree(name: String, generateHelp: Boolean = true, builder: FlarogusCommandHandler.() -> Unit): Supercommand {
 		return Supercommand(name = name, generateHelp = generateHelp).also {
@@ -165,6 +171,10 @@ open class FlarogusCommandHandler(
 
 	open fun remove(name: String) {
 		commands.removeAll { it.name == name }
+	}
+
+	companion object {
+		val DEFAULT_COMMAND = "_default-command_"
 	}
 }
 

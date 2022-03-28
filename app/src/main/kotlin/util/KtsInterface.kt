@@ -8,7 +8,7 @@ import flarogus.*
 
 val global = HashMap<String, Any?>(50)
 
-inline val Bindings.message get() = this["message"] as Message
+inline val SimpleBindings.message get() = this["message"] as Message
 
 inline fun launch(crossinline l: suspend CoroutineScope.() -> Unit) = flarogus.Vars.client.launch { l() };
 inline fun <R> async(crossinline l: suspend CoroutineScope.() -> R) = flarogus.Vars.client.async { l() };
