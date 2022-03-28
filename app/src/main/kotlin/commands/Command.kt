@@ -5,15 +5,12 @@ import dev.kord.core.entity.*;
 import dev.kord.core.event.message.*;
 import flarogus.*
 
-open class Command(
-	var name: String,
-	var handler: suspend MessageCreateEvent.(List<String>) -> Unit,
+data class Command(
+	val handler: suspend MessageCreateEvent.(List<String>) -> Unit,
 	var condition: (User) -> Boolean = { true },
 	var header: String? = null,
 	var description: String? = null
 ) {
-	open val fancyName get() = "$name [$header]"
-
 	fun header(header: String): Command {
 		this.header = header
 		return this

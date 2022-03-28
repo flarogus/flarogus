@@ -74,20 +74,13 @@ class HistorySerializer : KSerializer<Multimessage> {
 	};
 	
 	override fun deserialize(decoder: Decoder): Multimessage = decoder.decodeStructure(descriptor) {
-		var id: Snowflake? = null
-		var channelId: Snowflake? = null
-		var retranslated: List<WebhookMessageBehavior>? = null
-
-		eachIndex(descriptor) {
-			when (it) {
-				0 -> id = decodeSerializableElement(descriptor, 0, snowflakeSerializer)
-				1 -> channelId = decodeSerializableElement(descriptor, 1, snowflakeSerializer)
-				2 -> retranslated = decodeSerializableElement(descriptor, 2, wmblistSerializer)
-			}
-		}
-
-		val message = MessageBehavior(channelId = channelId!!, messageId = id!!, kord = Vars.client)
-		Multimessage(message, retranslated!!)
+		val id = decodeSerializableElement(descriptor, 0, snowflakeSerializer)
+		val channelId = decodeSerializableElement(descriptor, 1, snowflakeSerializer)
+		
+		val message = MessageBehavior(channelId = channelId, messageId = id, kord = Vars.client)
+		
+		val retranslated = decodeSerializableElement(descriptor, 2, wmblistSerializer)
+		Multimessage(message, retranslated)
 	}
 }
 
@@ -107,29 +100,10 @@ class HistoryEntrySerializer : KSerializer<WebhookMessageBehavior> {
 	};
 	
 	override fun deserialize(decoder: Decoder): WebhookMessageBehavior = decoder.decodeStructure(descriptor) {
-		var webhookId: Snowflake? = null
-		var channelId: Snowflake? = null
-		var messageId: Snowflake? = null
-		eachIndex(descriptor) {
-			val snowflake = decodeSerializableElement(descriptor, it, snowflakeSerializer)
-			when (it) {
-				0 -> webhookId = snowflake
-				1 -> channelId = snowflake
-				2 -> messageId = snowflake
-			}
-		}
+		val webhookId = decodeSerializableElement(descriptor, 0, snowflakeSerializer)
+		val channelId = decodeSerializableElement(descriptor, 1, snowflakeSerializer)
+		val messageId = decodeSerializableElement(descriptor, 2, snowflakeSerializer)
 		
-		WebhookMessageBehavior(webhookId!!, channelId!!, messageId!!)
-	}
-}
-
-fun CompositeDecoder.eachIndex(descriptor: SerialDescriptor, handler: (index: Int) -> Unit) {
-	while (true) {
-		val index = decodeElementIndex(descriptor)
-		when {
-			index >= 0 -> handler(index)
-			index == CompositeDecoder.DECODE_DONE -> break
-			else -> throw IllegalStateException("Unexpected index: $index")
-		}
+		WebhookMessageBehavior(webhookId, channelId, messageId)
 	}
 }

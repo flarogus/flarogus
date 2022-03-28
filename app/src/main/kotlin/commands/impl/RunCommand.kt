@@ -19,8 +19,6 @@ val defaultImports = arrayOf(
 ).map { "import $it;" }.joinToString("")
 
 val RunCommand = flarogus.commands.Command(
-	name = "run",
-
 	handler = handler@ {
 		if (message.data.author.id.value != Vars.ownerId && message.data.guildId.value != Vars.flarogusGuild) {
 			throw IllegalAccessException("Due to security reasons, the `run` command can only be used within the flarogus guild.")
@@ -30,6 +28,7 @@ val RunCommand = flarogus.commands.Command(
 		val begin = command.indexOf("<<")
 		
 		var isAdmin = false
+		var stopAfter = 3000L
 		var addImports = false
 		
 		val regex = "-([a-zA-Z0-9=]*)[\\s<]?".toRegex()
@@ -40,6 +39,9 @@ val RunCommand = flarogus.commands.Command(
 			when {
 				arg == "su" -> {
 					isAdmin = true
+				}
+				arg == "long" -> {
+					stopAfter = 300000L
 				}
 				arg == "imports" -> {
 					addImports = true
@@ -61,7 +63,7 @@ val RunCommand = flarogus.commands.Command(
 			argument = argument.next()
 		}
 		
-		expect(begin == -1) { "Invalid syntax! The correct one is 'run -arg1 -arg2 << some_script'. The script can be wrapped in a code block." }
+		if (begin == -1) throw CommandException("run", "Invalid syntax! The correct one is 'run -arg1 -arg2 << some_script'. The script can be wrapped in a code block.")
 		
 		//try to find a code block, remove it if it's present
 		var script = command.substring(begin + 2)
@@ -88,7 +90,7 @@ val RunCommand = flarogus.commands.Command(
 		}
 		
 		if (errCount > 0) {
-			throw CommandException("$errCount errors:\n```\n${errors.take(1500)}\n```")
+			throw CommandException("run", "$errCount errors:\n```\n${errors.take(1500)}\n```")
 		}
 		
 		//execute
@@ -106,7 +108,7 @@ val RunCommand = flarogus.commands.Command(
 						null -> "no output"
 						else -> result.toString()
 					}
-					replyWith(message, "```\n${resultString.take(1950).replace("```", "`'`")}\n```")
+					replyWith(message, "```\n${resultString.take(1950)}\n```")
 					
 					Log.info { "${message.author?.tag} has successfully executed a kotlin script (see fetchMessage(${message.channel.id}UL, ${message.id}UL))" }
 				} catch (e: Exception) { 
