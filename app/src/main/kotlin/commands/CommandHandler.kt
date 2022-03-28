@@ -13,22 +13,91 @@ import flarogus.multiverse.*
 /** Main command handler */
 val CommandHandler = FlarogusCommandHandler(false, "flarogus")
 
-/** Handles discord chat commands */
-open class FlarogusCommandHandler(val ignoreBots: Boolean = true, val prefix: String) {
-	val commands = HashMap<String, FlarogusCommand>(50)
+/**
+ * Handles discord chat commands 
+ *
+ * @param ignoreBots Whether to ignore bot users
+ * @param generateHelp Whether to generate a help command
+ */
+open class FlarogusCommandHandler(
+	val ignoreBots: Boolean = true,
+	val prefix: String = "",
+	val generateHelp: Boolean = true
+) {
+	val commands = ArrayList<FlarogusCommand>(50)
+	
+	/** Executed if the command wasn't found */
+	var fallback: suspend MessageCreateEvent.(List<String>) -> Unit = {
+		it.getOrNull(1)?.let {
+			replyWith(message, "Unknown command: '${it.stripEveryone()}'. Please refer to the help subcommand of the current command.")
+		} ?: replyWith(message, "No command specified! Please refer to the help subcommand of the current command.")
+	}
 	
 	init {
-		register("help") {
-			message.channel.sendHelp(message.author!!, commands)
+		if (generateHelp) {
+			tree("help", false) {
+				register("tree") {
+					val tree = buildString(500) {
+						append("flarogus\n")
+
+						fun branch(level: Int, handler: FlarogusCommandHandler) {
+							handler.commands.forEachIndexed { index, command ->
+								repeat(level - 1) { append("┃ ") }
+								append(if (index < handler.commands.size - 1) "┣━" else "┗")
+								append(if (command is Supercommand) "┳" else "━")
+								append(command.fancyName)
+								append('\n')
+
+								if (command is Supercommand) {
+									branch(level + 1, command.commands)
+								}
+							}
+						}
+						branch(1, this@FlarogusCommandHandler)
+					}
+
+					message.channel.createEmbed {
+						title = "List of commands"
+						description = tree
+					}
+				}
+				.description("Show a tree-like help")
+
+				fallback = fallback@ {
+					message.channel.createEmbed {
+						title = "List of commands"
+						description = "Commands marked with [+] have subcommands. Use '<commandname> help' to see them."
+						
+						var hidden = 0
+						for (command in commands) {
+							if (!command.condition(this@fallback.message.author!!)) {
+								hidden++
+								continue;
+							}
+							field {
+								name = command.fancyName
+
+								value = command.description ?: "no description"
+								`inline` = true
+							}
+						}
+						
+						if (hidden > 0) {
+							footer { text = "there's [$hidden] commands you are not allowed to run" }
+						}
+					}
+				}
+			}
+			.header("mode: [tree]?")
+			.description("Show the list of commands. Provide 'tree' as an argument to view the commands in a tree-like form.")
 		}
-		.description("Show the list of commands")
 	}
 	
 	/** 
 	 * Invokes the command handler associated with the first word (command name) in the message.
 	 * Provides an array or arguments to the handler, 0th element is the source message without the command name 
 	 *
-	 * @return whether the message contained a command that was executed
+	 * @return whether the handler has responded to this message
 	 **/
 	open suspend fun handle(event: MessageCreateEvent): Boolean {
 		if (ignoreBots && event.message.author?.isBot ?: true) return false
@@ -41,16 +110,11 @@ open class FlarogusCommandHandler(val ignoreBots: Boolean = true, val prefix: St
 		if (commandName == null || commandName == "" || commandName.length >= message.length) return false
 		args[0] = message.substring(commandName.length + 1)
 		
-		val command = commands.get(commandName)
+		val command = commands.find { it.name.equals(commandName, true) }
 		
 		Vars.client.launch {
 			if (command == null) {
-				val err = event.message.channel.createMessage {
-					content = "unknown command: ${commandName.take(500).stripEveryone()}\n(${event.message.author?.username?.stripEveryone()}, you're so sussy)"
-					messageReference = event.message.id
-				}
-				delay(5000L)
-				err.edit { content = "unknown command: ${commandName.take(500).stripEveryone()}" }
+				event.fallback(args)
 			} else {
 				val author = event.message.author
 				if (author != null && command.condition(author)) {
@@ -60,10 +124,10 @@ open class FlarogusCommandHandler(val ignoreBots: Boolean = true, val prefix: St
 						
 						Log.debug { "${event.message.author?.tag} has successfully executed `$commandName`" }
 					} catch (e: Exception) { //no exceptions on my watch
+						if (e is CommandException && e.commandName == null) e.commandName = command.name
 						replyWith(event.message, e.toString())
 						
 						if (e is CommandException) {
-							e.cause?.printStackTrace() //usually there's no cause, thus I can't do anything
 							Log.debug { "a command exception has occurred while executing command `$commandName` ran by ${event.message.author?.tag}: `$e`" }
 						} else {
 							e.printStackTrace()
@@ -81,45 +145,26 @@ open class FlarogusCommandHandler(val ignoreBots: Boolean = true, val prefix: St
 		return true
 	}
 	
-	open fun register(name: String, command: FlarogusCommand): FlarogusCommand {
-		commands.put(name, command)
+	open fun register(command: FlarogusCommand): FlarogusCommand {
+		commands.add(command)
 		return command
 	}
 	
+	/** Register a command on-spot */
 	open fun register(name: String, handler: suspend MessageCreateEvent.(List<String>) -> Unit): FlarogusCommand {
-		val command = FlarogusCommand(handler)
-		commands.put(name, command)
-		return command
+		return FlarogusCommand(name, handler).also { commands.add(it) }
 	}
-	
+
+	/** Register a supercommand on-spot */
+	inline fun tree(name: String, generateHelp: Boolean = true, builder: FlarogusCommandHandler.() -> Unit): Supercommand {
+		return Supercommand(name = name, generateHelp = generateHelp).also {
+			it.commands.apply(builder)
+			commands.add(it)
+		}
+	}
+
 	open fun remove(name: String) {
-		commands.remove(name)
+		commands.removeAll { it.name == name }
 	}
 }
 
-
-/** Sends a help message in the specified channel, lists all commands available to the user */
-suspend fun MessageChannelBehavior.sendHelp(user: User, origin: Map<out Any, flarogus.commands.Command>) {
-	createEmbed {
-		title = "List of commands"
-		
-		var hidden = 0
-		for ((commandName, command) in origin) {
-			if (!command.condition(user)) {
-				hidden++
-				continue;
-			}
-			field {
-				name = commandName.toString()
-				value = command.description ?: "no description"
-				`inline` = true
-				
-				if (command.header != null) name += " [" + command.header + "]"
-			}
-		}
-		
-		if (hidden > 0) {
-			footer { text = "there's [$hidden] commands you are not allowed to run" }
-		}
-	}
-}

@@ -13,7 +13,6 @@ import flarogus.multiverse.*
 
 /** Contains lists related to multiverse and manages their updating. */
 object Lists {
-	
 	/** Guilds that are allowed to send messages in multiverse */
 	val whitelist = ArrayList<Snowflake>(50)
 	/** Guilds / users that are blacklisted from multiverse */
@@ -102,5 +101,4 @@ object Lists {
 	
 	/** Returns whether this channel is allowed to receive messages from multiverse */
 	fun canReceive(channel: Channel?) = channel != null && channel.data.guildId.value.let { it !in blacklist && it in whitelist }
-	
 }

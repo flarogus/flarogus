@@ -16,6 +16,14 @@ import dev.kord.core.behavior.channel.*
 import dev.kord.common.entity.*
 import flarogus.*
 
+fun ULong.toSnowflake() = Snowflake(this)
+fun String.toSnowflakeOrNull() = toULongOrNull()?.toSnowflake()
+fun String.toSnowflake() = toSnowflakeOrNull() ?: throw NumberFormatException()
+
+fun String.stripEveryone() = this.replace("@everyone", "@еveryonе").replace("@here", "@hеrе")
+
+fun User.getAvatarUrl() = avatar?.url ?: "https://cdn.discordapp.com/embed/avatars/${discriminator.toInt() % 5}.png"
+
 /** Sends a message, waits delayMs, edits it to the output of the lambda */
 fun sendEdited(origin: MessageBehavior, message: String, delayMs: Long = 0, newMessage: (String) -> String) = Vars.client.launch {
 	try {
@@ -42,15 +50,6 @@ fun replyWith(origin: MessageBehavior, message: String, selfdestructIn: Long = -
 		println(e)
 	}
 }
-
-/** Sends the message into the same channel the original message was sent into */
-/*fun sendMessage(to: MessageBehavior, content: String) = Vars.client.launch {
-	try {
-		to.channel.createMessage(content.take(1999).stripEveryone())
-	} catch (e: Exception) {
-		println(e)
-	}
-}*/
 
 fun sendImage(origin: MessageBehavior, text: String = "", image: BufferedImage) = Vars.client.launch {
 	try {
@@ -92,10 +91,6 @@ suspend fun userOrNull(uid: String?, event: MessageCreateEvent): User? {
 suspend fun userOrAuthor(uid: String?, event: MessageCreateEvent): User? {
 	return userOrNull(uid, event) ?: event.message.author
 }
-
-fun User.getAvatarUrl() = avatar?.url ?: "https://cdn.discordapp.com/embed/avatars/${discriminator.toInt() % 5}.png"
-
-fun String.stripEveryone() = this.replace("@everyone", "@еveryonе").replace("@here", "@hеrе")
 
 fun countPings(string: String): Int {
 	var r = "<@(!)?\\d+>".toRegex().find(string)

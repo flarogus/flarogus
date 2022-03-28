@@ -178,6 +178,7 @@ object Multiverse {
 						append('[')
 						append(customTag)
 						append(']')
+						append(' ')
 					}
 					append(author)
 					append(" — ")
@@ -233,6 +234,9 @@ object Multiverse {
 	/** Searches for channels with "multiverse" in their names in all guilds this bot is in */
 	suspend fun findChannels() {
 		Vars.client.rest.user.getCurrentUserGuilds().forEach {
+			//the following methods are way too costly to invoke them for every guild
+			if (universes.any { ch -> ch.data.guildId.value == it.id }) return@forEach
+
 			val guild = Vars.supplier.getGuildOrNull(it.id) //gCUG() returns a flow of partial discord guilds.
 			
 			if (guild != null && it.id !in Lists.blacklist && guild.id !in Lists.blacklist) guild.channelBehaviors.forEach {
