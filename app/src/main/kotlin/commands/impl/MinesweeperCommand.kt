@@ -15,6 +15,8 @@ private val maxW = 30
 private val maxH = 30
 
 val MinesweeperCommand = flarogus.commands.Command(
+	name = "minesweeper",
+
 	handler = {
 		val w = (it.getOrNull(1)?.toIntOrNull() ?: 12).coerceIn(5, maxW)
 		val h = (it.getOrNull(2)?.toIntOrNull() ?: 12).coerceIn(5, maxH)

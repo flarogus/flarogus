@@ -25,10 +25,12 @@ private val lines = ArrayList<String>(15)
 /** result:
 /------\ impostor#3661
 |avatar| impostor: yes
-\------/
+\------/ ...
 */
 @OptIn(kotlin.time.ExperimentalTime::class)
 val UserinfoCommand = flarogus.commands.Command(
+	name = "userinfo",
+
 	handler = {
 		val user = userOrAuthor(it.getOrNull(1), this)
 		
