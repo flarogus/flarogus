@@ -87,6 +87,8 @@ object Multiverse {
 					Log.error { "a shutdown message was received but it's content could not be readen: $e" }
 				}
 			}.launchIn(Vars.client)
+
+		setupEvents()
 		
 		findChannels()
 		
@@ -230,6 +232,64 @@ object Multiverse {
 			e.printStackTrace()
 		}
 	};
+
+	private fun setupEvents() {
+		Vars.client.events
+			.filterIsInstance<MessageDeleteEvent>()
+			.filter { isRunning }
+			.filter { event -> !isRetranslatedMessage(event.messageId) }
+			.filter { event -> event.guildId in Lists.whitelist }
+			.filter { event -> universes.any { it.id == event.channelId } }
+			.onEach { event ->
+				val multimessage = history.find { it.origin.id == event.messageId }
+
+				try {
+					if (multimessage != null) {
+						multimessage.delete(false) //well...
+						Log.info { "Message ${event.messageId} was deleted by deleting the original message" }
+					}
+				} catch (e: Exception) {
+					Log.error { "An exception has occurred while trying to delete a multiversal message ${event.messageId}: $e" }
+				}
+			}
+			.launchIn(Vars.client)
+		
+		//can't check the guild here
+		Vars.client.events
+			.filterIsInstance<MessageUpdateEvent>()
+			.filter { isRunning }
+			.filter { event -> !isRetranslatedMessage(event.messageId) }
+			.filter { event -> universes.any { it.id == event.channelId } }
+			.onEach { event ->
+				val multimessage = history.find { event.messageId == it.origin.id }
+				val new = event.new
+				try {
+					if (multimessage != null) {
+						if (new != null) {
+							multimessage.edit(false) {
+								content = buildString {
+									appendLine(new.content.value ?: "")
+									new.attachments.value?.forEach { attachment ->
+										if (attachment.size >= maxFileSize) {
+											appendLine(attachment.url)
+										}
+									}
+								}
+							}
+						} else {
+							event.channel.createMessage("""
+								Warning: message ${event.messageId} was edited but it's new content could not be determined!
+								Retranslated messages were not affected.
+								Ensure that the bot has the necessary permissions and try again!
+							""".trimIndent())
+						}
+					}
+				} catch (e: Exception) {
+					Log.error { "An exception has occurred while trying to edit a multiversal message ${event.messageId}: $e" }
+				}
+			}
+			.launchIn(Vars.client)
+	}
 	
 	/** Searches for channels with "multiverse" in their names in all guilds this bot is in */
 	suspend fun findChannels() {
@@ -281,15 +341,14 @@ object Multiverse {
 						""".trimIndent() }
 					} catch (e: Exception) {}
 				}
-			}
-			
+			}	
 		}
 	};
 	
 	/** Updates everything */
 	fun updateState() = Vars.client.launch {
 		findChannels()
-		Lists.updateLists() //TODO remove this
+		//Lists.updateLists() //TODO remove this
 	}
 	
 	/** Same as normal brodcast but uses system pfp & name */
@@ -342,10 +401,13 @@ object Multiverse {
 		
 		return messages
 	}
-	
+
 	/** Returns whether this message was sent by flarogus */
 	fun isOwnMessage(message: Message): Boolean {
 		return message.author?.id?.value == Vars.botId || (message.webhookId != null && universeWebhooks.any { it.webhook != null && it.webhook!!.id == message.webhookId })
 	}
+
+	/** Returns whether a message with this id is a retranslated message */
+	fun isRetranslatedMessage(id: Snowflake) = history.any { it.retranslated.any { it.id == id } }
 	
 }

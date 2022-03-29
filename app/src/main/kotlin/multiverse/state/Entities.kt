@@ -34,14 +34,14 @@ data class WebhookMessageBehavior(
 ) : MessageBehavior {
 	constructor(webhook: Webhook, message: Message) : this(webhook.id, message.channelId, message.id, message.kord)
 	
-	suspend open fun getWebhook() = supplier.getWebhook(webhookId);
+	suspend fun getWebhook() = supplier.getWebhook(webhookId);
 	
-	suspend open inline fun edit(builder: WebhookMessageModifyBuilder.() -> Unit): Message {
+	suspend inline fun edit(builder: WebhookMessageModifyBuilder.() -> Unit): Message {
 		val webhook = getWebhook()
 		return edit(webhookId = webhook.id, token = webhook.token!!, builder = builder) //have to specify the parameter name in order for kotlinc to understand me
 	}
 	
-	override suspend open fun delete(reason: String?) {
+	override suspend fun delete(reason: String?) {
 		val webhook = getWebhook()
 		delete(webhook.id, webhook.token!!, null)
 	}
@@ -52,6 +52,24 @@ data class Multimessage(
 	val origin: MessageBehavior,
 	val retranslated: List<WebhookMessageBehavior>
 ) {
+	suspend fun delete(deleteOrigin: Boolean) {
+		retranslated.forEach { 
+			try { it.delete() } catch (ignored: Exception) { }
+		}
+		if (deleteOrigin) {
+			try { origin.delete() } catch (ignored: Exception) { }
+		}
+	}
+
+	suspend inline fun edit(modifyOrigin: Boolean, crossinline builder: MessageModifyBuilder.() -> Unit) {
+		retranslated.forEach {
+			try { it.edit { builder() } } catch (ignored: Exception) { }
+		}
+		if (modifyOrigin) {
+			try { origin.edit(builder) } catch (ignored: Exception) { }
+		}
+	}
+
 	operator fun contains(other: MessageBehavior) = other.id == origin.id || retranslated.any { other.id == it.id };
 	
 	operator fun contains(other: Snowflake) = origin.id == other || retranslated.any { other == it.id };

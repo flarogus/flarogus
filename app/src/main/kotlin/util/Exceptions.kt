@@ -5,7 +5,7 @@ inline fun expect(
 	thrower: (String) -> Nothing = { throw CommandException(it) },
 	crossinline cause: () -> String
 ) {
-	if (condition) {
+	if (!condition) {
 		thrower(cause())
 	}
 }

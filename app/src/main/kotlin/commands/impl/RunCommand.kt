@@ -62,7 +62,7 @@ val RunCommand = flarogus.commands.Command(
 			argument = argument.next()
 		}
 		
-		expect(begin == -1) { "Invalid syntax! The correct one is 'run -arg1 -arg2 << some_script'. The script can be wrapped in a code block." }
+		expect(begin != -1) { "Invalid syntax! The correct one is 'run -arg1 -arg2 << some_script'. The script can be wrapped in a code block." }
 		
 		//try to find a code block, remove it if it's present
 		var script = command.substring(begin + 2)
