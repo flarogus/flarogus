@@ -38,7 +38,7 @@ val AdminCommand = Supercommand(
 				}
 			}.distinct().sortedBy { it.id }.map { "${it.id.value} - ${it.name}" }.joinToString(",\n")
 			
-			replyWith(message, "```\n" + msg + "\n```")
+			message.replyWith("```\n" + msg + "\n```")
 		}
 
 		register("all") {
@@ -56,19 +56,21 @@ val AdminCommand = Supercommand(
 	
 	tree("blacklist") {
 		register("add") {
-			val id = Snowflake(it.getOrNull(1)?.toULong() ?: throw CommandException("ban", "no uid specified"))
-			Lists.blacklist(id)
+			val id = it.getOrNull(1)?.toSnowflakeOrNull() ?: throw CommandException("ban", "no uid specified")
+			Lists.blacklist.add(id)
+			Settings.updateState()
 		}
 		.header("id: Snowflake")
 
 		register("remove") {
-			TODO()
+			val id = it.getOrNull(1)?.toULongOrNull() ?: throw CommandException("ban", "no uid specified")
+			Lists.blacklist.removeAll { it.value == id }
+			Settings.updateState()
 		}
 		.header("id: Snowflake")
-		.description("not implemented yet")
 
 		register("list") {
-			replyWith(message, Lists.blacklist.sorted().joinToString(","))
+			message.replyWith(Lists.blacklist.sorted().joinToString(","))
 		}
 		.description("List all banned ids")
 	}
@@ -77,31 +79,35 @@ val AdminCommand = Supercommand(
 
 	tree("whitelist") {
 		register("add") {
-			Lists.whitelist(Snowflake(it.getOrNull(1)?.toULong() ?: throw CommandException("no uid specified")))
+			val id = it.getOrNull(1)?.toSnowflakeOrNull() ?: throw CommandException("no uid specified")
+			Lists.whitelist.add(id)
+			Settings.updateState()
 		}
 		.header("id: Snowflake")
 
 		register("remove") {
-			TODO()
+			val id = it.getOrNull(1)?.toULongOrNull() ?: throw CommandException("no uid specified")
+			Lists.whitelist.removeAll { it.value == id }
+			Settings.updateState()
 		}
 		.header("id: Snowflake")
-		.description("not implemented yet")
 	}
 	.condition(CustomCommand.adminOnly)
 	.description("Manage the whitelist")
 
 	tree("tag") {
 		register("set") {
-			if (it.size != 2) { throw CommandException("you must provide exactly 2 arguments") }
-			val id = Snowflake(it[1].toULong())
+			expect(it.size != 2) { "you must provide exactly 2 arguments" }
+			val id = it[1].toSnowflakeOrNull() ?: throw CommandException("the providen id is not valid")
 			
-			Lists.usertags[id]
+			Lists.usertags[id] = it[2]
 		}
 		.header("id: Snowflake, tag: String")
 		.description("Set the usertag of a user. The tag should not contain spaces.")
 
 		register("clear") {
-			TODO()
+			val id = it.getOrNull(1)?.toSnowflakeOrNull() ?: throw CommandException("no uid providen")
+			Lists.usertags.remove(id)
 		}
 		.header("id: Snowflake")
 		.description("Not implemented yet")
@@ -122,7 +128,7 @@ val AdminCommand = Supercommand(
 
 		register("clear") {
 			val warns = Lists.warns.getOrDefault(Snowflake(it.getOrNull(1) ?: throw CommandException("no uid specified")), null)
-			warns?.clear()?.also { replyWith(message, "cleared succefully") } ?: replyWith(message, "this user has no warnings")
+			warns?.clear()?.also { message.replyWith("cleared succefully") } ?: replyWith(message, "this user has no warnings")
 		}
 		.header("id: Snowflake")
 		.description("Remove all warnings of a user")
@@ -181,7 +187,7 @@ val AdminCommand = Supercommand(
 			}
 		}
 		
-		replyWith(message, "$deleted messages were deleted successfully, $errors messages could not be deleted.")
+		message.replyWith("$deleted messages were deleted successfully, $errors messages could not be deleted.")
 	}
 	.condition(CustomCommand.adminOnly)
 	.header("purgeCount: Int, deleteOrigin: Boolean?")

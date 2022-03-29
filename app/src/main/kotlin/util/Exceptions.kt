@@ -10,13 +10,13 @@ inline fun expect(
 	}
 }
 
-open class CommandException(val description: String) : RuntimeException() {
-	/** Either assigned at call-place or after being caught by a command handler */
+open class CommandException(var description: String) : Exception() {
+	/** Assigned either wt call-place or at catch-place after being caught by a command handler */
 	var commandName: String? = null
+
+	override val message get() = "Could not execute command $commandName: $description"
 
 	constructor(name: String, description: String) : this(description) {
 		commandName = name
 	}
-
-	override val message = "Could not execute command $commandName: $description"
 }

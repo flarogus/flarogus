@@ -33,7 +33,8 @@ fun initCommands() {
 
 		@OptIn(ExperimentalTime::class)
 		register("sus") {
-			sendEdited(message, "sussificating", 50L) {
+			val msg = message.replyWith("sussificating").await()
+			msg?.edit {
 				val ping = message.id.timeMark.elapsedNow().toLong(DurationUnit.MILLISECONDS)
 				"""
 					${Vars.ubid} — running for ${formatTime(System.currentTimeMillis() - Vars.startedAt)}. sussification time: ${ping}ms.

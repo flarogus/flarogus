@@ -53,7 +53,7 @@ object Settings {
 		Vars.restSupplier.getMessage(channelId = settingsMessage!!.channelId, messageId = settingsMessage!!.id).let {
 			if (it.content.startsWith("http")) {
 				val stateContent = downloadFromCdn<String>(it.content)
-				val state = Json.decodeFromString<State>(stateContent)
+				val state = Json { ignoreUnknownKeys = true }.decodeFromString<State>(stateContent)
 				
 				if (state.ubid != Vars.ubid) {
 					//load if the save is from older instance, shut down this instance if it's from newer, ignore otherwise

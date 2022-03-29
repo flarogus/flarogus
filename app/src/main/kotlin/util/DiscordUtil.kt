@@ -25,32 +25,39 @@ fun String.stripCodeblocks() = this.replace("```", "`'`")
 
 fun User.getAvatarUrl() = avatar?.url ?: "https://cdn.discordapp.com/embed/avatars/${discriminator.toInt() % 5}.png"
 
-/** Sends a message, waits delayMs, edits it to the output of the lambda */
-fun sendEdited(origin: MessageBehavior, message: String, delayMs: Long = 0, newMessage: (String) -> String) = Vars.client.launch {
-	try {
-		val msg = origin.channel.createMessage(message.take(1999).stripEveryone())
-		if (delayMs > 0) delay(delayMs)
-		msg.edit { content = newMessage(message).take(1999).stripEveryone() }
-	} catch (e: Exception) {
-		println(e)
-	}
-};
+///** Sends a message, waits delayMs, edits it to the output of the lambda */
+//fun sendEdited(origin: MessageBehavior, message: String, delayMs: Long = 0, newMessage: (String) -> String) = Vars.client.launch {
+//	try {
+//		val msg = origin.channel.createMessage(message.take(1999).stripEveryone())
+//		if (delayMs > 0) delay(delayMs)
+//		msg.edit { content = newMessage(message).take(1999).stripEveryone() }
+//	} catch (e: Exception) {
+//		println(e)
+//	}
+//};
 
-/** Replies to the message, optionally deletes the message in selfdestructIn ms */
-fun replyWith(origin: MessageBehavior, message: String, selfdestructIn: Long = -1) = Vars.client.launch {
+/** Replies to a message */
+@Deprecated("this was created at the very beginning of flarogus development.")
+fun replyWith(origin: MessageBehavior, message: CharSequence) = origin.replyWith(message.toString())
+
+/** Replies to a message */
+fun MessageBehavior.replyWith(message: String) = Vars.client.async {
 	try {
-		val msg = origin.channel.createMessage {
+		channel.createMessage {
 			content = message.take(1999).stripEveryone()
-			messageReference = origin.id
+			messageReference = this@replyWith.id
 		}
-		if (selfdestructIn > 0L) {
-			delay(selfdestructIn)
-			msg.delete()
-		}
-	} catch (e: Exception) {
-		println(e)
+	} catch (ignored: Exception) {
+		null
 	}
 }
+
+/** Reply based on condition, useful for commands */
+fun MessageBehavior.replyWithResult(
+	condition: Boolean,
+	success: String = "success.",
+	fail: String = "fail."
+) = replyWith(if (condition) success else fail)
 
 fun sendImage(origin: MessageBehavior, text: String = "", image: BufferedImage) = Vars.client.launch {
 	try {
@@ -81,11 +88,7 @@ suspend fun userOrNull(uid: String?, event: MessageCreateEvent): User? {
 			return userOrNull(id, event)
 		}
 	}
-	try {
-		return event.supplier.getUser(Snowflake(uid.toULong()))
-	} catch (e: Exception) {
-		return null
-	}
+	return event.supplier.getUserOrNull(Snowflake(uid.toULong()))
 }
 
 /** Tries to find a user by mention/userid, returns the author in case of error. May return null if it's a system message */
@@ -164,6 +167,7 @@ inline suspend fun fetchMessages(channelId: Snowflake, crossinline handler: susp
 }
 
 /** Utility function: calls the specified function for every message in the channel. Catches and ignores any exceptions, Errors can be used to stop execution */
+@Deprecated("dumbass")
 inline suspend fun fetchMessages(channel: MessageChannelBehavior, crossinline handler: suspend (Message) -> Unit) {
 	try {
 		channel.messages
