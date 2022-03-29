@@ -29,6 +29,7 @@ object Lists {
 	/** Amount of warns required for the user to be auto-banned */
 	val criticalWarns = 5
 	
+	@Deprecated("legacy function")
 	fun updateLists() = Vars.client.launch {
 		//add blacklisted users and guilds
 		fetchMessages(blacklistChannel) {

@@ -21,6 +21,7 @@ fun String.toSnowflakeOrNull() = toULongOrNull()?.toSnowflake()
 fun String.toSnowflake() = toSnowflakeOrNull() ?: throw NumberFormatException()
 
 fun String.stripEveryone() = this.replace("@everyone", "@еveryonе").replace("@here", "@hеrе")
+fun String.stripCodeblocks() = this.replace("```", "`'`")
 
 fun User.getAvatarUrl() = avatar?.url ?: "https://cdn.discordapp.com/embed/avatars/${discriminator.toInt() % 5}.png"
 

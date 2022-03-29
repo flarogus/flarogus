@@ -21,6 +21,7 @@ import dev.kord.core.behavior.channel.*
 import flarogus.*
 import flarogus.util.*
 import flarogus.multiverse.*
+import flarogus.multiverse.state.*
 
 object Settings {
 
@@ -92,6 +93,7 @@ object Settings {
 
 }
 
+/** An utility class that stores the most important parts of bot's state. Used for serialization. */
 @kotlinx.serialization.Serializable
 data class State(
 	val ubid: String = Vars.ubid,
@@ -99,15 +101,29 @@ data class State(
 	var runWhitelist: Set<ULong> = Vars.superusers,
 	var epoch: Long = Vars.flarogusEpoch,
 	var logLevel: Int = Log.level.level,
-	var warns: Map<Snowflake, MutableList<Rule>> = Lists.warns
+
+	var warns: Map<Snowflake, MutableList<Rule>> = Lists.warns,
+	var whitelist: List<Snowflake> = Lists.whitelist,
+	var blacklist: List<Snowflake> = Lists.blacklist,
+	var usertags: Map<Snowflake, String> = Lists.usertags,
+
+	var history: List<Multimessage> = Multiverse.history.takeLast(100)
 ) {
 	/** Updates the current bot state in accordance with this state */
 	fun loadFromState() {
 		Vars.superusers.addAll(runWhitelist)
 		Vars.flarogusEpoch = epoch
 		Log.level = Log.LogLevel.of(logLevel)
+
 		warns.forEach { user, warns ->
 			Lists.warns[user] = warns
 		}
+		whitelist.forEach { if (it !in Lists.whitelist) Lists.whitelist.add(it) }
+		blacklist.forEach { if (it !in Lists.blacklist) Lists.blacklist.add(it) }
+		usertags.forEach { user, tag ->
+			Lists.usertags[user] = tag
+		}
+
+		Multiverse.history.addAll(history)
 	}
 }

@@ -289,7 +289,7 @@ object Multiverse {
 	/** Updates everything */
 	fun updateState() = Vars.client.launch {
 		findChannels()
-		Lists.updateLists()
+		Lists.updateLists() //TODO remove this
 	}
 	
 	/** Same as normal brodcast but uses system pfp & name */

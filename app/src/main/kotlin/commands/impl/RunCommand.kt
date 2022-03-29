@@ -15,7 +15,8 @@ private val context = SimpleScriptContext()
 val defaultImports = arrayOf(
 	"flarogus.*", "flarogus.util.*", "flarogus.multiverse.*", "ktsinterface.*", "dev.kord.core.entity.*", "dev.kord.core.entity.channel.*",
 	"dev.kord.common.entity.*", "dev.kord.rest.builder.*", "dev.kord.rest.builder.message.*", "dev.kord.rest.builder.message.create.*",
-	"dev.kord.core.behavior.*", "dev.kord.core.behavior.channel.*", "kotlinx.coroutines.*", "kotlinx.coroutines.flow.*", "kotlin.system.*"
+	"dev.kord.core.behavior.*", "dev.kord.core.behavior.channel.*", "kotlinx.coroutines.*", "kotlinx.coroutines.flow.*", "kotlin.system.*",
+	"kotlinx.serialization.*", "kotlinx.serialization.json.*", "flarogus.multiverse.state.*"
 ).map { "import $it;" }.joinToString("")
 
 val RunCommand = flarogus.commands.Command(
@@ -106,13 +107,13 @@ val RunCommand = flarogus.commands.Command(
 						null -> "no output"
 						else -> result.toString()
 					}
-					replyWith(message, "```\n${resultString.take(1950).replace("```", "`'`")}\n```")
+					replyWith(message, "```\n${resultString.take(1950).stripCodeblocks()}\n```")
 					
 					Log.info { "${message.author?.tag} has successfully executed a kotlin script (see fetchMessage(${message.channel.id}UL, ${message.id}UL))" }
 				} catch (e: Exception) { 
 					val trace = if (e is ScriptException) e.toString() else e.cause?.stackTraceToString() ?: e.stackTraceToString()
 					
-					replyWith(message, "exception during execution:\n```\n${trace.take(1950)}\n```")
+					replyWith(message, "exception during execution:\n```\n${trace.take(1950).stripCodeblocks()}\n```")
 					e.printStackTrace()
 				}
 			}
