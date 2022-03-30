@@ -113,14 +113,14 @@ val AdminCommand = Supercommand(
 		.header("id: Snowflake")
 		.description("Remove the usertag of a user")
 
-//		register("list") {
-//			message.replyWith(buildString {
-//				Lists.usertags.forEach { id, tag ->
-//					val user = Vars.supplier.getUserOrNull(id
-//					append(user?.tag).append(" — ").appendLine(tag)
-//				}
-//			})
-//		}
+		register("list") {
+			message.replyWith(buildString {
+				Lists.usertags.forEach { (id, tag) ->
+					val user = Vars.supplier.getUserOrNull(id)
+					append(user?.tag).append(" — ").appendLine(tag)
+				}
+			})
+		}
 	}
 	.condition(CustomCommand.adminOnly)
 	.description("Nanage the list of usertags")
@@ -144,19 +144,19 @@ val AdminCommand = Supercommand(
 		.header("id: Snowflake")
 		.description("Remove all warnings of a user")
 
-//		register("list") {
-//			message.replyWith(buildString {
-//				Lists.warns.forEach { id, warns ->
-//					val user = with(this@register) { Vars.supplier.getUserOrNull(id) }
-//					append(user?.tag).append(" — ")
-//					warns.forEach {
-//						append(it.category).append('.').append(it.index)
-//						append(" [").append(it.points).append("points]; ")
-//					}
-//					appendLine()
-//				}
-//			})
-//		}
+		register("list") {
+			message.replyWith(buildString {
+				Lists.warns.forEach { (id, warns) ->
+					val user = with(this@register) { Vars.supplier.getUserOrNull(id) }
+					append(user?.tag).append(" — ")
+					warns.forEach {
+						append(it.category).append('.').append(it.index)
+						append(" [").append(it.points).append("points]; ")
+					}
+					appendLine()
+				}
+			})
+		}
 	}
 	.condition(CustomCommand.adminOnly)
 	.description("Manage warnings.")
