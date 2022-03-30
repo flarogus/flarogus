@@ -50,7 +50,7 @@ open class FlarogusCommandHandler(
 								appendLine(command.fancyName)
 
 								if (command is Supercommand) {
-									if (command.name != HELP_COMMAND) {
+									if (command.name != HELP_COMMAND && command.condition(this@register.message.author!!)) {
 										branch(level + 1, command.commands)
 									} else {
 										repeat(level) { append("┃ ") }
@@ -180,7 +180,7 @@ open class FlarogusCommandHandler(
 	}
 	
 	companion object {
-		val DEFAULT_COMMAND = "__default__"
+		val DEFAULT_COMMAND = "__default_action__"
 		val HELP_COMMAND = "help"
 	}
 }

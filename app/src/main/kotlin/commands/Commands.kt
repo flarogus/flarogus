@@ -53,23 +53,16 @@ fun initCommands() {
 
 			val flarsusBase = ImageIO.read({}::class.java.getResource("/flarsus.png") ?: throw RuntimeException("aaaaa le flar has escaped"))
 			register("flaroficate") {
-				launch {
-					val image = if (message.attachments.size == 0) {
-						userOrAuthor(it.getOrNull(1), this@register)?.getAvatarUrl()
-					} else {
-						message.attachments.find { it.isImage && it.width!! < 2000 && it.height!! < 2000 }?.url
-					}
-					if (image == null) throw CommandException("flaroficate", "failed to process: unable to retrieve image url. this can be caused by non-image files attached to the message.")
-					
-					try {
-						val origin = ImageIO.read(URL(image))
-						val sussyImage = ImageUtil.multiply(origin, flarsusBase)
-						
-						sendImage(message, image = sussyImage)
-					} catch (e: Exception) {
-						throw CommandException("flaroficate", e.stackTraceToString())
-					}
+				val image = if (message.attachments.size == 0) {
+					userOrAuthor(it.getOrNull(1), this)?.getAvatarUrl()
+				} else {
+					message.attachments.find { it.isImage && it.width!! < 2000 && it.height!! < 2000 }?.url
 				}
+				expect(image != null) { "failed to process: unable to retrieve image url. this can be caused by non-image files attached to the message." }
+				
+				val origin = ImageIO.read(URL(image))
+				val sussyImage = ImageUtil.multiply(origin, flarsusBase)						
+				sendImage(message, image = sussyImage)
 			}
 			.header("user: User? / attachment: Image")
 			.description("Flaroficate the providen image, avatar of the providen user or, if neither are present, avatar of the caller")
@@ -82,9 +75,9 @@ fun initCommands() {
 				} else {
 					arg;
 				}
-				if (name == null) throw CommandException("impostor", "the amogus has escaped, I couldn't do anything :pensive:")
+				expect(name != null) { "the amogus has escaped, I couldn't do anything :pensive:" }
 				
-				replyWith(message, buildString {
+				message.replyWith(buildString {
 					var usAdded = false
 					for (i in name.length - 1 downTo 0) {
 						val char = name[i]
@@ -102,11 +95,11 @@ fun initCommands() {
 			.description("Amogusificate the providen word, name of the providen user or, if neither are present, name of the caller.")
 	
 			register("merge") {
-				val first = userOrNull(it.getOrNull(1), this)
+				val first = userOrNull(it.getOrNull(1))
 				val second = userOrAuthor(it.getOrNull(2), this)
 					
-				if (first == null || second == null) throw CommandException("merge", "you must specify at least one valid user! (null-equals: first - ${first == null}, second - ${second == null})")
-				if (first == second) throw CommandException("merge", "you must specify different users!")
+				expect(first != null && second != null) { "you must specify at least one valid user!" }
+				expect(first != second) { "you must specify different users!" }
 				
 				try {
 					val image1 = ImageIO.read(URL(first.getAvatarUrl()))
@@ -125,7 +118,7 @@ fun initCommands() {
 			.header("first: User, second: User?")
 			.description("Merge pfps of two users. If only one user is specified, uses the caller as the second.")
 		}
-		.description("funny stuff that nobody use")
+		.description("funny stuff that nobody uses")
 
 		tree("util") {
 			register(UserinfoCommand)
@@ -134,7 +127,6 @@ fun initCommands() {
 				if (it.getOrNull(1) == null) return@register
 				
 				var proc: Process? = null
-				
 				val thread = Vars.threadPool.submit {
 					try {
 						File("/tmp/command").writeText(it.get(0))
@@ -149,11 +141,11 @@ fun initCommands() {
 						proc!!.errorStream.bufferedReader().use {
 							val error = it.readText()
 							proc!!.inputStream.bufferedReader().use {
-								replyWith(message, "output${if (error != "") " and errors" else ""}:\n```\n$error\n\n${it.readText()} \n```")
+								message.replyWith("output${if (error != "") " and errors" else ""}:\n```\n$error\n\n${it.readText()} \n```")
 							}
 						}
 					} catch(e: IOException) {
-						ktsinterface.launch { replyWith(message, e.toString()) }
+						message.replyWith(e.toString()) 
 					}
 				}
 				delay(60 * 1000L) //60 seconds must be enough
@@ -171,6 +163,7 @@ fun initCommands() {
 			
 			if (target == Vars.ubid) {
 				Multiverse.shutdown()
+				message.replyWith("shutting down...").await()
 				
 				//purge
 				it.getOrNull(2)?.toIntOrNull()?.let { purgeCount ->
@@ -196,21 +189,21 @@ fun initCommands() {
 		
 		val reportsChannel = Snowflake(944718226649124874UL)	
 		register("report") {
-			if (it[0].isEmpty()) throw CommandException("report", "you must specify a message")
+			expect(!it[0].isEmpty()) { "you must specify a message" }
 			
 			try {
 				Vars.client.unsafe.messageChannel(reportsChannel).createMessage {
 					content = """
-					${message.author?.tag} (channel ${message.channelId}, guild ${message.data.guildId.value}) reports:
-					```
-					${it[0].stripEveryone().take(1800)}
-					```
+						${message.author?.tag} (channel ${message.channelId}, guild ${message.data.guildId.value}) reports:
+						```
+						${it[0].stripEveryone().take(1800)}
+						```
 					""".trimIndent()
 				}
 				
-				replyWith(message, "Sent succefully")
+				message.replyWith("Sent succefully")
 			} catch (e: Exception) {
-				throw CommandException("report", "Could not send a report: $e")
+				throw CommandException("Could not send a report", e)
 			}
 		}
 		.header("message: String")

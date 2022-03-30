@@ -23,18 +23,9 @@ fun String.toSnowflake() = toSnowflakeOrNull() ?: throw NumberFormatException()
 fun String.stripEveryone() = this.replace("@everyone", "@еveryonе").replace("@here", "@hеrе")
 fun String.stripCodeblocks() = this.replace("```", "`'`")
 
-fun User.getAvatarUrl() = avatar?.url ?: "https://cdn.discordapp.com/embed/avatars/${discriminator.toInt() % 5}.png"
+fun Any?.isNotNull() = this != null
 
-///** Sends a message, waits delayMs, edits it to the output of the lambda */
-//fun sendEdited(origin: MessageBehavior, message: String, delayMs: Long = 0, newMessage: (String) -> String) = Vars.client.launch {
-//	try {
-//		val msg = origin.channel.createMessage(message.take(1999).stripEveryone())
-//		if (delayMs > 0) delay(delayMs)
-//		msg.edit { content = newMessage(message).take(1999).stripEveryone() }
-//	} catch (e: Exception) {
-//		println(e)
-//	}
-//};
+fun User.getAvatarUrl() = avatar?.url ?: "https://cdn.discordapp.com/embed/avatars/${discriminator.toInt() % 5}.png"
 
 /** Replies to a message */
 @Deprecated("this was created at the very beginning of flarogus development.")
@@ -59,6 +50,9 @@ fun MessageBehavior.replyWithResult(
 	fail: String = "fail."
 ) = replyWith(if (condition) success else fail)
 
+/** Same as replyWithResult but uses infix notation and doesn't support different messages */
+infix fun Boolean.sendResultTo(message: MessageBehavior) = message.replyWithResult(this)
+
 fun sendImage(origin: MessageBehavior, text: String = "", image: BufferedImage) = Vars.client.launch {
 	try {
 		ByteArrayOutputStream().use {
@@ -78,22 +72,22 @@ fun sendImage(origin: MessageBehavior, text: String = "", image: BufferedImage) 
 
 
 /** Tries to find the user by uid / mention, returns null in case of an error */
-suspend fun userOrNull(uid: String?, event: MessageCreateEvent): User? {
+suspend fun userOrNull(uid: String?): User? {
 	if (uid == null || uid.isEmpty()) {
 		return null
 	}
 	if (uid.startsWith("<@")) {
 		val id = "<@(\\d*)>".toRegex().find(uid)?.groupValues?.getOrNull(1)
 		if (id != null) {
-			return userOrNull(id, event)
+			return userOrNull(id)
 		}
 	}
-	return event.supplier.getUserOrNull(Snowflake(uid.toULong()))
+	return Vars.supplier.getUserOrNull(Snowflake(uid.toULong()))
 }
 
 /** Tries to find a user by mention/userid, returns the author in case of error. May return null if it's a system message */
 suspend fun userOrAuthor(uid: String?, event: MessageCreateEvent): User? {
-	return userOrNull(uid, event) ?: event.message.author
+	return userOrNull(uid) ?: event.message.author
 }
 
 fun countPings(string: String): Int {
@@ -162,12 +156,7 @@ fun formatTime(millis: Long): String {
 }
 
 /** Utility function: calls the specified function for every message in the channel. Catches and ignores any exceptions, Errors can be used to stop execution */
-inline suspend fun fetchMessages(channelId: Snowflake, crossinline handler: suspend (Message) -> Unit) {
-	fetchMessages(Vars.client.unsafe.messageChannel(channelId), handler)
-}
-
-/** Utility function: calls the specified function for every message in the channel. Catches and ignores any exceptions, Errors can be used to stop execution */
-@Deprecated("dumbass")
+@Deprecated("dumbass", level = DeprecationLevel.ERROR)
 inline suspend fun fetchMessages(channel: MessageChannelBehavior, crossinline handler: suspend (Message) -> Unit) {
 	try {
 		channel.messages

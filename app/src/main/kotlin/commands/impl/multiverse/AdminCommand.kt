@@ -57,14 +57,14 @@ val AdminCommand = Supercommand(
 	tree("blacklist") {
 		register("add") {
 			val id = it.getOrNull(1)?.toSnowflakeOrNull() ?: throw CommandException("ban", "no uid specified")
-			Lists.blacklist.add(id)
+			Lists.blacklist.add(id) sendResultTo message
 			Settings.updateState()
 		}
 		.header("id: Snowflake")
 
 		register("remove") {
 			val id = it.getOrNull(1)?.toULongOrNull() ?: throw CommandException("ban", "no uid specified")
-			Lists.blacklist.removeAll { it.value == id }
+			Lists.blacklist.removeAll { it.value == id } sendResultTo message
 			Settings.updateState()
 		}
 		.header("id: Snowflake")
@@ -80,14 +80,14 @@ val AdminCommand = Supercommand(
 	tree("whitelist") {
 		register("add") {
 			val id = it.getOrNull(1)?.toSnowflakeOrNull() ?: throw CommandException("no uid specified")
-			Lists.whitelist.add(id)
+			Lists.whitelist.add(id) sendResultTo message
 			Settings.updateState()
 		}
 		.header("id: Snowflake")
 
 		register("remove") {
 			val id = it.getOrNull(1)?.toULongOrNull() ?: throw CommandException("no uid specified")
-			Lists.whitelist.removeAll { it.value == id }
+			Lists.whitelist.removeAll { it.value == id } sendResultTo message
 			Settings.updateState()
 		}
 		.header("id: Snowflake")
@@ -99,18 +99,28 @@ val AdminCommand = Supercommand(
 		register("set") {
 			expect(it.size != 2) { "you must provide exactly 2 arguments" }
 			val id = it[1].toSnowflakeOrNull() ?: throw CommandException("the providen id is not valid")
-			
+
 			Lists.usertags[id] = it[2]
+			message.replyWith("success.")
 		}
 		.header("id: Snowflake, tag: String")
 		.description("Set the usertag of a user. The tag should not contain spaces.")
 
 		register("clear") {
 			val id = it.getOrNull(1)?.toSnowflakeOrNull() ?: throw CommandException("no uid providen")
-			Lists.usertags.remove(id)
+			Lists.usertags.remove(id).isNotNull() sendResultTo message
 		}
 		.header("id: Snowflake")
-		.description("Not implemented yet")
+		.description("Remove the usertag of a user")
+
+//		register("list") {
+//			message.replyWith(buildString {
+//				Lists.usertags.forEach { id, tag ->
+//					val user = Vars.supplier.getUserOrNull(id
+//					append(user?.tag).append(" — ").appendLine(tag)
+//				}
+//			})
+//		}
 	}
 	.condition(CustomCommand.adminOnly)
 	.description("Nanage the list of usertags")
@@ -123,15 +133,30 @@ val AdminCommand = Supercommand(
 			Lists.warn(user, rule)
 			
 			Multiverse.brodcastSystem { content = "user ${Vars.supplier.getUserOrNull(user)?.tag} was warned for rule '$rule'" }
+			message.replyWith("success.")
 		}
 		.header("id: Snowflake, rule: Int, rule category: [general]?")
 
 		register("clear") {
 			val warns = Lists.warns.getOrDefault(Snowflake(it.getOrNull(1) ?: throw CommandException("no uid specified")), null)
-			warns?.clear()?.also { message.replyWith("cleared succefully") } ?: replyWith(message, "this user has no warnings")
+			warns?.clear()?.also { message.replyWith("cleared succefully") } ?: message.replyWith("this user has no warnings")
 		}
 		.header("id: Snowflake")
 		.description("Remove all warnings of a user")
+
+//		register("list") {
+//			message.replyWith(buildString {
+//				Lists.warns.forEach { id, warns ->
+//					val user = with(this@register) { Vars.supplier.getUserOrNull(id) }
+//					append(user?.tag).append(" — ")
+//					warns.forEach {
+//						append(it.category).append('.').append(it.index)
+//						append(" [").append(it.points).append("points]; ")
+//					}
+//					appendLine()
+//				}
+//			})
+//		}
 	}
 	.condition(CustomCommand.adminOnly)
 	.description("Manage warnings.")
@@ -145,24 +170,16 @@ val AdminCommand = Supercommand(
 	.header("text: String")
 	.description("Send a system message in multiverse")
 	
-	register("reload") {
-		Lists.blacklist.clear()
-		Lists.whitelist.clear()
-		Lists.usertags.clear()
-		Multiverse.updateState()
-	}
-	.condition(CustomCommand.adminOnly)
-	.description("Clear all lists and reload them from the respective channels. This command is to be called after unbanning removing an entry from white / black / other list.")
-	
 	register("setloglevel") {
 		Log.level = Log.LogLevel.valueOf(it[1].uppercase())
+		message.replyWith("success")
 	}
 	.condition(CustomCommand.adminOnly)
 	.header("level: [lifecycle, debug, info, error]")
 	.description("Set the log level")
 	
 	register("purge") {
-		val purgeCount = it.getOrNull(1)?.toIntOrNull() ?: throw CommandException("purge", "You must specify the purge count")
+		val purgeCount = it.getOrNull(1)?.toIntOrNull() ?: throw CommandException("You must specify the purge count")
 		val deleteOrigin = it.getOrNull(2)?.toBoolean() ?: false
 		
 		var errors = 0

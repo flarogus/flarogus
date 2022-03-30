@@ -59,7 +59,7 @@ val MultiverseCommand = Supercommand(
 		
 		val deleteOrigin = it.getOrNull(1)?.toBoolean() ?: true
 		
-		val origin = Multiverse.history.find { reply!!.id in it } ?: throw CommandException("this message wasn't found in the history. perhaps, it was sent in the previous instance?")
+		val origin = Multiverse.history.find { reply.id in it } ?: throw CommandException("this message wasn't found in the history. perhaps, it was sent in the previous instance?")
 		
 		origin.let {
 			if (message.data.author.id.value !in Vars.superusers && it.origin.asMessage().data.author.id != message.data.author.id) {
@@ -82,6 +82,8 @@ val MultiverseCommand = Supercommand(
 					""".trimIndent())
 				}
 			}
+
+			message.replyWith("success.")
 		}
 	}
 	.header("deleteOriginal: Boolean?")

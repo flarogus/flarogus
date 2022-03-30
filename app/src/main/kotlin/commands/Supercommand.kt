@@ -19,7 +19,7 @@ class Supercommand(
 ) : Command(
 	name = name,
 	handler = {},
-	header = "subcommand: String, arguments: String...",
+	header = "subcommand: Any?",
 	condition = condition, 
 	description = description
 ) {
