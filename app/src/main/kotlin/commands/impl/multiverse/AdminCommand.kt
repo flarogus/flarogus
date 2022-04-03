@@ -162,7 +162,7 @@ val AdminCommand = Supercommand(
 	.description("Manage warnings.")
 	
 	register("echo") {
-		Multiverse.brodcastSystem {
+		Multiverse.brodcastSystem { _ ->
 			content = (it.getOrNull(0) ?: throw CommandException("echo", "can't send an empty message")).take(1999)
 		}
 	}

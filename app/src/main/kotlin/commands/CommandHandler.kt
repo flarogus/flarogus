@@ -27,11 +27,7 @@ open class FlarogusCommandHandler(
 	val commands = ArrayList<FlarogusCommand>(50)
 	
 	/** Executed if the command wasn't found */
-	var fallback: suspend MessageCreateEvent.(List<String>) -> Unit = {
-		it.getOrNull(1)?.let {
-			replyWith(message, "Command '${it.stripEveryone()}' does not exist. Please refer to the help subcommand of the current command.")
-		} ?: replyWith(message, "No command specified! Please refer to the help subcommand of the current command.")
-	}
+	var fallback: (suspend MessageCreateEvent.(List<String>) -> Unit)? = null
 	
 	init {
 		if (generateHelp) {
@@ -113,7 +109,8 @@ open class FlarogusCommandHandler(
 		val message = event.message.content.substring(prefix.length)
 		val args = message.split(" ").filter { !it.isEmpty() }.toMutableList()
 		
-		val commandName = args.getOrNull(0)?.also {
+		val originalCommandName = args.getOrNull(0)
+		val commandName = originalCommandName?.also {
 			args[0] = message.substring(it.length + 1)
 		} ?: DEFAULT_COMMAND
 		
@@ -121,7 +118,13 @@ open class FlarogusCommandHandler(
 		
 		Vars.client.launch {
 			if (command == null) {
-				event.fallback(args)
+				if (fallback != null) {
+					fallback!!.invoke(event, args)
+				} else {
+					originalCommandName?.let {
+						event.message.replyWith("Command '${it.stripEveryone()}' does not exist. Please refer to the help subcommand of the current command.")
+					} ?: event.message.replyWith("No command specified! Please refer to the help subcommand of the current command.")
+				}
 			} else {
 				val author = event.message.author
 				if (author != null && command.condition(author)) {

@@ -32,7 +32,7 @@ data class WebhookMessageBehavior(
 	override val kord: Kord = Vars.client,
 	override val supplier: EntitySupplier = Vars.supplier
 ) : MessageBehavior {
-	constructor(webhook: Webhook, message: Message) : this(webhook.id, message.channelId, message.id, message.kord)
+	constructor(webhook: Webhook, message: MessageBehavior) : this(webhook.id, message.channelId, message.id, Vars.client)
 	
 	suspend fun getWebhook() = supplier.getWebhook(webhookId);
 	

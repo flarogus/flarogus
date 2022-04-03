@@ -59,7 +59,7 @@ val MultiverseCommand = Supercommand(
 		
 		val deleteOrigin = it.getOrNull(1)?.toBoolean() ?: true
 		
-		val origin = Multiverse.history.find { reply.id in it } ?: throw CommandException("this message wasn't found in the history. perhaps, it was sent in the previous instance?")
+		val origin = Multiverse.history.find { reply.id in it } ?: throw CommandException("this message wasn't found in the history. perhaps, it was sent too long time ago?")
 		
 		origin.let {
 			if (message.data.author.id.value !in Vars.superusers && it.origin.asMessage().data.author.id != message.data.author.id) {
@@ -75,6 +75,7 @@ val MultiverseCommand = Supercommand(
 			if (deleteOrigin) {
 				try {
 					it.origin.delete()
+					Multiverse.history.remove(it)
 				} catch (e: Exception) {
 					replyWith(it.origin, """
 						This message was deleted from other multiversal channels but this (original) message could not be deleted.
@@ -87,5 +88,25 @@ val MultiverseCommand = Supercommand(
 		}
 	}
 	.header("deleteOriginal: Boolean?")
-	.description("Reply to a multiversal message sent in this instance to delete it. You can set [deleteOriginal] to false to avoid deleting the original message.")
+	.description("Reply to a multiversal message sent recently to delete it. You can set [deleteOriginal] to false to avoid deleting the original message.")
+
+	register("replyInfo") {
+		val reply = message.referencedMessage
+		expect(reply != null) { "you must reply to a multiversal message" }
+
+		val msg = Multiverse.history.find { reply in it }
+		expect(msg != null) { "this message wasn't found in the history. perhaps, it was sent too long time ago?" }
+		val originMsg = msg.origin.asMessage()
+		val author = User(originMsg.data.author, Vars.client)
+
+		message.reply {
+			content = """
+				Multiversal message #${msg.origin.id}
+				Author: ${author.tag}, uid: ${author.id}
+				Channel id: ${originMsg.channelId}
+				Guild id: ${originMsg.data.guildId.value}
+			""".trimIndent()
+		}
+	}
+	.description("Reply to a multiversal message sent recently to get info about it.")
 } }

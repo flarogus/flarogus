@@ -20,6 +20,7 @@ import flarogus.*
 import flarogus.util.*
 import flarogus.multiverse.state.*
 import flarogus.multiverse.npc.impl.*
+import flarogus.multiverse.entity.*
 
 /**
  * Retranslates messages sent in any channel of guild network, aka Multiverse, into other multiverse channels
@@ -51,6 +52,11 @@ object Multiverse {
 	var shutdownWebhook: Webhook? = null
 	
 	val npcs = mutableListOf(AmogusNPC())
+
+	/** Currently unused. */
+	val users = ArrayList<MultiversalUser>(90)
+	/** Currently unused. */
+	val guilds = ArrayList<MultiversalGuild>(30)
 	
 	/** Sets up the multiverse */
 	suspend fun start() {
@@ -94,12 +100,13 @@ object Multiverse {
 		
 		Vars.client.launch {
 			delay(40000L)
-			brodcastSystem {
+			brodcastSystem { _ ->
 				val channels = universeWebhooks.fold(0) { v, it -> if (it.webhook != null && Lists.canReceive(it.channel)) v + 1 else v }
 				embed { description = """
 					***This channel is a part of the Multiverse. There's ${channels - 1} other channels.***
 					Call `flarogus multiverse rules` to see the rules
 					Use `flarogus report` to report an issue
+					Refer to `flarogus multiverse help` for useful commands
 				""".trimIndent() }
 			}
 		}
@@ -129,7 +136,7 @@ object Multiverse {
 		val guild = event.getGuild()
 		
 		if (!Lists.canTransmit(guild, event.message.author)) {
-			replyWith(event.message, """
+			event.message.replyWith("""
 				[!] You're not allowed to send messages in multiverse. Please contact one of admins to find out why.
 				You can do that using `flarogus report`.
 			""".trimIndent())
@@ -141,14 +148,14 @@ object Multiverse {
 			//instaban spammers
 			if (countPings(event.message.content) > 7) {
 				Lists.blacklist += event.message.author!!.id //we don't need to ban permanently
-				replyWith(event.message, "[!] You've been auto-banned from this multiverse instance. please wait 'till the next restart.")
+				event.message.replyWith("[!] You've been auto-banned from this multiverse instance. please wait 'till the next restart.")
 				Log.info { "${event.message.author?.tag} was auto-tempbanned for attempting to ping too many people at once" }
 				return
 			}
 			
 			//block potential spam messages
 			if (ScamDetector.hasScam(event.message.content)) {
-				replyWith(event.message, "[!] your message contains a potential scam. if you're not a bot, remove any links and try again")
+				event.message.replyWith("[!] your message contains a potential scam. if you're not a bot, remove any links and try again")
 				Log.info { "a potential scam message sent by ${event.message.author?.tag} was blocked: ```${event.message.content.take(200)}```" }
 				return
 			}
@@ -160,7 +167,7 @@ object Multiverse {
 				
 				if (current - lastMessage < ratelimit) {
 					Vars.client.launch {
-						replyWith(event.message, "[!] You are being rate limited. Please wait ${ratelimit + lastMessage - current} milliseconds.")
+						event.message.replyWith("[!] You are being rate limited. Please wait ${ratelimit + lastMessage - current} milliseconds.")
 					}
 					return
 				} else {
@@ -171,10 +178,10 @@ object Multiverse {
 			//actual retranslation region
 			Vars.client.launch {
 				val original = event.message.content
-				val webhook = event.message.webhookId?.let { Vars.supplier.getWebhookOrNull(it) }
-				val author = event.message.author?.tag?.replace("*", "\\*") ?: "webhook<${webhook?.name}>"
+				val isWebhook = event.message.data.webhookId.value == event.message.data.author.id
+				val author = User(event.message.data.author, Vars.client)
 				val customTag = Lists.usertags.getOrDefault(userid, null)
-					
+				
 				val username = buildString {
 					if (customTag != null) {
 						append('[')
@@ -182,9 +189,11 @@ object Multiverse {
 						append(']')
 						append(' ')
 					}
-					append(author)
+					if (isWebhook) append("webhook<")
+					append(author.tag)
 					append(" — ")
 					append(guild?.name ?: "<DISCORD>")
+					if (isWebhook) append(">")
 				}
 				
 				var finalMessage = buildString {
@@ -197,17 +206,17 @@ object Multiverse {
 					}
 				}.take(1999)
 				
-				if (finalMessage.isEmpty() && event.message.data.attachments.isEmpty()/* && event.message.data.stickers.isEmpty*/) {
+				if (finalMessage.isEmpty() && event.message.data.attachments.isEmpty()) {
 					finalMessage = "<no content>"
 				}
 				
 				val beginTime = System.currentTimeMillis()
 				
 				//actually brodcast
-				val messages = brodcast(event.message.channel.id.value, username, event.message.author?.getAvatarUrl() ?: webhook?.data?.avatar) {
+				val messages = brodcast(event.message.channel.id.value, username, author.getAvatarUrl()) { channelId ->
 					var finalContent = finalMessage
 					
-					quoteMessage(event.message.referencedMessage)
+					quoteMessage(event.message.referencedMessage, channelId)
 					
 					event.message.data.attachments.forEach { attachment ->
 						if (attachment.size < maxFileSize) {
@@ -241,12 +250,14 @@ object Multiverse {
 			.filter { event -> event.guildId in Lists.whitelist }
 			.filter { event -> universes.any { it.id == event.channelId } }
 			.onEach { event ->
-				val multimessage = history.find { it.origin.id == event.messageId }
+				var multimessage: Multimessage? = null
+				delayWhile(20000L, 500L) { history.find { it.origin.id == event.messageId }.also { multimessage = it } != null }
 
 				try {
 					if (multimessage != null) {
-						multimessage.delete(false) //well...
+						multimessage!!.delete(false) //well...
 						Log.info { "Message ${event.messageId} was deleted by deleting the original message" }
+						history.remove(multimessage!!)
 					}
 				} catch (e: Exception) {
 					Log.error { "An exception has occurred while trying to delete a multiversal message ${event.messageId}: $e" }
@@ -261,27 +272,20 @@ object Multiverse {
 			.filter { event -> !isRetranslatedMessage(event.messageId) }
 			.filter { event -> universes.any { it.id == event.channelId } }
 			.onEach { event ->
-				val multimessage = history.find { event.messageId == it.origin.id }
-				val new = event.new
+				var multimessage: Multimessage? = null
+				delayWhile(20000L, 500L) { history.find { it.origin.id == event.messageId }.also { multimessage = it } != null }
+
 				try {
 					if (multimessage != null) {
-						if (new != null) {
-							multimessage.edit(false) {
-								content = buildString {
-									appendLine(new.content.value ?: "")
-									new.attachments.value?.forEach { attachment ->
-										if (attachment.size >= maxFileSize) {
-											appendLine(attachment.url)
-										}
+						multimessage!!.edit(false) {
+							content = buildString {
+								appendLine(event.new.content.value ?: "")
+								event.new.attachments.value?.forEach { attachment ->
+									if (attachment.size >= maxFileSize) {
+										appendLine(attachment.url)
 									}
 								}
 							}
-						} else {
-							event.channel.createMessage("""
-								Warning: message ${event.messageId} was edited but it's new content could not be determined!
-								Retranslated messages were not affected.
-								Ensure that the bot has the necessary permissions and try again!
-							""".trimIndent())
 						}
 					}
 				} catch (e: Exception) {
@@ -297,14 +301,14 @@ object Multiverse {
 			//the following methods are way too costly to invoke them for every guild
 			if (universes.any { ch -> ch.data.guildId.value == it.id }) return@forEach
 
-			val guild = Vars.supplier.getGuildOrNull(it.id) //gCUG() returns a flow of partial discord guilds.
+			val guild = Vars.restSupplier.getGuildOrNull(it.id) //gCUG() returns a flow of partial discord guilds.
 			
-			if (guild != null && it.id !in Lists.blacklist && guild.id !in Lists.blacklist) guild.channelBehaviors.forEach {
-				var c = it.asChannel()
-				
-				if (c.data.type == ChannelType.GuildText && c.data.name.toString().contains("multiverse") && c.id !in Lists.blacklist) {
+			if (guild != null && it.id !in Lists.blacklist && guild.id !in Lists.blacklist) guild.channels.collect {
+				var c = it as? TextChannel
+
+				if (c != null && c.data.name.toString().contains("multiverse") && c.id !in Lists.blacklist) {
 					if (!universes.any { it.id.value == c.id.value }) {
-						universes += TextChannel(c.data, Vars.client) //todo: a simple cast should be enough but I'm afraid of breaking everything
+						universes += c
 					}
 				}
 			}
@@ -348,11 +352,12 @@ object Multiverse {
 	/** Updates everything */
 	fun updateState() = Vars.client.launch {
 		findChannels()
-		//Lists.updateLists() //TODO remove this
 	}
 	
 	/** Same as normal brodcast but uses system pfp & name */
-	inline suspend fun brodcastSystem(crossinline message: suspend MessageCreateBuilder.() -> Unit) = brodcast(0UL, systemName, systemAvatar, message)
+	inline suspend fun brodcastSystem(
+		crossinline message: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
+	) = brodcast(0UL, systemName, systemAvatar, message)
 	
 	/**
 	 * Sends a message into every multiverse channel except the ones that are blacklisted and the one sith id == exclude
@@ -364,7 +369,7 @@ object Multiverse {
 		exclude: ULong = 0UL,
 		user: String? = null,
 		avatar: String? = null,
-		crossinline message: suspend MessageCreateBuilder.() -> Unit
+		crossinline messageBuilder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
 	): List<WebhookMessageBehavior> {
 		val messages = ArrayList<WebhookMessageBehavior>(universeWebhooks.size)
 		val deferreds = arrayOfNulls<Deferred<WebhookMessageBehavior?>>(universeWebhooks.size) //todo: can i avoid this array allocation?
@@ -375,7 +380,7 @@ object Multiverse {
 					try {
 						if (it.webhook != null) {
 							val message = it.webhook!!.execute(it.webhook!!.token!!) {
-								message()
+								messageBuilder(it.channel.id)
 								content = content?.take(1999)?.stripEveryone()
 								allowedMentions() //forbid all mentions
 								username = user ?: "unknown user"

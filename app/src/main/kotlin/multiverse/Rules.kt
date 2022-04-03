@@ -78,3 +78,14 @@ class RuleSerializer : KSerializer<Rule> {
 		return RuleCategory.of(parts[0].toInt(), parts[1].toInt()) ?: Rule.UNKNOWN
 	}
 }
+
+/** Represents the fact that a user has broken a rule */
+@Serializable
+data class WarnEntry(val rule: Rule, val received: Long = 0) {
+	fun isValid() = received + expiration < System.currentTimeMillis()
+
+	companion object {
+		/** Time in ms required for a warn to expire. 20 days. */
+		val expiration = 1000L * 60 * 60 * 24 * 20
+	}
+}

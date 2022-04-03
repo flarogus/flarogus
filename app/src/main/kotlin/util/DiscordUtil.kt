@@ -15,6 +15,7 @@ import dev.kord.core.behavior.*
 import dev.kord.core.behavior.channel.*
 import dev.kord.common.entity.*
 import flarogus.*
+import flarogus.multiverse.*
 
 fun ULong.toSnowflake() = Snowflake(this)
 fun String.toSnowflakeOrNull() = toULongOrNull()?.toSnowflake()
@@ -26,6 +27,19 @@ fun String.stripCodeblocks() = this.replace("```", "`'`")
 fun Any?.isNotNull() = this != null
 
 fun User.getAvatarUrl() = avatar?.url ?: "https://cdn.discordapp.com/embed/avatars/${discriminator.toInt() % 5}.png"
+
+/** Waits up to [limit] ms for [condition] to become true. Returns true if the condition returned true, false if [limit] was reached. */
+suspend inline fun delayWhile(limit: Long, period: Long = 50L, condition: () -> Boolean): Boolean {
+	if (condition()) return true
+
+	val begin = System.currentTimeMillis()
+	do {
+		delay(period)
+		if (condition()) return true
+	} while (System.currentTimeMillis() < begin + limit)
+
+	return false
+}
 
 /** Replies to a message */
 @Deprecated("this was created at the very beginning of flarogus development.")
@@ -174,19 +188,32 @@ inline suspend fun fetchMessages(channel: MessageChannelBehavior, crossinline ha
 
 val nameRegex = """^([.*])?(.*#\d\d\d\d) — .*""".toRegex()
 
-/** Adds an embed referencing the original message */
-fun MessageCreateBuilder.quoteMessage(message: Message?) {
+/** 
+ * Adds an embed referencing the original message
+ * @param toChannel id of the channel this message is sent to. 0 if not present.
+ */
+suspend fun MessageCreateBuilder.quoteMessage(message: Message?, toChannel: Snowflake) {
 	if (message != null) {
 		val author = User(message.data.author, Vars.client) //gotta construct one myself if the default api doesn't allow that
 		val authorName = nameRegex.find(author.username)?.groupValues?.getOrNull(2) ?: "${author.username}#${author.discriminator}"
+
+		//message in the same channel the new message is being sent to
+		val closest = Multiverse.history.find { message in it }?.let {
+			if (it.origin.channelId == toChannel) it.origin else it.retranslated.find { it.channelId == toChannel }
+		}?.asMessage()
 		
 		embed {
-			title = "(reply to ${authorName})"
+			url = if (closest != null) "https://discord.com/channels/${closest.data.guildId.value}/${closest.channelId}/${closest.id}" else null
+			title = "reply to ${authorName}" + if (closest != null) "(click to jump)" else ""
+
 			description = buildString {
-				val replyOrigin = "(> .+\n)?((?s).+)".toRegex().find(message.content)?.groupValues?.getOrNull(2)?.replace('\n', ' ') ?: "<no content>"
-				append(replyOrigin.take(100).replace("/", "\\/"))
-				if (replyOrigin.length > 100) append("...")
-			}
+				append(message.content.take(100).replace("/", "\\/"))
+				if (message.content.length > 100) append("...")
+				
+				message.attachments.forEach {
+					append("file <").append(it.filename).append('>').append('\n')
+				}
+			}.let { if (it.length > 200) it.take(200) + "..." else it }
 			
 			thumbnail { url = author.getAvatarUrl() }
 		}
