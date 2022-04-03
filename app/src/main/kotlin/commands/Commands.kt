@@ -36,7 +36,7 @@ fun initCommands() {
 			val msg = message.replyWith("sussificating").await()
 			msg?.edit {
 				val ping = message.id.timeMark.elapsedNow().toLong(DurationUnit.MILLISECONDS)
-				"""
+				content = """
 					${Vars.ubid} — running for ${formatTime(System.currentTimeMillis() - Vars.startedAt)}. sussification time: ${ping}ms.
 					Time since flarogus epoch: ${formatTime(System.currentTimeMillis() - Vars.flarogusEpoch)}
 				""".trimIndent()
