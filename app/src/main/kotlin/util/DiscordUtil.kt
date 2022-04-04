@@ -212,7 +212,7 @@ suspend fun MessageCreateBuilder.quoteMessage(message: Message?, toChannel: Snow
 				if (message.content.length > 100) append("...")
 				
 				message.attachments.forEach {
-					append("file <").append(it.filename).append('>').append('\n')
+					append('\n').append("file <").append(it.filename).append('>')
 				}
 			}.let { if (it.length > 200) it.take(200) + "..." else it }
 			
