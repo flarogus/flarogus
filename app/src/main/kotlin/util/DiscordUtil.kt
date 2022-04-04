@@ -201,10 +201,11 @@ suspend fun MessageCreateBuilder.quoteMessage(message: Message?, toChannel: Snow
 		val closest = Multiverse.history.find { message in it }?.let {
 			if (it.origin.channelId == toChannel) it.origin else it.retranslated.find { it.channelId == toChannel }
 		}?.asMessage()
+		val closestChannel = closest?.getChannel()
 		
 		embed {
-			url = if (closest != null) "https://discord.com/channels/${closest.data.guildId.value}/${closest.channelId}/${closest.id}" else null
-			title = "reply to ${authorName}" + if (closest != null) "(click to jump)" else ""
+			url = if (closest != null) "https://discord.com/channels/${closestChannel?.data?.guildId?.value}/${closest.channelId}/${closest.id}" else null
+			title = "reply to ${authorName}" + if (closest != null) " (link)" else ""
 
 			description = buildString {
 				append(message.content.take(100).replace("/", "\\/"))
