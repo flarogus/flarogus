@@ -213,7 +213,7 @@ object Multiverse {
 				val beginTime = System.currentTimeMillis()
 				
 				//actually brodcast
-				val messages = brodcast(event.message.channel.id.value, username, author.getAvatarUrl()) { channelId ->
+				val messages = brodcast(username, author.getAvatarUrl(), { it.id != event.message.channel.id }) { channelId ->
 					var finalContent = finalMessage
 					
 					quoteMessage(event.message.referencedMessage, channelId)
@@ -357,7 +357,7 @@ object Multiverse {
 	/** Same as normal brodcast but uses system pfp & name */
 	inline suspend fun brodcastSystem(
 		crossinline message: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
-	) = brodcast(0UL, systemName, systemAvatar, message)
+	) = brodcast(systemName, systemAvatar, { true }, message)
 	
 	/**
 	 * Sends a message into every multiverse channel except the ones that are blacklisted and the one sith id == exclude
@@ -366,16 +366,16 @@ object Multiverse {
 	 * @return array containing ids of all created messages
 	 **/
 	inline suspend fun brodcast(
-		exclude: ULong = 0UL,
 		user: String? = null,
 		avatar: String? = null,
+		filter: (TextChannel) -> Boolean = { true },
 		crossinline messageBuilder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
 	): List<WebhookMessageBehavior> {
 		val messages = ArrayList<WebhookMessageBehavior>(universeWebhooks.size)
 		val deferreds = arrayOfNulls<Deferred<WebhookMessageBehavior?>>(universeWebhooks.size) //todo: can i avoid this array allocation?
 		
 		universeWebhooks.forEachIndexed { index, it ->
-			if (exclude != it.channel.id.value && Lists.canReceive(it.channel)) {
+			if (filter(it.channel) && Lists.canReceive(it.channel)) {
 				deferreds[index] = Vars.client.async {
 					try {
 						if (it.webhook != null) {

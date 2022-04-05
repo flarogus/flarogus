@@ -13,16 +13,18 @@ import flarogus.multiverse.*
  */
 @Serializable
 open class MultiversalGuild(
-	val discordId: Snowflake,
-	val uuid: Long
-) {
+	val discordId: Snowflake
+) : MultiversalEntity() {
 	@Transient
 	var guild: Guild? = null
+	var nameOverride: String? = null
+
+	val name: String get() = nameOverride ?: guild!!.name
 
 	var lastUpdate = 0L
 
-	open suspend fun send(username: String, avatar: String, builder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit) {
-
+	suspend inline fun send(username: String, avatar: String, crossinline builder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit) {
+		Multiverse.brodcast("$username — $name", avatar, { it.guildId != discordId }, builder)
 	}
 
 	open suspend fun update() {

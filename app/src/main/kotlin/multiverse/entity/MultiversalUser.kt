@@ -17,9 +17,8 @@ import flarogus.multiverse.*
  */
 @Serializable
 open class MultiversalUser(
-	val discordId: Snowflake,
-	val uuid: Long
-) {
+	val discordId: Snowflake
+) : MultiversalEntity() {
 	@Transient
 	open var user: User? = null
 
