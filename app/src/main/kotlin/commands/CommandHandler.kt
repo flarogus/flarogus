@@ -69,7 +69,11 @@ open class FlarogusCommandHandler(
 				registerDefault {
 					message.channel.createEmbed {
 						title = "List of commands"
-						description = "Commands marked with [+] have subcommands. Use '<commandname> help' to see them."
+						description = """
+							**Commands marked with [+] have subcommands. Use '<commandname> help' to see them.
+							In order to call a subcommand, use the following syntax: `flarogus command1 subcommand2`
+							e.g: `flarogus fun help` calls the 'help' subcommand of the 'fun' command.**
+						""".trimIndent()
 						
 						var hidden = 0
 						for (command in this@FlarogusCommandHandler.commands) {
