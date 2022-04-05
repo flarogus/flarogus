@@ -104,7 +104,7 @@ open class FlarogusCommandHandler(
 	 **/
 	open suspend fun handle(event: MessageCreateEvent): Boolean {
 		if (ignoreBots && event.message.author?.isBot ?: true) return false
-		if (!event.message.content.startsWith(prefix)) return false
+		if (!event.message.content.startsWith(prefix, true)) return false
 		
 		val message = event.message.content.substring(prefix.length)
 		val args = message.split(" ").filter { !it.isEmpty() }.toMutableList()

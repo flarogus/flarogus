@@ -406,6 +406,12 @@ object Multiverse {
 		
 		return messages
 	}
+	
+	/** Returns a MultiversalUser with the given id, or null if it does not exist */
+	fun userOf(id: Snowflake) = users.find { it.discordId == id }
+
+	/** Returns a MultiversalGuild with the given id, or null if it does not exist */
+	fun guildOf(id: Snowflake) = guilds.find { it.discordId == id }
 
 	/** Returns whether this message was sent by flarogus */
 	fun isOwnMessage(message: Message): Boolean {

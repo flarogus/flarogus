@@ -21,7 +21,7 @@ open class MultiversalGuild(
 
 	var lastUpdate = 0L
 
-	open suspend fun send(username: String, avatar: String, builder: suspend MessageCreateBuilder.() -> Unit) {
+	open suspend fun send(username: String, avatar: String, builder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit) {
 
 	}
 
