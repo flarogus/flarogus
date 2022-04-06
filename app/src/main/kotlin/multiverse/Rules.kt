@@ -7,7 +7,7 @@ import kotlinx.serialization.encoding.*
 
 enum class RuleCategory(val index: Int, val description: String, val rules: List<Rule>) {
 	GENERAL(1, "list of multiversal rules", listOf(
-		Rule(1, "Do not insult, harrass, discriminate other people. This should be obvious."),
+		Rule(1, "Do not insult, harrass, discriminate other people. This also includes fandom-related hate, stop posting it for fuck's sake."),
 		Rule(1, "Do not spam / flood the multiverse. Meme dumps are allowed as long as they don't disturb other users."),
 		Rule(4, "Posting scam links is strictly prohibited and can result in an immediate ban, unless the link was successfully blocked by the filter."),
 		Rule(2, "Avoid posting nsfw-content. Posting explicit images / videos / gifs is prohibited. Videos with a questionable preview are counted too."),
