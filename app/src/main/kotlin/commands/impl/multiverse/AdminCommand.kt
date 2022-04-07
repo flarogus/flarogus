@@ -123,7 +123,7 @@ val AdminCommand = Supercommand(
 		}
 	}
 	.condition(CustomCommand.adminOnly)
-	.description("Nanage the list of usertags")
+	.description("Manage the list of usertags")
 	
 	tree("warn") {
 		register("add") {
