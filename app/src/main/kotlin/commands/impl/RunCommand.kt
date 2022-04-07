@@ -19,7 +19,7 @@ val defaultImports = arrayOf(
 	"kotlinx.serialization.*", "kotlinx.serialization.json.*", "flarogus.multiverse.state.*", "flarogus.multiverse.entity.*"
 ).map { "import $it;" }.joinToString("")
 
-val codeblockRegex = "```([a-z]*)?((?s).*)(```)?".toRegex()
+val codeblockRegex = "```([a-z]*)?((?s).*)```".toRegex()
 val argumentRegex = "-([a-zA-Z0-9=]*)[\\s<]?".toRegex()
 
 val RunCommand = flarogus.commands.Command(
