@@ -19,7 +19,7 @@ val MinesweeperCommand = flarogus.commands.Command(
 
 	handler = {
 		val w = (it.getOrNull(1)?.toIntOrNull() ?: 12).coerceIn(5, maxW)
-		val h = (it.getOrNull(2)?.toIntOrNull() ?: 12).coerceIn(5, maxH)
+		val h = (it.getOrNull(2)?.toIntOrNull() ?: 8).coerceIn(5, maxH)
 		val mines = (it.getOrNull(3)?.toIntOrNull() ?: (w * h / 4)).coerceIn(0, w * h - 9)
 		
 		//position that will be opened at the start
@@ -59,7 +59,7 @@ val MinesweeperCommand = flarogus.commands.Command(
 		}
 		
 		if (w * h * 6 > 2000) {
-			replyWith(message, "warning: too many tiles, the message will be split into multiple")
+			message.replyWith("warning: too many tiles, the message will be split into multiple")
 		}
 		
 		//fourth iteration: construct the game field
@@ -80,7 +80,7 @@ val MinesweeperCommand = flarogus.commands.Command(
 						builder.append("||").append(bombEmoji).append("||")
 					} else {
 						val emoji = numbers[value and 0b1111]
-						if (value and 0b10000 == 16) { //pre-open tile
+						if (value and 0b10000 != 0) { //pre-open tile
 							builder.append(emoji)
 						} else {
 							builder.append("||").append(emoji).append("||")

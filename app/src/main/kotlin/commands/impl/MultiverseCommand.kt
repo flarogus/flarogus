@@ -26,14 +26,22 @@ val MultiverseCommand = Supercommand(
 	
 	register("mywarnings") {
 		message.channel.createEmbed {
-			val warnings = Lists.warns.getOrDefault(message.author!!.id, null)?.fold(0) { a, v -> a + v.points }?.toString() ?: "no"
+			val warnings = Lists.warns.getOrDefault(message.author!!.id, null)
+			val points = warnings?.fold(0) { a, v -> a + v.points }?.toString() ?: "no"
+
 			description = "User ${message.author?.tag} has $warnings warning points"
+			if (warnings != null && warnings.size > 0) description += buildString {
+				appendLine()
+				warnings.forEach {
+					append(it.category).append('.').append(it.index).append(' ')
+				}
+			}
 		}
 	}
 	.description("Show warnings of the caller")
 	
 	register("lastusers") {
-		replyWith(message, Multiverse.ratelimited.keys.map {
+		message.replyWith(Multiverse.ratelimited.keys.map {
 			try {
 				return@map "[${Vars.supplier.getUser(it).tag}]: $it"
 			} catch (e: Exception) {

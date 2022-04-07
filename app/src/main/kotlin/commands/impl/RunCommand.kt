@@ -16,8 +16,11 @@ val defaultImports = arrayOf(
 	"flarogus.*", "flarogus.util.*", "flarogus.multiverse.*", "ktsinterface.*", "dev.kord.core.entity.*", "dev.kord.core.entity.channel.*",
 	"dev.kord.common.entity.*", "dev.kord.rest.builder.*", "dev.kord.rest.builder.message.*", "dev.kord.rest.builder.message.create.*",
 	"dev.kord.core.behavior.*", "dev.kord.core.behavior.channel.*", "kotlinx.coroutines.*", "kotlinx.coroutines.flow.*", "kotlin.system.*",
-	"kotlinx.serialization.*", "kotlinx.serialization.json.*", "flarogus.multiverse.state.*"
+	"kotlinx.serialization.*", "kotlinx.serialization.json.*", "flarogus.multiverse.state.*", "flarogus.multiverse.entity.*"
 ).map { "import $it;" }.joinToString("")
+
+val codeblockRegex = "```([a-z]*)?((?s).*)(```)?".toRegex()
+val argumentRegex = "-([a-zA-Z0-9=]*)[\\s<]?".toRegex()
 
 val RunCommand = flarogus.commands.Command(
 	name = "run",
@@ -33,8 +36,7 @@ val RunCommand = flarogus.commands.Command(
 		var isAdmin = false
 		var addImports = false
 		
-		val regex = "-([a-zA-Z0-9=]*)[\\s<]?".toRegex()
-		var argument = regex.find(command.substring(0, if (begin == -1) command.length else begin - 1))
+		var argument = argumentRegex.find(command.substring(0, if (begin == -1) command.length else begin - 1))
 		while (argument != null) {
 			val arg = argument.groupValues.getOrNull(1) ?: break
 			
@@ -52,7 +54,7 @@ val RunCommand = flarogus.commands.Command(
 						val id = parts.get(1).toULong()
 						Vars.superusers.add(id)
 					} catch (e: Exception) {
-						replyWith(message, "couldn't add this user: $e!")
+						message.replyWith("couldn't add this user: $e!")
 					}
 					return@handler;
 				}
@@ -66,7 +68,7 @@ val RunCommand = flarogus.commands.Command(
 		
 		//try to find a code block, remove it if it's present
 		var script = command.substring(begin + 2)
-		val codeblock = "```([a-z]*)?((?s).*)```".toRegex().find(script)?.groupValues?.getOrNull(2)
+		val codeblock = codeblockRegex.find(script)?.groupValues?.getOrNull(2)
 		if (codeblock != null) script = codeblock
 		if (addImports) script = "$defaultImports\n$script"
 		
@@ -107,13 +109,13 @@ val RunCommand = flarogus.commands.Command(
 						null -> "no output"
 						else -> result.toString()
 					}
-					replyWith(message, "```\n${resultString.take(1950).stripCodeblocks()}\n```")
+					message.replyWith("```\n${resultString.take(1950).stripCodeblocks()}\n```")
 					
 					Log.info { "${message.author?.tag} has successfully executed a kotlin script (see fetchMessage(${message.channel.id}UL, ${message.id}UL))" }
 				} catch (e: Exception) { 
 					val trace = if (e is ScriptException) e.toString() else e.cause?.stackTraceToString() ?: e.stackTraceToString()
 					
-					replyWith(message, "exception during execution:\n```\n${trace.take(1950).stripCodeblocks()}\n```")
+					message.replyWith("exception during execution:\n```\n${trace.take(1950).stripCodeblocks()}\n```")
 					e.printStackTrace()
 				}
 			}

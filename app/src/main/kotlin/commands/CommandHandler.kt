@@ -139,7 +139,7 @@ open class FlarogusCommandHandler(
 						Log.debug { "${event.message.author?.tag} has successfully executed `$commandName`" }
 					} catch (e: Exception) { //no exceptions on my watch
 						if (e is CommandException && e.commandName == null) e.commandName = command.name
-						replyWith(event.message, e.toString())
+						event.message.replyWith(e.toString())
 						
 						if (e is CommandException) {
 							Log.debug { "a command exception has occurred while executing command `$commandName` ran by ${event.message.author?.tag}: `$e`" }
@@ -149,7 +149,7 @@ open class FlarogusCommandHandler(
 						}
 					}
 				} else {
-					replyWith(event.message, "You are not allowed to run '${commandName.stripEveryone()}'.")
+					event.message.replyWith("You are not allowed to run '${commandName.stripEveryone()}'.")
 					
 					Log.info { "${event.message.author?.tag} has tried to execute a command they don't have access to: `${commandName}`" }
 				}

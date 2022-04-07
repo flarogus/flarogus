@@ -213,7 +213,7 @@ fun initCommands() {
 			try {
 				message.author?.getDmChannel()?.createMessage("invite to the core guild: https://discord.gg/kgGaUPx2D2")
 			} catch (e: Exception) {
-				replyWith(message, "couldn't send a DM. make sure you have DMs open ($e)")
+				message.replyWith("couldn't send a DM. make sure you have DMs open ($e)")
 			}
 		}
 		.description("Get an invite to the official server")

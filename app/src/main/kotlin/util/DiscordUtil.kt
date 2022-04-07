@@ -42,7 +42,7 @@ suspend inline fun delayWhile(limit: Long, period: Long = 50L, condition: () -> 
 }
 
 /** Replies to a message */
-@Deprecated("this was created at the very beginning of flarogus development.")
+@Deprecated("This was created at the very beginning of the flarogus development. Use 'origin.replyWith(message)' instead.", ReplaceWith("origin.replyWith(message)"), DeprecationLevel.ERROR)
 fun replyWith(origin: MessageBehavior, message: CharSequence) = origin.replyWith(message.toString())
 
 /** Replies to a message */
