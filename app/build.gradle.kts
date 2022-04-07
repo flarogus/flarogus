@@ -22,7 +22,7 @@ dependencies {
 	//runtimeOnly("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.6.10")
 	//implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223-embeddable:1.3.72")
 
-	implementation("dev.kord:kord-core:0.8.0-M12")
+	implementation("dev.kord:kord-core:0.8.0-M10")
 	implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
 	
 	//note for myself: DONT REMOVE THIS DEPENDENCY YOU DUMBFUCK!
