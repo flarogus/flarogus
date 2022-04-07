@@ -33,6 +33,9 @@ object Vars {
 	
 	/** Superusers that are allowed to do most things */
 	val superusers = mutableSetOf<ULong>(ownerId, 691650272166019164UL, 794686191467233280UL) //the first is smolkeys, second is real sushi
+
+	/** Whether to enable experimental stuff. Should be enabled only using the run command */
+	var experimental = false
 	
 	fun loadState() {
 		ubid = Random.nextInt(0, 1000000000).toString()

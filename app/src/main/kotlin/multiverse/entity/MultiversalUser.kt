@@ -32,10 +32,13 @@ open class MultiversalUser(
 
 	/** The name of the user */
 	val name get() = if (usertag != null) "[$usertag] ${user?.tag}" else user?.tag ?: "null"
+	/** The avatar of the user */
+	val avatar get() = user?.getAvatarUrl()
 
 	@Transient
 	var lastUpdate = 0L
 	var lastSent = 0L
+	var totalSent = 0
 
 	/** Should be called when this user sends a multiversal message */
 	suspend fun onMultiversalMessage(event: MessageCreateEvent) {
@@ -51,7 +54,7 @@ open class MultiversalUser(
 			lastSent = System.currentTimeMillis()
 
 			if (delay > 0) {
-				event.message.replyWith("This message was not retranslated because was rate limited. Please, wait $delay ms.")
+				event.message.replyWith("This message was not retranslated because was rate limited. Please, wait $messageRateLimit ms.")
 				return
 			} else if (ScamDetector.hasScam(event.message.content)) {
 				event.message.replyWith("[!] your message contains a potential scam. if you're not a bot, remove any links and try again")
@@ -87,9 +90,9 @@ open class MultiversalUser(
 		}
 	}
 
-	inline suspend fun send(guild: MultiversalGuild, crossinline builder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit) {
+	inline suspend fun send(guild: MultiversalGuild, crossinline builder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit) = let {
 		update()
-		guild.send(name, user!!.getAvatarUrl()) { builder(it) }
+		guild.retranslateUserMessage(this) { builder(it) }.also { totalSent++ }
 	}
 	
 	/** Updates this user */
@@ -108,7 +111,7 @@ open class MultiversalUser(
 
 	companion object {
 		val criticalWarns = 5
-		var updateInterval = 1000L * 180
+		var updateInterval = 1000L * 60 * 8
 		val messageRateLimit = 3000L
 	}
 }

@@ -196,8 +196,7 @@ val AdminCommand = Supercommand(
 			
 			if (deleteOrigin) {
 				try {
-					it.origin.delete()
-					deleted++
+					it.origin?.delete()?.also { deleted++ }
 				} catch (e: Exception) {
 					errors++
 				}

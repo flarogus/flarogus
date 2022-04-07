@@ -49,7 +49,7 @@ data class WebhookMessageBehavior(
 
 @kotlinx.serialization.Serializable(with = HistorySerializer::class)
 data class Multimessage(
-	val origin: MessageBehavior,
+	val origin: MessageBehavior? = null,
 	val retranslated: List<WebhookMessageBehavior>
 ) {
 	suspend fun delete(deleteOrigin: Boolean) {
@@ -57,7 +57,7 @@ data class Multimessage(
 			try { it.delete() } catch (ignored: Exception) { }
 		}
 		if (deleteOrigin) {
-			try { origin.delete() } catch (ignored: Exception) { }
+			try { origin?.delete() } catch (ignored: Exception) { }
 		}
 	}
 
@@ -66,13 +66,13 @@ data class Multimessage(
 			try { it.edit { builder() } } catch (ignored: Exception) { }
 		}
 		if (modifyOrigin) {
-			try { origin.edit(builder) } catch (ignored: Exception) { }
+			try { origin?.edit(builder) } catch (ignored: Exception) { }
 		}
 	}
 
-	operator fun contains(other: MessageBehavior) = other.id == origin.id || retranslated.any { other.id == it.id };
+	operator fun contains(other: MessageBehavior) = other.id == origin?.id || retranslated.any { other.id == it.id };
 	
-	operator fun contains(other: Snowflake) = origin.id == other || retranslated.any { other == it.id };
+	operator fun contains(other: Snowflake) = origin?.id == other || retranslated.any { other == it.id };
 }
 
 class HistorySerializer : KSerializer<Multimessage> {
@@ -86,8 +86,10 @@ class HistorySerializer : KSerializer<Multimessage> {
 	}
 	
 	override fun serialize(encoder: Encoder, value: Multimessage) = encoder.encodeStructure(descriptor) {
-		encodeSerializableElement(descriptor, 0, snowflakeSerializer, value.origin.id)
-		encodeSerializableElement(descriptor, 1, snowflakeSerializer, value.origin.channelId)
+		if (value.origin != null) {
+			encodeSerializableElement(descriptor, 0, snowflakeSerializer, value.origin!!.id)
+			encodeSerializableElement(descriptor, 1, snowflakeSerializer, value.origin!!.channelId)
+		}
 		encodeSerializableElement(descriptor, 2, wmblistSerializer, value.retranslated)
 	};
 	
@@ -104,7 +106,11 @@ class HistorySerializer : KSerializer<Multimessage> {
 			}
 		}
 
-		val message = MessageBehavior(channelId = channelId!!, messageId = id!!, kord = Vars.client)
+		val message = if (channelId != null && id != null) {
+			MessageBehavior(channelId = channelId!!, messageId = id!!, kord = Vars.client)
+		} else {
+			null
+		}
 		Multimessage(message, retranslated!!)
 	}
 }

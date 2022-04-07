@@ -199,7 +199,7 @@ suspend fun MessageCreateBuilder.quoteMessage(message: Message?, toChannel: Snow
 
 		//message in the same channel the new message is being sent to
 		val closest = Multiverse.history.find { message in it }?.let {
-			if (it.origin.channelId == toChannel) it.origin else it.retranslated.find { it.channelId == toChannel }
+			if (it.origin?.channelId == toChannel) it.origin else it.retranslated.find { it.channelId == toChannel }
 		}?.asMessage()
 		val closestChannel = closest?.getChannel()
 		

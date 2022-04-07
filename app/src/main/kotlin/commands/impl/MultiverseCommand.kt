@@ -62,29 +62,33 @@ val MultiverseCommand = Supercommand(
 		val origin = Multiverse.history.find { reply.id in it } ?: throw CommandException("this message wasn't found in the history. perhaps, it was sent too long time ago?")
 		
 		origin.let {
-			if (message.data.author.id.value !in Vars.superusers && it.origin.asMessage().data.author.id != message.data.author.id) {
+			if (message.data.author.id.value !in Vars.superusers && it.origin?.asMessage()?.data?.author?.id != message.data.author.id) {
 				throw IllegalAccessException("you are not allowed to delete others' messages")
 			}
 			
+			var deleted = 0
 			it.retranslated.forEach { 
-				try { it.delete() } catch (ignored: Exception) {}
+				try { 
+					it.delete();
+					deleted++
+				} catch (ignored: Exception) {}
 			}
 			
-			Log.info { "${message.author?.tag} deleted a multiversal message ${it.origin.id}" }
-			
+			Log.info { "${message.author?.tag} deleted a multiversal message with id ${it.origin?.id}" }
+			Multiverse.history.remove(it)
+
 			if (deleteOrigin) {
 				try {
-					it.origin.delete()
-					Multiverse.history.remove(it)
+					it.origin?.delete()?.also { deleted++ }
 				} catch (e: Exception) {
-					replyWith(it.origin, """
+					it.origin?.replyWith("""
 						This message was deleted from other multiversal channels but this (original) message could not be deleted.
 						Check whether the bot has the necessary permissions.
 					""".trimIndent())
 				}
 			}
 
-			message.replyWith("success.")
+			message.replyWith("successfully deleted $deleted messages.")
 		}
 	}
 	.header("deleteOriginal: Boolean?")
@@ -96,7 +100,7 @@ val MultiverseCommand = Supercommand(
 
 		val msg = Multiverse.history.find { reply in it }
 		expect(msg != null) { "this message wasn't found in the history. perhaps, it was sent too long time ago?" }
-		val originMsg = msg.origin.asMessage()
+		val originMsg = msg.origin?.asMessage() ?: throw CommandException("this message doesn't have an origin.")
 		val author = User(originMsg.data.author, Vars.client)
 
 		message.reply {
