@@ -35,18 +35,17 @@ val RunCommand = flarogus.commands.Command(
 		
 		var isAdmin = false
 		var addImports = false
+		var stackTrace = false
 		
 		var argument = argumentRegex.find(command.substring(0, if (begin == -1) command.length else begin - 1))
 		while (argument != null) {
 			val arg = argument.groupValues.getOrNull(1) ?: break
 			
 			when {
-				arg == "su" -> {
-					isAdmin = true
-				}
-				arg == "imports" -> {
-					addImports = true
-				}
+				arg == "su" -> isAdmin = true
+				arg == "imports" -> addImports = true
+				arg == "trace" -> stackTrace = true
+
 				arg.startsWith("addSuperuser") -> {
 					if (message.author?.id?.value != Vars.ownerId) throw IllegalAccessException("Only the bot owner can add superusers")
 					val parts = arg.split("=")
@@ -106,14 +105,18 @@ val RunCommand = flarogus.commands.Command(
 					
 					val resultString = when (result) {
 						is Deferred<*> -> result.await().toString()
-						null -> "no output"
+						null, Unit -> "no output"
 						else -> result.toString()
 					}
 					message.replyWith("```\n${resultString.take(1950).stripCodeblocks()}\n```")
 					
 					Log.info { "${message.author?.tag} has successfully executed a kotlin script (see fetchMessage(${message.channel.id}UL, ${message.id}UL))" }
 				} catch (e: Exception) { 
-					val trace = if (e is ScriptException) e.toString() else e.cause?.stackTraceToString() ?: e.stackTraceToString()
+					val trace = if (e is ScriptException) {
+						(e.cause ?: e).let { if (stackTrace) it.stackTraceToString() else it.toString() }
+					} else {
+						e.stackTraceToString()
+					}
 					
 					message.replyWith("exception during execution:\n```\n${trace.take(1950).stripCodeblocks()}\n```")
 					e.printStackTrace()

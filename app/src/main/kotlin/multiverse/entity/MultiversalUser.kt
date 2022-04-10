@@ -69,8 +69,8 @@ open class MultiversalUser(
 				send(guild) { channelId ->
 					content = buildString {
 						append(event.message.content.stripEveryone())
-						event.message.data.attachments.forEach { attachment ->
-							if (attachment.size >= Multiverse.maxFileSize) {
+						event.message.attachments.forEach { attachment ->
+							if (!attachment.isImage && attachment.size >= Multiverse.maxFileSize) {
 								append('\n').append(attachment.url)
 							}
 						}
@@ -78,8 +78,10 @@ open class MultiversalUser(
 
 					quoteMessage(event.message.referencedMessage, channelId)
 					
-					event.message.data.attachments.forEach { attachment ->
-						if (attachment.size < Multiverse.maxFileSize) {
+					event.message.attachments.forEach { attachment ->
+						if (attachment.isImage) {
+							embed { image = attachment.url }
+						} else if (attachment.size < Multiverse.maxFileSize) {
 							addFile(attachment.filename, URL(attachment.url).openStream())
 						}
 					}

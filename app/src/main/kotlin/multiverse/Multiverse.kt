@@ -46,7 +46,7 @@ object Multiverse {
 	val history = ArrayList<Multimessage>(1000)
 	
 	/** Files with size exceeding this limit will be sent in the form of links */
-	val maxFileSize = 1024 * 1024 * 3 - 1024
+	val maxFileSize = 1024 * 1024 * 1
 	
 	val webhookName = "MultiverseWebhook"
 	val systemName = "Multiverse"
@@ -175,8 +175,8 @@ object Multiverse {
 					var finalMessage = buildString {
 						append(original)
 						
-						event.message.data.attachments.forEach { attachment ->
-							if (attachment.size >= maxFileSize) {
+						event.message.attachments.forEach { attachment ->
+							if (!attachment.isImage && attachment.size >= maxFileSize) {
 								append('\n').append(attachment.url)
 							}
 						}
@@ -194,8 +194,10 @@ object Multiverse {
 						
 						quoteMessage(event.message.referencedMessage, channelId)
 						
-						event.message.data.attachments.forEach { attachment ->
-							if (attachment.size < maxFileSize) {
+						event.message.attachments.forEach { attachment ->
+							if (attachment.isImage) {
+								embed { image = attachment.url }
+							} else if (attachment.size < maxFileSize) {
 								addFile(attachment.filename, URL(attachment.url).openStream())
 							}
 						}
@@ -267,6 +269,7 @@ object Multiverse {
 								}
 							}
 						}
+						Log.info { "Message ${multimessage!!.origin?.id} was edited by it's author" }
 					}
 				} catch (e: Exception) {
 					Log.error { "An exception has occurred while trying to edit a multiversal message ${event.messageId}: $e" }
