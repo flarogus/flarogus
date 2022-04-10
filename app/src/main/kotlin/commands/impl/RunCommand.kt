@@ -9,10 +9,10 @@ import flarogus.*
 import flarogus.util.*
 import flarogus.multiverse.*
 
-internal val engine = ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts");
-internal val context = SimpleScriptContext()
+private val engine = ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts");
+private val context = SimpleScriptContext()
 
-internal val defaultImports = arrayOf(
+val defaultImports = arrayOf(
 	"flarogus.*", "flarogus.util.*", "flarogus.multiverse.*", "ktsinterface.*", "dev.kord.core.entity.*", "dev.kord.core.entity.channel.*",
 	"dev.kord.common.entity.*", "dev.kord.rest.builder.*", "dev.kord.rest.builder.message.*", "dev.kord.rest.builder.message.create.*",
 	"dev.kord.core.behavior.*", "dev.kord.core.behavior.channel.*", "kotlinx.coroutines.*", "kotlinx.coroutines.flow.*", "kotlin.system.*",
