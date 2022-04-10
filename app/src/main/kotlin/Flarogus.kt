@@ -4,6 +4,7 @@ import java.util.*
 import kotlin.concurrent.*;
 import kotlinx.coroutines.*;
 import kotlinx.coroutines.flow.*;
+import dev.kord.common.entity.*
 import dev.kord.rest.request.*
 import dev.kord.rest.ratelimit.*
 import dev.kord.rest.builder.message.create.*
@@ -11,9 +12,12 @@ import dev.kord.core.*
 import dev.kord.core.event.*
 import dev.kord.core.event.message.*
 import dev.kord.core.entity.*;
+import dev.kord.core.entity.channel.*
 import flarogus.util.*;
 import flarogus.commands.*;
 import flarogus.multiverse.*
+
+val autorunChannel = Snowflake(962823075357949982UL)
 
 suspend fun main(vararg args: String) = runBlocking {
 	val botToken = args.getOrNull(0)
@@ -45,12 +49,6 @@ suspend fun main(vararg args: String) = runBlocking {
 	Timer(true).schedule(1000 * 60 * 60 * 5L + 1000 * 60 * 30L) {
 		Vars.client.launch {
 			Log.info { "a multiverse instance is shutting down" }
-			
-			/* fuck Akine, but not in the good way.
-			Multiverse.brodcastSystem {
-				embed { description = "This workflow job cannot be continued anymore. Shutting down." }
-			} */
-			
 			Vars.client.shutdown();
 		}
 	}
@@ -60,6 +58,32 @@ suspend fun main(vararg args: String) = runBlocking {
 		try {
 			Multiverse.start()
 			Log.info { "mutliverse instance ${Vars.ubid} has started" }
+
+			//execute all scripts defined in the autorun channel
+			val engine = flarogus.commands.impl.engine
+			val context = flarogus.commands.impl.context
+			val imports = flarogus.commands.impl.defaultImports
+			val codeRegex = flarogus.commands.impl.codeblockRegex
+
+			val output = buildString {
+				appendLine("executing autorun scripts:")
+				(Vars.supplier.getChannelOrNull(autorunChannel) as? TextChannel)?.messages?.toList()?.forEachIndexed { index, it ->
+					append(index).append(": ")
+
+					val script = codeRegex.find(it.content)?.groupValues?.getOrNull(2) ?: it.content
+
+					val res = try { 
+						engine.eval(imports + "\n" + script, context)?.let {
+							if (it is Deferred<*>) it.await() else it
+						}?.toString() ?: "null"
+					} catch (e: Exception) {
+						e.toString()
+					}.take(200)
+					appendLine(res)
+				}
+			}.take(1900)
+
+			Log.info { output }
 		} catch (e: Exception) {
 			Log.error { "FATAL EXCEPTION HAS OCCURRED DURING MULTIVERSE INTIALIZATION: `$e`" }
 		}
