@@ -45,7 +45,7 @@ open class MultiversalGuild(
 		username: String?,
 		avatar: String?,
 		crossinline filter: (TextChannel) -> Boolean = { true },
-		crossinline handler: (Message, Webhook) -> Unit = { m, w -> },
+		crossinline handler: (Message, Webhook) -> Unit = { _, _ -> },
 		crossinline builder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
 	) {
 		update()
@@ -76,7 +76,7 @@ open class MultiversalGuild(
 		crossinline builder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
 	) = Multiverse.brodcast("${user.name} — $name", user.avatar, filter, builder)
 
-	open suspend fun update() {
+	override open suspend fun update() {
 		if (guild == null || lastUpdate + updateInterval < System.currentTimeMillis()) {
 			guild = Vars.restSupplier.getGuildOrNull(discordId)
 
@@ -93,6 +93,8 @@ open class MultiversalGuild(
 					Log.error { "couldn't acquire a webhook for ${it.name} (${it.id}}: $e" }
 				}
 			}
+
+			if (guild == null) isValid = false //well...
 		}
 	}
 

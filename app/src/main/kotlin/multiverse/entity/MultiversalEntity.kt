@@ -6,5 +6,10 @@ import kotlinx.serialization.*
 abstract class MultiversalEntity(
 	val uuid: ULong
 ) {
+	var isValid = true
+		protected set
+	
 	constructor() : this((System.currentTimeMillis() xor 0x5AAAAAAAAAAAAAAAL).toULong()) //funny.
+
+	abstract suspend fun update()
 }

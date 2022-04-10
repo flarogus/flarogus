@@ -25,8 +25,7 @@ import flarogus.multiverse.entity.*
 // TODO switch to the new model:
 // remove remains of the old model
 // make brodcast return a multimessage with a null origin
-// save experimental messages to history
-// find new guilds in findChannels()
+// save experimental messages to history automatically
 
 /**
  * Retranslates messages sent in any channel of guild network, aka Multiverse, into other multiverse channels
@@ -220,7 +219,7 @@ object Multiverse {
 			}
 		} else {
 			val user = userOf(event.message.data.author.id)
-			user.onMultiversalMessage(event)
+			user?.onMultiversalMessage(event) ?: event.message.replyWith("No user associated with your user id was found!")
 		}
 	};
 
@@ -284,8 +283,10 @@ object Multiverse {
 			//the following methods are way too costly to invoke them for every guild
 			if (universes.any { ch -> ch.data.guildId.value == it.id }) return@forEach
 
+			guildOf(it.id)?.update() //this will add an entry if it didnt exist
+
 			val guild = Vars.restSupplier.getGuildOrNull(it.id) //gCUG() returns a flow of partial discord guilds.
-			
+
 			if (guild != null && it.id !in Lists.blacklist && guild.id !in Lists.blacklist) guild.channels.collect {
 				var c = it as? TextChannel
 
@@ -407,13 +408,17 @@ object Multiverse {
 	}
 	
 	/** Returns a MultiversalUser with the given id, or null if it does not exist */
-	suspend fun userOf(id: Snowflake) = users.find { it.discordId == id } ?: let {
-		MultiversalUser(id).also { it.update() }
+	suspend fun userOf(id: Snowflake): MultiversalUser? = users.find { it.discordId == id } ?: let {
+		MultiversalUser(id).also { it.update() }.let {
+			if (it.isValid) it.also { users.add(it) } else null
+		}
 	}
 
 	/** Returns a MultiversalGuild with the given id, or null if it does not exist */
-	suspend fun guildOf(id: Snowflake) = guilds.find { it.discordId == id } ?: let {
-		MultiversalGuild(id).also { it.update() }
+	suspend fun guildOf(id: Snowflake): MultiversalGuild? = guilds.find { it.discordId == id } ?: let {
+		MultiversalGuild(id).also { it.update() }.let { 
+			if (it.isValid) it.also { guilds.add(it) } else null
+		}
 	}
 
 	/** Returns whether this message was sent by flarogus */

@@ -98,11 +98,13 @@ open class MultiversalUser(
 	}
 	
 	/** Updates this user */
-	open suspend fun update() {
+	override open suspend fun update() {
 		warns.removeAll { !it.isValid() }
 
 		if (user == null || lastUpdate + updateInterval < System.currentTimeMillis()) {
 			user = Vars.restSupplier.getUserOrNull(discordId)
+
+			if (user == null) isValid = false
 		}
 	}
 	
