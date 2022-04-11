@@ -11,6 +11,7 @@ import dev.kord.core.behavior.channel.*
 import flarogus.*
 import flarogus.util.*
 import flarogus.multiverse.*
+import flarogus.multiverse.state.*
 
 /** 
  * Represents a guild that has a multiversal channel
@@ -74,7 +75,9 @@ open class MultiversalGuild(
 		user: MultiversalUser,
 		crossinline filter: (TextChannel) -> Boolean = { true },
 		crossinline builder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
-	) = Multiverse.brodcast("${user.name} — $name", user.avatar, filter, builder)
+	) = Multiverse.brodcast("${user.name} — $name", user.avatar, filter, builder).let {
+		Multimessage(null, it)
+	}
 
 	override open suspend fun update() {
 		if (guild == null || lastUpdate + updateInterval < System.currentTimeMillis()) {
@@ -87,7 +90,6 @@ open class MultiversalGuild(
 				
 				try {
 					val webhook = it.webhooks.firstOrNull { it.name == webhookName && it.token != null } ?: it.createWebhook(webhookName)
-					
 					webhooks.add(webhook)
 				} catch (e: Exception) {
 					Log.error { "couldn't acquire a webhook for ${it.name} (${it.id}}: $e" }

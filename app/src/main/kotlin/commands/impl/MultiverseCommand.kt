@@ -113,10 +113,10 @@ val MultiverseCommand = Supercommand(
 
 		message.reply {
 			content = """
-				Multiversal message #${msg.origin.id}
+				Multiversal message #${msg.origin!!.id}
 				Author: ${author.tag}, uid: ${author.id}
 				Channel id: ${originMsg.channelId}
-				Guild id: ${originMsg.data.guildId.value}
+				Guild id: ${originMsg.getChannel().data.guildId.value}
 			""".trimIndent()
 		}
 	}

@@ -40,7 +40,7 @@ open class MultiversalUser(
 	var lastSent = 0L
 	var totalSent = 0
 
-	/** Should be called when this user sends a multiversal message */
+	/** Should be called when this user sends a multiversal message. Automatically saves the message to history. */
 	suspend fun onMultiversalMessage(event: MessageCreateEvent) {
 		update()
 		if (!canSend()) {
@@ -66,7 +66,7 @@ open class MultiversalUser(
 			if (guild == null) {
 				Log.info { "A user with a non-existent guild has attempted to send a message in the multiverse: `${event.message.content}`" }
 			} else {
-				send(guild) { channelId ->
+				val message = send(guild) { channelId ->
 					content = buildString {
 						append(event.message.content.stripEveryone())
 						event.message.attachments.forEach { attachment ->
@@ -88,6 +88,9 @@ open class MultiversalUser(
 
 					if (content!!.isEmpty() && event.message.data.attachments.isEmpty()) content = "<no content>"
 				}
+
+				message.origin = event.message
+				Multiverse.history.add(message)
 			}
 		}
 	}
