@@ -285,7 +285,7 @@ object Multiverse {
 			if (universes.any { ch -> ch.data.guildId.value == it.id }) return@forEach
 
 			// TODO: uncomment this
-			//guildOf(it.id)?.update() //this will add an entry if it didnt exist
+			guildOf(it.id)?.update() //this will add an entry if it didnt exist
 			
 			val guild = Vars.restSupplier.getGuildOrNull(it.id) //gCUG() returns a flow of partial discord guilds.
 
