@@ -17,7 +17,7 @@ import dev.kord.common.entity.*
 import flarogus.*
 import flarogus.multiverse.*
 
-val mentionRegex = "<@(!)?\\(d+)>".toRegex()
+val mentionRegex = "<@(!)?(d+)>".toRegex()
 
 fun ULong.toSnowflake() = Snowflake(this)
 fun String.toSnowflakeOrNull(): Snowflake? = if (!startsWith("<")) {

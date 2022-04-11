@@ -59,31 +59,31 @@ suspend fun main(vararg args: String) = runBlocking {
 			Multiverse.start()
 			Log.info { "mutliverse instance ${Vars.ubid} has started" }
 
-			//execute all scripts defined in the autorun channel
-			//val engine = flarogus.commands.impl.engine
-			//val context = flarogus.commands.impl.context
-			//val imports = flarogus.commands.impl.defaultImports
-			//val codeRegex = flarogus.commands.impl.codeblockRegex
-                        //
-			//val output = buildString {
-			//	appendLine("executing autorun scripts:")
-			//	(Vars.supplier.getChannelOrNull(autorunChannel) as? TextChannel)?.messages?.toList()?.forEachIndexed { index, it ->
-			//		append(index).append(": ")
-                        //
-			//		val script = codeRegex.find(it.content)?.groupValues?.getOrNull(2) ?: it.content
-                        //
-			//		val res = try { 
-			//			engine.eval(imports + "\n" + script, context)?.let {
-			//				if (it is Deferred<*>) it.await() else it
-			//			}?.toString() ?: "null"
-			//		} catch (e: Exception) {
-			//			e.toString()
-			//		}.take(200)
-			//		appendLine(res)
-			//	}
-			//}.take(1900)
-                        //
-			//Log.info { output }
+			execute all scripts defined in the autorun channel
+			val engine = flarogus.commands.impl.engine
+			val context = flarogus.commands.impl.context
+			val imports = flarogus.commands.impl.defaultImports
+			val codeRegex = flarogus.commands.impl.codeblockRegex
+                        
+			val output = buildString {
+				appendLine("executing autorun scripts:")
+				(Vars.supplier.getChannelOrNull(autorunChannel) as? TextChannel)?.messages?.toList()?.forEachIndexed { index, it ->
+					append(index).append(": ")
+                        
+					val script = codeRegex.find(it.content)?.groupValues?.getOrNull(2) ?: it.content
+                        
+					val res = try { 
+						engine.eval(imports + "\n" + script, context)?.let {
+							if (it is Deferred<*>) it.await() else it
+						}?.toString() ?: "null"
+					} catch (e: Exception) {
+						e.toString()
+					}.take(200)
+					appendLine(res)
+				}
+			}.take(1900)
+                        
+			Log.info { output }
 		} catch (e: Exception) {
 			Log.error { "FATAL EXCEPTION HAS OCCURRED DURING MULTIVERSE INTIALIZATION: `$e`" }
 		}
