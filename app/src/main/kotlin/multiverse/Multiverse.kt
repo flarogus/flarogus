@@ -233,7 +233,7 @@ object Multiverse {
 			.filter { event -> universes.any { it.id == event.channelId } }
 			.onEach { event ->
 				var multimessage: Multimessage? = null
-				delayWhile(20000L, 500L) { history.find { it.origin?.id == event.messageId }.also { multimessage = it } != null }
+				delayUntil(20000L, 500L) { history.find { it.origin?.id == event.messageId }.also { multimessage = it } != null }
 
 				try {
 					if (multimessage != null) {
@@ -255,7 +255,7 @@ object Multiverse {
 			.filter { event -> universes.any { it.id == event.channelId } }
 			.onEach { event ->
 				var multimessage: Multimessage? = null
-				delayWhile(20000L, 500L) { history.find { it.origin?.id == event.messageId }.also { multimessage = it } != null }
+				delayUntil(20000L, 500L) { history.find { it.origin?.id == event.messageId }.also { multimessage = it } != null }
 
 				try {
 					if (multimessage != null) {

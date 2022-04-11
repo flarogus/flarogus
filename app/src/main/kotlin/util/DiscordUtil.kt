@@ -17,9 +17,16 @@ import dev.kord.common.entity.*
 import flarogus.*
 import flarogus.multiverse.*
 
+val mentionRegex = "<@(!)?\\(d+)>".toRegex()
+
 fun ULong.toSnowflake() = Snowflake(this)
-fun String.toSnowflakeOrNull() = toULongOrNull()?.toSnowflake()
-fun String.toSnowflake() = toSnowflakeOrNull() ?: throw NumberFormatException()
+fun String.toSnowflakeOrNull(): Snowflake? = if (!startsWith("<")) {
+	toULongOrNull()?.toSnowflake()
+} else {
+	mentionRegex.find(this)?.groupValues?.getOrNull(2)?.toSnowflake()
+}
+fun String.toSnowflake() = toSnowflakeOrNull() ?: throw NumberFormatException("invalid snowflake format")
+fun Long.toSnowflake() = toULong().toSnowflake()
 
 fun String.stripEveryone() = this.replace("@everyone", "@еveryonе").replace("@here", "@hеrе")
 fun String.stripCodeblocks() = this.replace("```", "`'`")
@@ -29,7 +36,7 @@ fun Any?.isNotNull() = this != null
 fun User.getAvatarUrl() = avatar?.url ?: "https://cdn.discordapp.com/embed/avatars/${discriminator.toInt() % 5}.png"
 
 /** Waits up to [limit] ms for [condition] to become true. Returns true if the condition returned true, false if [limit] was reached. */
-suspend inline fun delayWhile(limit: Long, period: Long = 50L, condition: () -> Boolean): Boolean {
+suspend inline fun delayUntil(limit: Long, period: Long = 50L, condition: () -> Boolean): Boolean {
 	if (condition()) return true
 
 	val begin = System.currentTimeMillis()
@@ -86,6 +93,7 @@ fun sendImage(origin: MessageBehavior, text: String = "", image: BufferedImage) 
 
 
 /** Tries to find the user by uid / mention, returns null in case of an error */
+@Deprecated("dumbass")
 suspend fun userOrNull(uid: String?): User? {
 	if (uid == null || uid.isEmpty()) {
 		return null
@@ -100,6 +108,7 @@ suspend fun userOrNull(uid: String?): User? {
 }
 
 /** Tries to find a user by mention/userid, returns the author in case of error. May return null if it's a system message */
+@Deprecated("dumbass")
 suspend fun userOrAuthor(uid: String?, event: MessageCreateEvent): User? {
 	return userOrNull(uid) ?: event.message.author
 }
