@@ -13,6 +13,7 @@ import flarogus.util.*
 object Log {
 	
 	var level = LogLevel.INFO
+		set(level: LogLevel) { if (level.level > LogLevel.ERROR.level) throw IllegalArgumentException("illegal log level") else field = level }
 	val logChannelId = Snowflake(942139405718663209UL)
 	val logChannel by lazy { Vars.client.unsafe.messageChannel(logChannelId) }
 	
@@ -40,9 +41,11 @@ object Log {
 	inline fun info(crossinline message: () -> String) = sendLog(LogLevel.INFO, message);
 	
 	inline fun error(crossinline message: () -> String) = sendLog(LogLevel.ERROR, message);
+
+	inline fun force(crossinline message: () -> String) = sendLog(LogLevel.FORCE, message)
 	
 	enum class LogLevel(val level: Int) {
-		LIFECYCLE(0), DEBUG(1), INFO(2), ERROR(3);
+		LIFECYCLE(0), DEBUG(1), INFO(2), ERROR(3), FORCE(4);
 		
 		companion object {
 			fun of(level: Int) = values().find { it.level == level } ?: INFO

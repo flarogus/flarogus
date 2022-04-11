@@ -49,7 +49,7 @@ data class WebhookMessageBehavior(
 
 @kotlinx.serialization.Serializable(with = HistorySerializer::class)
 data class Multimessage(
-	val origin: MessageBehavior? = null,
+	var origin: MessageBehavior? = null,
 	val retranslated: List<WebhookMessageBehavior>
 ) {
 	suspend fun delete(deleteOrigin: Boolean) {
