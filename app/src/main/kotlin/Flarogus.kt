@@ -38,7 +38,7 @@ suspend fun main(vararg args: String) = runBlocking {
 			try {
 				val isCommand = CommandHandler.handle(it)
 				if (!isCommand) Multiverse.messageReceived(it)
-			} catch (e: Exception) {
+			} catch (e: Throwable) {
 				Log.error { "an uncaught exception has occurred while evaluating a command ran by ${it.message.author?.tag}: $e" }
 			}
 		}.launchIn(Vars.client)
@@ -59,7 +59,7 @@ suspend fun main(vararg args: String) = runBlocking {
 			Multiverse.start()
 			Log.info { "mutliverse instance ${Vars.ubid} has started" }
 
-			execute all scripts defined in the autorun channel
+			//execute all scripts defined in the autorun channel
 			val engine = flarogus.commands.impl.engine
 			val context = flarogus.commands.impl.context
 			val imports = flarogus.commands.impl.defaultImports
@@ -84,7 +84,7 @@ suspend fun main(vararg args: String) = runBlocking {
 			}.take(1900)
                         
 			Log.info { output }
-		} catch (e: Exception) {
+		} catch (e: Throwable) {
 			Log.error { "FATAL EXCEPTION HAS OCCURRED DURING MULTIVERSE INTIALIZATION: `$e`" }
 		}
 	}
