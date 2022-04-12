@@ -65,6 +65,8 @@ open class MultiversalUser(
 
 			if (guild == null) {
 				Log.info { "A user with a non-existent guild has attempted to send a message in the multiverse: `${event.message.content}`" }
+			} else if (!guild.isWhitelisted) {
+				event.message.replyWith("This guild is not whitelisted. Contact the admins for more info")
 			} else {
 				val message = send(guild) { channelId ->
 					content = buildString {

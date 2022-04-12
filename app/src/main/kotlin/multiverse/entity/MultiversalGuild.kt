@@ -36,6 +36,11 @@ open class MultiversalGuild(
 	var totalSent = 0
 	var totalUserMessages = 0
 
+	/** Whether this guild is allowed to participate in multiverse */
+	var isWhitelisted = false
+	/** Whether this guild was forcibly banned */
+	var isForceBanned = false
+
 	/** 
 	 * Sends a message into every channels of this guild, optionally invoking a function on every message sent
 	 * @param filter filters channels. should return [true] if the message is to be retranslated into the channel
@@ -50,6 +55,7 @@ open class MultiversalGuild(
 		crossinline builder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
 	) {
 		update()
+		if (!isWhitelisted) return
 
 		webhooks.forEach { webhook ->
 			val channel = channels.find { it.id == webhook.channelId } 
@@ -75,8 +81,12 @@ open class MultiversalGuild(
 		user: MultiversalUser,
 		crossinline filter: (TextChannel) -> Boolean = { true },
 		crossinline builder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
-	) = Multiverse.brodcast("${user.name} — $name", user.avatar, filter, builder).let {
-		Multimessage(null, it)
+	): Multimessage {
+		if (!isWhitelisted) throw IllegalAccessException("this guild is not whitelisted")
+
+		return Multiverse.brodcast("${user.name} — $name", user.avatar, filter, builder).let {
+			Multimessage(null, it)
+		}
 	}
 
 	override open suspend fun update() {
@@ -96,7 +106,9 @@ open class MultiversalGuild(
 				}
 			}
 
-			if (guild == null) isValid = false //well...
+			isValid = guild == null //well...
+
+			if (discordId in Lists.whitelist) isWhitelisted = true
 		}
 	}
 

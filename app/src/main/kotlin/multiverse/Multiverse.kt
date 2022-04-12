@@ -425,7 +425,8 @@ object Multiverse {
 
 	/** Returns whether this message was sent by flarogus */
 	fun isOwnMessage(message: Message): Boolean {
-		return message.author?.id?.value == Vars.botId || (message.webhookId != null && universeWebhooks.any { it.webhook != null && it.webhook!!.id == message.webhookId })
+		return (message.author?.id?.value == Vars.botId) 
+			|| ((message.webhookId != null) && (universeWebhooks.any { it.webhook != null && it.webhook!!.id == message.webhookId } || guilds.any { it.webhooks.any { it.id == message.webhookId } }))
 	}
 
 	/** Returns whether a message with this id is a retranslated message */
