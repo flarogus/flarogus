@@ -26,7 +26,7 @@ open class MultiversalGuild(
 	@Transient
 	val channels = HashSet<TextChannel>()
 	@Transient
-	val webhooks = ArrayList<Webhook>()
+	val webhooks = HashSet<Webhook>()
 
 	var nameOverride: String? = null
 	val name: String get() = nameOverride ?: guild?.name ?: "unknown guild"
