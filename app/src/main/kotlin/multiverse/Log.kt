@@ -1,5 +1,7 @@
 package flarogus.multiverse
 
+import java.util.*
+import kotlin.concurrent.*
 import kotlinx.coroutines.*
 import dev.kord.common.entity.*
 import dev.kord.rest.builder.message.create.*
@@ -11,11 +13,37 @@ import flarogus.util.*
 /** Logs stuff. Messages are evaluated lazily (only if the message _will_ be sent) */
 @SuppressWarnings("NOTHING_TO_INLINE")
 object Log {
-	
 	var level = LogLevel.INFO
 		set(level: LogLevel) { if (level.level > LogLevel.ERROR.level) throw IllegalArgumentException("illegal log level") else field = level }
 	val logChannelId = Snowflake(942139405718663209UL)
 	val logChannel by lazy { Vars.client.unsafe.messageChannel(logChannelId) }
+
+	val buffer = ArrayList<String>()
+	lateinit var logTimer: Timer
+
+	fun setup() {
+		logTimer = fixedRateTimer(daemon = true, period = 2000L) {
+			while (!buffer.isEmpty()) {
+				val message = buildString {
+					while (length < 1900 && !buffer.isEmpty()) {
+						val entry = buffer.removeFirst()
+						if (entry.length + length > 1900) {
+							appendLine(entry.take(1900 - length))
+						} else {
+							appendLine(entry)
+						}
+					}
+				}
+				
+				Vars.client.launch {
+					logChannel.createMessage {
+						content = message
+						allowedMentions()
+					}
+				}
+			}
+		}
+	}
 	
 	inline fun sendLog(logLevel: LogLevel, crossinline message: () -> String) {
 		if (logLevel.level < level.level) return
@@ -24,10 +52,7 @@ object Log {
 			try {
 				val prefix = if (logLevel == LogLevel.ERROR) "! ERROR !" else logLevel.toString()
 				
-				logChannel.createMessage {
-					content = "**[$prefix]**: ${message()}".stripEveryone().take(1999)
-					allowedMentions()
-				}
+				buffer.add("**[$prefix]**: ${message()}".stripEveryone().take(1999))
 			} catch (e: Exception) {
 				e.printStackTrace()
 			}
@@ -50,6 +75,5 @@ object Log {
 		companion object {
 			fun of(level: Int) = values().find { it.level == level } ?: INFO
 		}
-	}
-	
+	}	
 }

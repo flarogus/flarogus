@@ -106,7 +106,7 @@ open class MultiversalGuild(
 				}
 			}
 
-			isValid = guild == null //well...
+			isValid = guild != null //well...
 
 			if (discordId in Lists.whitelist) isWhitelisted = true
 		}

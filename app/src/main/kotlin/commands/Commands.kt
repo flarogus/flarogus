@@ -73,7 +73,7 @@ fun initCommands() {
 				val name = if (arg == null || arg.isEmpty() || arg[0].isDigit() || arg.startsWith("<@")) { //todo: find a better way?
 					userOrAuthor(arg, this@register)?.username;
 				} else {
-					arg;
+					it[0];
 				}
 				expect(name != null) { "the amogus has escaped, I couldn't do anything :pensive:" }
 				

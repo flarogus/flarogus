@@ -26,7 +26,6 @@ import flarogus.multiverse.entity.*
 // remove remains of the old model
 // make brodcast return a multimessage with a null origin
 // save experimental messages to history automatically
-// uncomment that line in findChannels
 
 /**
  * Retranslates messages sent in any channel of guild network, aka Multiverse, into other multiverse channels
@@ -66,6 +65,7 @@ object Multiverse {
 	
 	/** Sets up the multiverse */
 	suspend fun start() {
+		Log.setup()
 		Settings.updateState()
 		
 		setupEvents()
@@ -284,7 +284,6 @@ object Multiverse {
 			//the following methods are way too costly to invoke them for every guild
 			if (universes.any { ch -> ch.data.guildId.value == it.id }) return@forEach
 
-			// TODO: uncomment this
 			guildOf(it.id)?.update() //this will add an entry if it didnt exist
 			
 			val guild = Vars.restSupplier.getGuildOrNull(it.id) //gCUG() returns a flow of partial discord guilds.

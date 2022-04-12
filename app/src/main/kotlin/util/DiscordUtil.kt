@@ -17,13 +17,13 @@ import dev.kord.common.entity.*
 import flarogus.*
 import flarogus.multiverse.*
 
-val mentionRegex = "<@(!)?(d+)>".toRegex()
+val mentionRegex = "<@(!)?(\\d+)>".toRegex()
 
 fun ULong.toSnowflake() = Snowflake(this)
 fun String.toSnowflakeOrNull(): Snowflake? = if (!startsWith("<")) {
 	toULongOrNull()?.toSnowflake()
 } else {
-	mentionRegex.find(this)?.groupValues?.getOrNull(2)?.toSnowflake()
+	mentionRegex.find(this)?.groupValues?.getOrNull(2)?.toULongOrNull()?.toSnowflake()
 }
 fun String.toSnowflake() = toSnowflakeOrNull() ?: throw NumberFormatException("invalid snowflake format")
 fun Long.toSnowflake() = toULong().toSnowflake()

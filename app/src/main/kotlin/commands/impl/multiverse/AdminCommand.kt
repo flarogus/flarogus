@@ -173,6 +173,7 @@ val AdminCommand = Supercommand(
 	register("setloglevel") {
 		Log.level = Log.LogLevel.valueOf(it[1].uppercase())
 		message.replyWith("success")
+		Log.force { "log level was set to ${Log.level}!" }
 	}
 	.condition(CustomCommand.adminOnly)
 	.header("level: [lifecycle, debug, info, error]")
