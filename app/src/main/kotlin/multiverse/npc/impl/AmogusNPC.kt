@@ -65,7 +65,7 @@ class AmogusNPC : NPC(1000L * 30 * 1) {
 					- "a fan of flarogus corporation"
 				}
 				
-				If { it.contains("you") && (it.contains("sus") || it.contains("amogus") } then random {
+				If { it.contains("you") && (it.contains("sus") || it.contains("amogus")) } then random {
 					- "shut up"
 					- "no"
 					- "no u"
