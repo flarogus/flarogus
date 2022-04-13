@@ -4,7 +4,7 @@ import kotlin.random.*
 import dev.kord.core.*
 import flarogus.multiverse.npc.*
 
-class AmogusNPC : NPC(1000L * 60 * 1) {
+class AmogusNPC : NPC(1000L * 30 * 1) {
 	override val name = "local amogus"
 	override val location = "oblivion settlement"
 	override val avatar = "https://drive.google.com/uc?export=download&id=19jMVrZwOuWpe7vJ1Gb3Uj0tzi27kXeEY"
@@ -16,14 +16,24 @@ class AmogusNPC : NPC(1000L * 60 * 1) {
 					- ""
 					- " u"
 					- " shut up"
+					- " go away"
 				} and repeat(1, 5, "!")
 				
-				- "s" and repeat(1, 3, "us") and " " and random {
+				- "s" and repeat(1, 5, "us") and " " and random {
 					- ""
 					- "amogus"
 					- "mogus"
 					- "sugoma"
 					- "momogus"
+				}
+
+				- "when the " and random {
+					- "amogus"
+					- "flarogus"
+					- "impasta"
+				} and " is " and random {
+					- "sus"
+					- "the impostor"
 				}
 			}
 			
@@ -55,7 +65,7 @@ class AmogusNPC : NPC(1000L * 60 * 1) {
 					- "a fan of flarogus corporation"
 				}
 				
-				If { it.contains("you") && it.contains("sus") } then random {
+				If { it.contains("you") && (it.contains("sus") || it.contains("amogus") } then random {
 					- "shut up"
 					- "no"
 					- "no u"
@@ -75,13 +85,18 @@ class AmogusNPC : NPC(1000L * 60 * 1) {
 					- "staaahp"
 					- "go away"
 					- "touch grass"
+					- "do you know anything else?!"
 				}
 				
 				//just a generic answer
 				If { it.contains("you") } then random {
 					- "idc"
 					- "I don't care"
-					- "ok"
+					- random {
+						- "ok"
+						- "and"
+						- "ok and"
+					}
 				}
 			}
 			
@@ -116,10 +131,11 @@ class AmogusNPC : NPC(1000L * 60 * 1) {
 					- " mortal"
 				} and repeat(1, 2, "!")
 				
-				- "s" and repeat(0, 7, "us")
+				- "s" and repeat(1, 7, "us")
 				- "sussy"
 				- "SHUT BEFORE I BAN U"
 				- run { phrasegen(6, 's', 's', 'u', 'u', 'a', 'm', 'o', 'g') } and repeat(1, 4, "!")
+				- run { phrasegen(7, 'u', 's', 'o', 'm', 'g') } and phrasegen(3, '!', '?')
 			}
 			
 			//else

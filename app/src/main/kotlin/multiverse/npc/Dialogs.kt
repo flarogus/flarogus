@@ -129,7 +129,7 @@ open class RepeatNode(open val times: Int, open var repeat: Node) : Node() {
 }
 
 open class RandomRepeatNode(open var minTimes: Int, open var maxTimes: Int, repeat: Node) : RepeatNode(maxTimes, repeat) {
-	override open val times get() = Random.nextInt(0, maxTimes - minTimes)
+	override open val times get() = Random.nextInt(minTimes, maxTimes)
 	
 	override fun count() = (maxTimes - minTimes) * repeat.count()
 }

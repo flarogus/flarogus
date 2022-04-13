@@ -51,7 +51,7 @@ abstract class NPC(open val cooldown: Long = 20000L, open val replyDelay: Long =
 	
 	/** If this method returns null, there is no message */
 	open fun processMessage(message: String): String? {
-		return dialog.construct(message).let { if (it.isEmpty()) null else it }
+		return dialog.construct(message.lowercase()).let { if (it.isEmpty()) null else it }
 	}
 	
 	open fun obtainUsertag(): String {
