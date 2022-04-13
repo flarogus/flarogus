@@ -6,10 +6,12 @@ import kotlinx.serialization.*
 import dev.kord.common.entity.*
 import dev.kord.rest.builder.message.create.*
 import dev.kord.core.entity.*
+import dev.kord.core.entity.channel.*
 import dev.kord.core.event.message.*
 import flarogus.*
 import flarogus.util.*
 import flarogus.multiverse.*
+import flarogus.multiverse.state.*
 
 /** 
  * Represents a user that has ever interacted with the Multiverse 
@@ -24,8 +26,6 @@ open class MultiversalUser(
 
 	val warns = ArrayList<WarnEntry>()
 	val warningPoints get() = warns.fold(0) { total: Int, warn -> total + warn.rule.points }
-	/** If true, this user was forcedly banned by an admin */
-	var isForceBanned = false
 
 	/** NOT the name of the user! */
 	var usertag: String? = null
@@ -68,7 +68,10 @@ open class MultiversalUser(
 			} else if (!guild.isWhitelisted) {
 				event.message.replyWith("This guild is not whitelisted. Contact the admins for more info")
 			} else {
-				val message = send(guild) { channelId ->
+				val message = send(
+					guild = guild,
+					filter = { it.id != event.message.channelId }
+				) { channelId ->
 					content = buildString {
 						append(event.message.content.stripEveryone())
 						event.message.attachments.forEach { attachment ->
@@ -96,10 +99,21 @@ open class MultiversalUser(
 			}
 		}
 	}
-
-	inline suspend fun send(guild: MultiversalGuild, crossinline builder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit) = let {
+	
+	/**
+	 * Sends a message as if it was sent from the specified guild by this user
+	 * @param guild Guild to send from
+	 * @param filter Should return true if the message is to be retranslated into the providen channel
+	 */
+	inline suspend fun send(
+		guild: MultiversalGuild,
+		crossinline filter: (TextChannel) -> Boolean = { true },
+		crossinline builder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
+	): Multimessage {
 		update()
-		guild.retranslateUserMessage(this) { builder(it) }.also { totalSent++ }
+		return guild.retranslateUserMessage(this, filter) {
+			builder(it)
+		}.also { totalSent++ }
 	}
 	
 	/** Updates this user */
@@ -108,6 +122,9 @@ open class MultiversalUser(
 
 		if (user == null || lastUpdate + updateInterval < System.currentTimeMillis()) {
 			user = Vars.restSupplier.getUserOrNull(discordId)
+			
+			//TODO: remove this
+			Lists.usertags.getOrDefault(discordId, null)?.let { usertag = it }
 
 			isValid = user != null
 		}

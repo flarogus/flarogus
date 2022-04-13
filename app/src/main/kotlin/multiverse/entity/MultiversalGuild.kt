@@ -38,8 +38,6 @@ open class MultiversalGuild(
 
 	/** Whether this guild is allowed to participate in multiverse */
 	var isWhitelisted = false
-	/** Whether this guild was forcibly banned */
-	var isForceBanned = false
 
 	/** 
 	 * Sends a message into every channels of this guild, optionally invoking a function on every message sent

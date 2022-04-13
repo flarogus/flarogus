@@ -3,13 +3,11 @@ package flarogus.multiverse.entity
 import kotlinx.serialization.*
 
 @Serializable
-abstract class MultiversalEntity(
-	val uuid: ULong
-) {
+abstract class MultiversalEntity() {
+	/** Whether this entity was forcibly banned */
+	var isForceBanned = false
 	var isValid = true
 		protected set
 	
-	constructor() : this((System.currentTimeMillis() xor 0x5AAAAAAAAAAAAAAAL).toULong()) //funny.
-
 	abstract suspend fun update()
 }

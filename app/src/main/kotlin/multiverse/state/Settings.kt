@@ -22,6 +22,7 @@ import flarogus.*
 import flarogus.util.*
 import flarogus.multiverse.*
 import flarogus.multiverse.state.*
+import flarogus.multiverse.entity.*
 
 object Settings {
 
@@ -107,7 +108,10 @@ data class State(
 	var blacklist: List<Snowflake> = Lists.blacklist,
 	var usertags: Map<Snowflake, String> = Lists.usertags,
 
-	var history: List<Multimessage> = Multiverse.history.takeLast(100)
+	var history: List<Multimessage> = Multiverse.history.takeLast(100),
+
+	var users: List<MultiversalUser> = Multiverse.users,
+	var guilds: List<MultiversalGuild> = Multiverse.guilds
 ) {
 	/** Updates the current bot state in accordance with this state */
 	fun loadFromState() {
@@ -125,5 +129,14 @@ data class State(
 		}
 
 		Multiverse.history.addAll(history)
+
+		users.forEach { u ->
+			Multiverse.users.removeAll { it.discordId == u.discordId }
+			Multiverse.users.add(u)
+		}
+		guilds.forEach { g ->
+			Multiverse.guilds.removeAll { it.discordId == g.discordId }
+			Multiverse.guilds.add(g)
+		}
 	}
 }
