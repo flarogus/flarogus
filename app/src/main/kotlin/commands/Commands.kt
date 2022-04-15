@@ -131,7 +131,7 @@ fun initCommands() {
 					user.lastReward = System.currentTimeMillis()
 					message.replyWith("daily reward: " + dailies.random())
 				} else {
-					val wait = (user.lastReward - System.currentTimeMillis())
+					val wait = ((user.lastReward + 1000L * 60 * 60 * 24) - System.currentTimeMillis())
 					message.replyWith("you have already claimed your daily reward! wait ${formatTime(wait)}!")
 				}
 			}
@@ -230,6 +230,7 @@ fun initCommands() {
 								reportsChannel,
 								"linked message by"
 							)
+							embeds.lastOrNull()?.url = "https://" + result.value
 						}
 					} catch (e: Exception) {
 						embed { description = "failed to include a message reference: $e" }
