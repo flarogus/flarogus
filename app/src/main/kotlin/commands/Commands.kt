@@ -120,7 +120,8 @@ fun initCommands() {
 			
 			val dailies = arrayOf(
 				"you are brainless", "you have no friends", "you fell off", "1 social credit was deducted from your account",
-				"you lost", "amogus was sent to your house", "you are an amogus"
+				"you lost", "amogus was sent to your house", "you are an amogus", "go commit suicide",
+				"what did you expect", "go seek for help", "this was a triumph..."
 			)
 
 			register("daily") {
@@ -230,7 +231,7 @@ fun initCommands() {
 								reportsChannel,
 								"linked message by"
 							)
-							embeds.lastOrNull()?.url = "https://" + result.value
+							embeds.lastOrNull()?.url = "https://" + it.value
 						}
 					} catch (e: Exception) {
 						embed { description = "failed to include a message reference: $e" }
