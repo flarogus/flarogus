@@ -201,7 +201,7 @@ val nameRegex = """^([.*])?(.*#\d\d\d\d) — .*""".toRegex()
  * Adds an embed referencing the original message
  * @param toChannel id of the channel this message is sent to. 0 if not present.
  */
-suspend fun MessageCreateBuilder.quoteMessage(message: Message?, toChannel: Snowflake) {
+suspend fun MessageCreateBuilder.quoteMessage(message: Message?, toChannel: Snowflake?, titleText: String = "reply to") {
 	if (message != null) {
 		val author = User(message.data.author, Vars.client) //gotta construct one myself if the default api doesn't allow that
 		val authorName = nameRegex.find(author.username)?.groupValues?.getOrNull(2) ?: "${author.username}#${author.discriminator}"
@@ -214,7 +214,7 @@ suspend fun MessageCreateBuilder.quoteMessage(message: Message?, toChannel: Snow
 		
 		embed {
 			url = if (closest != null) "https://discord.com/channels/${closestChannel?.data?.guildId?.value}/${closest.channelId}/${closest.id}" else null
-			title = "reply to ${authorName}" + if (closest != null) " (link)" else ""
+			title = "$titleText ${authorName}" + if (closest != null) " (link)" else ""
 
 			description = buildString {
 				append(message.content.take(100).replace("/", "\\/"))
