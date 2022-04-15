@@ -40,6 +40,8 @@ open class MultiversalUser(
 	var lastSent = 0L
 	var totalSent = 0
 
+	var lastReward: Long = 0
+
 	/** Should be called when this user sends a multiversal message. Automatically saves the message to history. */
 	suspend fun onMultiversalMessage(event: MessageCreateEvent) {
 		update()
