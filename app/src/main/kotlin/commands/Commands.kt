@@ -222,8 +222,8 @@ fun initCommands() {
 					""".trimIndent()
 
 					try {
-						val result = linkRegex.findAll(this@register.message.content)
-					
+						val result = linkRegex.findAll(it[0])
+						
 						result.forEach {
 							quoteMessage(
 								Vars.supplier.getMessage(it.groupValues[1].toSnowflake(), it.groupValues[2].toSnowflake()),
@@ -232,14 +232,13 @@ fun initCommands() {
 							)
 						}
 					} catch (e: Exception) {
-						embed { description = "failed to include a message reference" }
+						embed { description = "failed to include a message reference: $e" }
 					}
-
 				}
 				
 				message.replyWith("Sent succefully")
 			} catch (e: Exception) {
-				throw CommandException("Could not send a report", e)
+				throw CommandException("Could not send a report: $e")
 			}
 		}
 		.header("message: String")
