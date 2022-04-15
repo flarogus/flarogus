@@ -117,6 +117,25 @@ fun initCommands() {
 			}
 			.header("first: User, second: User?")
 			.description("Merge pfps of two users. If only one user is specified, uses the caller as the second.")
+			
+			val dailies = arrayOf(
+				"you are brainless", "you have no friends", "you fell off", "1 social credit was deducted from your account",
+				"you lost", "amogus was sent to your house", "you are an amogus"
+			)
+
+			register("daily") {
+				val user = message.author?.id?.let { Multiverse.userOf(it) }
+				require(user != null) { "couldn't find nor acquire a user entry for your account!" }
+
+				if (System.currentTimeMillis() > user.lastReward + 1000L * 60 * 60 * 24) {
+					user.lastReward = System.currentTimeMillis()
+					message.replyWith("daily reward: " + dailies.random())
+				} else {
+					val wait = (user.lastReward - System.currentTimeMillis())
+					message.replyWith("you have already claimed your daily reward! wait ${formatTime(wait)}!")
+				}
+			}
+			.description("receive the daily reward (one per 24 hours!)")
 		}
 		.description("funny stuff that nobody uses")
 
@@ -187,7 +206,9 @@ fun initCommands() {
 		.header("ubid: Int, purgeCount: Int?")
 		.description("shut down an instance by ubid, optionally deleting up to [purgeCount] last messages sent in this instance (use this to clear the consequences of double-instance periods)")
 		
-		val reportsChannel = Snowflake(944718226649124874UL)	
+		val reportsChannel = Snowflake(944718226649124874UL)
+		val linkRegex = """discord.com/channels/\d+/(\d+)/(\d+)""".toRegex()
+
 		register("report") {
 			expect(!it[0].isEmpty()) { "you must specify a message" }
 			
@@ -196,9 +217,24 @@ fun initCommands() {
 					content = """
 						${message.author?.tag} (channel ${message.channelId}, guild ${message.data.guildId.value}) reports:
 						```
-						${it[0].stripEveryone().take(1800)}
+						${it[0].stripCodeblocks().stripEveryone().take(1800)}
 						```
 					""".trimIndent()
+
+					try {
+						val result = linkRegex.findAll(this@register.message.content)
+					
+						result.forEach {
+							quoteMessage(
+								Vars.supplier.getMessage(it.groupValues[1].toSnowflake(), it.groupValues[2].toSnowflake()),
+								reportsChannel,
+								"linked message by"
+							)
+						}
+					} catch (e: Exception) {
+						embed { description = "failed to include a message reference" }
+					}
+
 				}
 				
 				message.replyWith("Sent succefully")
@@ -207,11 +243,11 @@ fun initCommands() {
 			}
 		}
 		.header("message: String")
-		.description("Send a message that will be visible to admins")
+		.description("Send a message that will be visible to admins. You can link a message in order for admins to see it instantly.")
 		
 		register("server") {
 			try {
-				message.author?.getDmChannel()?.createMessage("invite to the core guild: https://discord.gg/kgGaUPx2D2")
+				message.author!!.getDmChannel()!!.createMessage("invite to the core guild: https://discord.gg/kgGaUPx2D2")
 			} catch (e: Exception) {
 				message.replyWith("couldn't send a DM. make sure you have DMs open ($e)")
 			}
