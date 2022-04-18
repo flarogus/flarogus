@@ -114,6 +114,7 @@ open class MultiversalUser(
 		update()
 		return guild.retranslateUserMessage(this, filter) {
 			builder(it)
+			content = content?.revealHypertext()
 		}.also { totalSent++ }
 	}
 	
