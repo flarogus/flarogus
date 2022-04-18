@@ -259,16 +259,20 @@ object Multiverse {
 
 				try {
 					if (multimessage != null) {
-						multimessage!!.edit(false) {
-							content = buildString {
-								appendLine(event.new.content.value ?: "")
-								event.new.attachments.value?.forEach { attachment ->
-									if (attachment.size >= maxFileSize) {
-										appendLine(attachment.url)
-									}
+						val origin = multimessage!!.origin?.asMessage()
+						val newContent = buildString {
+							appendLine(event.new.content.value ?: "")
+							origin?.attachments.value?.forEach { attachment ->
+								if (attachment.size >= maxFileSize) {
+									appendLine(attachment.url)
 								}
 							}
 						}
+
+						multimessage!!.edit(false) {
+							content = newContent
+						}
+
 						Log.info { "Message ${multimessage!!.origin?.id} was edited by it's author" }
 					}
 				} catch (e: Exception) {

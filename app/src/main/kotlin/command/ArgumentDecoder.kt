@@ -2,8 +2,16 @@ package flarogus.command
 
 import kotlin.math.*
 
-open class ArgumentDecoder(val callback: Callback, message: String, val offset: Int = 0) {
-	val argcb = callback.ArgumentCallback().also { callback._arguments = it }
+/**
+ * Decodes a string of arguments and assignes them to the providen callback
+ */
+open class ArgumentDecoder(
+	val arguments: Arguments,
+	val callback: Callback<out Any?>,
+	message: String,
+	val offset: Int = 0
+) {
+	val argcb = callback.createArguments()
 	val message = message + " "
 
 	protected val arg = StringBuilder(50)
@@ -35,7 +43,7 @@ open class ArgumentDecoder(val callback: Callback, message: String, val offset: 
 				}
 				char == ' ' && lastChar != '\\' && !quoteMode -> {
 					if (!arg.isEmpty()) {
-						processArg(arg.toString())
+						processArg(arg.toString(), index)
 						arg.clear()
 					}
 					hasQuote = false
@@ -43,7 +51,7 @@ open class ArgumentDecoder(val callback: Callback, message: String, val offset: 
 				char == '\\' && lastChar != '\\' -> {} //do nothing — it's an escape character
 				else -> {
 					if (hasQuote && !quoteMode) {
-						err("Illegal quotation mark. Put a backslash (\\) before it if you don't want to use a quoted string.", index)
+						err("Trailing text after a quotation mark. Add a space after the quote.", index)
 					}
 					arg.append(char)
 				}
@@ -56,21 +64,37 @@ open class ArgumentDecoder(val callback: Callback, message: String, val offset: 
 			err("Unterminated quoted string", quoteBegin)
 		}
 
-		if (errors != null && !errors.isEmpty()) {
-			throw IllegalArgumentException(errors.toString())
+		if (errors != null && !errors!!.isEmpty()) {
+			throw IllegalArgumentException("Error(s) have occured:\n`errors.toString())`")
 		}
-
-		TODO("implement this")
 	}
 
-	protected fun processArg(arg: String) {
-		TODO("implement this")
+	protected fun processArg(arg: String, position: Int) {
+		if (arg.isEmpty()) return
+
+		if (arg.startsWith("-")) {
+			if (arguments.flags.any { it.applicable(arg) }) {
+				val trimmed = if (arg.startsWith("--")) arg.substring(2) else arg.substring(1)
+				argcb.flags.add(trimmed)
+			} else {
+				err("Unresolved flag (add a '\\' before it if it's not a flag)", position - arg.length, arg.length)
+			}
+		} else {
+			val index = argcb.positional.size
+			val argument = arguments.positional.getOrNull(index)
+
+			if (argument != null) {
+				argcb.positional[argument.name] = argument.constructFrom(arg)
+			} else {
+				err("Unexpected argument. Use quotation marks if it's a part of the previous argument.", position - arg.length, arg.length)
+			}
+		}
 	}
 
-	protected fun err(cause: String, index: Int, hintChars: Int = 5) {
+	protected fun err(cause: String, index: Int, hightlightLength: Int = 1, hintChars: Int = 5) {
 		if (errors == null) errors = StringBuilder(250)
 
-		erorrs!!.apply {
+		errors!!.apply {
 			appendLine(cause)
 			
 			if (!message.isEmpty() && hintChars > 0) {
@@ -82,7 +106,8 @@ open class ArgumentDecoder(val callback: Callback, message: String, val offset: 
 				appendLine()
 
 				repeat(index - hintBegin) { append(' ') }
-				append('^').appendLine()
+				repeat(min(hintChars, hightlightLength)) { append('^') }
+				appendLine()
 			}
 		}
 	}
