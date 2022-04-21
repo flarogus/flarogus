@@ -14,12 +14,35 @@ import dev.kord.core.event.message.*
 import dev.kord.core.entity.*;
 import dev.kord.core.entity.channel.*
 import flarogus.util.*;
-import flarogus.commands.*;
+import flarogus.command.*;
 import flarogus.multiverse.*
 
 val autorunChannel = Snowflake(962823075357949982UL)
 
-suspend fun main(vararg args: String) = runBlocking {
+fun main(vararg appargs: String) {
+	val command = FlarogusCommand<String>("amogus").apply {
+		arguments {
+			flag("sus").alias('s')
+			required<Int>("count")
+			optional<Int>("kill")
+		}
+		
+		action {
+			if ("sus" in args.flags) {
+				val total = args.positional.arg<Int>("count")
+				val kill = args.positional.opt<Int>("kill") ?: 0
+				val survived = total - kill
+				result("survived: $survived")
+			} else {
+				result("not sus")
+			}
+		}
+	}
+
+	println(command(appargs.joinToString(" ")))
+}
+/*
+suspend fun oldmain(vararg args: String) = runBlocking {
 	val botToken = args.getOrNull(0)
 	if (botToken == null) {
 		println("[ERROR] no token specified")
@@ -93,3 +116,4 @@ suspend fun main(vararg args: String) = runBlocking {
 		presence { competing("execute `flarogus help` to see the list of available commands.") }
 	}
 }
+*/

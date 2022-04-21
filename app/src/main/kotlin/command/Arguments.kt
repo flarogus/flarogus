@@ -8,16 +8,16 @@ open class Arguments {
 	val positional = ArrayList<PositionalArgument<*>>()
 	val flags = ArrayList<NonPositionalArgument>()
 
-	inline fun <reified T> argument(name: String, mandatory: Boolean = true) {
-		positional.add(PositionalArgument.forType<T>(name, mandatory))
+	inline fun <reified T> argument(name: String, mandatory: Boolean = true) = PositionalArgument.forType<T>(name, mandatory).also {
+		positional.add(it)
 	}
 
 	inline fun <reified T> required(name: String) = argument<T>(name, true)
 
 	inline fun <reified T> optional(name: String) = argument<T>(name, false)
 
-	fun flag(name: String) {
-		flags.add(NonPositionalArgument(name))
+	fun flag(name: String) = NonPositionalArgument(name).also {
+		flags.add(it)
 	}
 }
 
@@ -29,7 +29,9 @@ abstract class PositionalArgument<T>(name: String, mandatory: Boolean) : Argumen
 
 	/** Constructs the value of this agument from a string and throws an exception if this argument is mandatory but the value could not be constructed */
 	open fun constructFrom(from: String) = construct(from) ?: 
-		throw IllegalArgumentException("argument $name: expected a ${this::class.simpleName?.lowercase()}, but a ${determineType(from)} was found")
+		throw IllegalArgumentException("argument $name: expected a ${
+			this::class.simpleName?.lowercase()?.let { if (it.endsWith("arg")) it.dropLast(3) else it }
+		}, but a ${determineType(from)} was found")
 	
 	/** Determines the type of the value and returns its name */
 	protected open fun determineType(value: String) = when {
@@ -91,17 +93,21 @@ open class NonPositionalArgument(name: String) : Argument(name, false) {
 	val shortAliases = ArrayList<Char>(5)
 
 	operator fun contains(other: String) = applicable(other)
+
+	fun alias(alias: Char) = this.also { shortAliases.add(alias) }
+
+	fun alias(alias: String) = this.also { aliases.add(alias) }
 	
 	/** Checks whether the string is this argument. The string must start either witb -- (long) or - (short) */
 	fun applicable(string: String): Boolean = when {
+		string.startsWith("--") -> string.substring(2).let { it == name || it in aliases }
+
 		string.startsWith("-") ->
 			if (string.length != 2) {
 				throw IllegalArgumentException("When using the short argument notation, you must type a minus sign followed by exactly one char.")
 			} else {
 				shortAliases.any { it == string[1] }
 			}
-
-		string.startsWith("--") -> string.substring(2).let { it == name || it in aliases }
 
 		else -> throw RuntimeException("A non-positional argument must begin with - or --.")
 	}

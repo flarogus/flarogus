@@ -83,9 +83,9 @@ open class MultiversalGuild(
 		if (!isWhitelisted) throw IllegalAccessException("this guild is not whitelisted")
 
 		return Multiverse.brodcast("${user.name} — $name", user.avatar, filter) {
-			builder()
-			content = content.stripEveryone().revealHypertext()
-		}).let {
+			builder(it)
+			content = content?.stripEveryone()?.revealHypertext()
+		}.let {
 			Multimessage(null, it)
 		}
 	}

@@ -262,7 +262,7 @@ object Multiverse {
 						val origin = multimessage!!.origin?.asMessage()
 						val newContent = buildString {
 							appendLine(event.new.content.value ?: "")
-							origin?.attachments.value?.forEach { attachment ->
+							origin?.attachments?.forEach { attachment ->
 								if (attachment.size >= maxFileSize) {
 									appendLine(attachment.url)
 								}

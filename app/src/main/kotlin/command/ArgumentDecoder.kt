@@ -11,7 +11,7 @@ open class ArgumentDecoder(
 	message: String,
 	val offset: Int = 0
 ) {
-	val argcb = callback.createArguments()
+	lateinit protected var argcb: Callback.ArgumentCallback
 	val message = message + " "
 
 	protected val arg = StringBuilder(50)
@@ -25,6 +25,13 @@ open class ArgumentDecoder(
 	 * @throws IllegalArgumentException containing all errors if the arguments are invalid
 	 */
 	open fun decode() {
+		argcb = callback.createArguments()
+		arg.clear()
+		errors = null
+		quoteBegin = -1
+		quoteMode = false
+		hasQuote = false
+
 		var lastChar: Char = 0.toChar()
 
 		// appending a space as a workaround in order to make sure the last argument would get processed too
@@ -38,6 +45,7 @@ open class ArgumentDecoder(
 							err("Illegal quotation mark. Put a backslash (\\) before it if you don't want to make a quoted string.", index)
 						}
 						hasQuote = true
+						quoteBegin = index
 						arg.clear()
 					}
 				}
@@ -64,30 +72,36 @@ open class ArgumentDecoder(
 			err("Unterminated quoted string", quoteBegin)
 		}
 
+		if (
+
 		if (errors != null && !errors!!.isEmpty()) {
-			throw IllegalArgumentException("Error(s) have occured:\n`errors.toString())`")
+			throw IllegalArgumentException("Error(s) have occured:\n${errors.toString()}")
 		}
 	}
 
 	protected fun processArg(arg: String, position: Int) {
 		if (arg.isEmpty()) return
 
-		if (arg.startsWith("-")) {
-			if (arguments.flags.any { it.applicable(arg) }) {
-				val trimmed = if (arg.startsWith("--")) arg.substring(2) else arg.substring(1)
-				argcb.flags.add(trimmed)
+		try {
+			if (arg.startsWith("-")) {
+				if (arguments.flags.any { it.applicable(arg) }) {
+					val trimmed = if (arg.startsWith("--")) arg.substring(2) else arg.substring(1)
+					argcb.flags.add(trimmed)
+				} else {
+					err("Unresolved flag (add a '\\' before it if it's not a flag)", position - arg.length, arg.length)
+				}
 			} else {
-				err("Unresolved flag (add a '\\' before it if it's not a flag)", position - arg.length, arg.length)
-			}
-		} else {
-			val index = argcb.positional.size
-			val argument = arguments.positional.getOrNull(index)
+				val index = argcb.positional.size
+				val argument = arguments.positional.getOrNull(index)
 
-			if (argument != null) {
-				argcb.positional[argument.name] = argument.constructFrom(arg)
-			} else {
-				err("Unexpected argument. Use quotation marks if it's a part of the previous argument.", position - arg.length, arg.length)
+				if (argument != null) {
+					argcb.positional[argument.name] = argument.constructFrom(arg)
+				} else {
+					err("Unexpected argument. Use quotation marks if it's a part of the previous argument.", position - arg.length, arg.length)
+				}
 			}
+		} catch (e: IllegalArgumentException) {
+			if (e.message != null) err(e.message!!, position - arg.length)
 		}
 	}
 
@@ -98,8 +112,8 @@ open class ArgumentDecoder(
 			appendLine(cause)
 			
 			if (!message.isEmpty() && hintChars > 0) {
-				val hintBegin = max(0, index - hintChars)
-				val hintEnd = min(message.length - 1, index + hintChars)
+				val hintBegin = max(0, index - hintChars + 1)
+				val hintEnd = min(message.length - 1, index + hintChars + 1)
 		
 				appendLine().append('`')
 				(hintBegin..hintEnd).forEach { append(message[it]) }
@@ -107,7 +121,7 @@ open class ArgumentDecoder(
 
 				repeat(index - hintBegin) { append(' ') }
 				repeat(min(hintChars, hightlightLength)) { append('^') }
-				appendLine()
+				appendLine('`')
 			}
 		}
 	}

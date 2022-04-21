@@ -8,6 +8,9 @@ open class FlarogusCommand<R>(val name: String) {
 
 	var description: String = "No description"
 
+	var requiredArguments = 0
+		protected set
+
 	open fun action(action: Callback<R>.() -> Unit) {
 		this.action = action
 	}
@@ -15,6 +18,15 @@ open class FlarogusCommand<R>(val name: String) {
 	inline fun arguments(builder: Arguments.() -> Unit) {
 		if (arguments == null) arguments = Arguments()
 		arguments!!.apply(builder)
+
+		//ensure they follow the "required-optional" order
+		var opt = false
+		arguments.positional.forEach {
+			if (opt && !it.optional) throw IllegalArgumentException("Mandatory arguments must come first")
+			if (it.optional) opt = true
+		}
+
+		requiredArguments = arguments.positional.fold(0) { t, arg -> if (arg.optional) t else t + 1 }
 	}
 
 	open operator fun invoke(message: Message?, argsOverride: String): Callback<R> {
@@ -36,5 +48,6 @@ open class FlarogusCommand<R>(val name: String) {
 		if (arguments != null) {
 			ArgumentDecoder(arguments!!, callback, args, argumentOffset).decode()
 		}
+		action?.invoke(callback)
 	}
 } 
