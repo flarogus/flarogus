@@ -100,7 +100,7 @@ open class FlarogusCommand<R>(name: String) {
 	/** Performs all checks of this command and throws an exception if any of them fail */
 	open fun performChecks(callback: Callback<*>) {
 		val errors = checks.mapNotNull { it(callback.originalMessage as? Message, callback.message) }
-		if (!erorrs.isEmpty()) {
+		if (!errors.isEmpty()) {
 			throw IllegalArgumentException("Could not execute this command, because: ${errors.joinToString(", ")}")
 		}
 	}
