@@ -121,14 +121,6 @@ object Multiverse {
 			}
 			
 			try {
-				//instaban spammers
-				if (countPings(event.message.content) > 7) {
-					Lists.blacklist += event.message.author!!.id //we don't need to ban permanently
-					event.message.replyWith("[!] You've been auto-banned from this multiverse instance. please wait 'till the next restart.")
-					Log.info { "${event.message.author?.tag} was auto-tempbanned for attempting to ping too many people at once" }
-					return
-				}
-				
 				//block potential spam messages
 				if (ScamDetector.hasScam(event.message.content)) {
 					event.message.replyWith("[!] your message contains a potential scam. if you're not a bot, remove any links and try again")
@@ -428,7 +420,7 @@ object Multiverse {
 
 	/** Returns whether this message was sent by flarogus */
 	fun isOwnMessage(message: Message): Boolean {
-		return (message.author?.id?.value == Vars.botId) 
+		return (message.author?.id == Vars.botId) 
 			|| ((message.webhookId != null) && (universeWebhooks.any { it.webhook != null && it.webhook!!.id == message.webhookId } || guilds.any { it.webhooks.any { it.id == message.webhookId } }))
 	}
 

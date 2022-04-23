@@ -1,4 +1,4 @@
-package flarogus.multiverse
+package flarogus.multiverse.state
 
 import java.io.*
 import java.net.*
@@ -45,7 +45,7 @@ object Settings {
 	
 	/** Tries to update the state once */
 	suspend fun updateStateAttempt() {
-		settingsMessage = settingsChannel.messages.firstOrNull { (it.content.startsWith("http") || it.content == "placeholder") && it.data.author.id.value == Vars.botId }
+		settingsMessage = settingsChannel.messages.firstOrNull { (it.content.startsWith("http") || it.content == "placeholder") && it.data.author.id == Vars.botId }
 		
 		if (settingsMessage == null) {
 			settingsMessage = settingsChannel.createMessage("placeholder")
@@ -99,7 +99,7 @@ object Settings {
 data class State(
 	val ubid: String = Vars.ubid,
 	val startedAt: Long = Vars.startedAt,
-	var runWhitelist: Set<ULong> = Vars.superusers,
+	var runWhitelist: Set<Snowflake> = Vars.superusers,
 	var epoch: Long = Vars.flarogusEpoch,
 	var logLevel: Int = Log.level.level,
 

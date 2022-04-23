@@ -5,40 +5,75 @@ import dev.kord.rest.builder.message.create.*
 import dev.kord.core.entity.*
 import dev.kord.core.behavior.*
 import flarogus.*
+import flarogus.util.*
 
+/**
+ * A callback of a command.
+ *
+ * @param command Command to which this callback relates. May be replaced by subcommands.
+ * @param message A message containing the arguments.
+ * @param originalMessage If the command was triggered by a discord message, this property contains that message.
+ */
 open class Callback<R>(
-	val command: FlarogusCommand<*>,
-	val message: MessageBehavior? = null
+	var command: FlarogusCommand<*>,
+	val message: String,
+	val originalMessage: MessageBehavior? = null
 ) {
+	/** The offset at which the arguments of a command begin. Used by parent commands. */
+	var argumentOffset = 0
+
 	protected var _arguments: ArgumentCallback? = null
+	/** Whether this command has arguments */
+	val hasArgs: Boolean get() = _arguments != null
 	/** Returns the ArgumentCallback assigned to this callback or throws an IllegalStateException if it doesn't exist */
 	val args: ArgumentCallback get() = _arguments ?: throw IllegalStateException("A command has attempted to access it's arguments, but it doesn't have any arguments.")
-	
+
 	var result: R? = null
 	var replyResult: Boolean = true
 	
 	/** Asyncronously replies to a message. Does not assign a result. */
-	inline fun reply(crossinline builder: MessageCreateBuilder.() -> Unit) = Vars.client.async {
-		message?.reply(builder)
+	inline fun reply(
+		crossinline builder: MessageCreateBuilder.() -> Unit
+	) = if (originalMessage == null) null else Vars.client.async {
+		originalMessage!!.reply {
+			builder()
+			content = content?.stripEveryone()?.take(1999)
+		}
 	}
 
-	/** Asyncronously replies to a message. Does not assign a result. */
-	fun reply(value: R?) = reply { 
+	/**
+	 * Asyncronously replies to a message. Does not assign a result.
+	 * Supports primitive types (including booleans), strings, exceptions; toString()s any other objects.
+	 */
+	fun reply(value: Any?) = reply { 
 		content = when (value) {
 			is Boolean -> if (value) "success." else "fail."
 			is Number -> "result: $value"
 			is String -> value
+
+			Unit, null -> "Executed with no output."
+
+			is IllegalArgumentException -> "Illegal argument(s):\n${value.message}"
+			is IllegalStateException -> "Illegal state:\n${value.message}"
+			is IllegalAccessException -> "You are not allowed to execute this command:\n${value.message}"
+			is CommandException -> {
+				value.commandName = command.getFullName()
+				value.message
+			}
+			is Exception -> "A fatal exception has occured: $value"
+			is Error -> "A fatal error has occured:\n${value.stackTraceToString()}"
+
 			else -> "output: ${value.toString()}"
 		}
 	}
 
 	/** 
-	 * Assigns a result and, if [replyResult] is true, replies with the result to the original message.
+	 * Assigns a result and, if [replyResult] and [doReply] are true, replies with the result to the original message.
 	 * This function should not be used to reply with strings (unless it's actual output is a string), as other commands may try to read the result.
 	 */
-	open fun result(value: R?) {
+	open fun result(value: R?, doReply: Boolean = true) {
 		result = value
-		if (replyResult) reply(value)
+		if (replyResult && doReply) reply(value)
 	}
 	
 	/** Creates and assigns an ArgumentCallback for this callback */

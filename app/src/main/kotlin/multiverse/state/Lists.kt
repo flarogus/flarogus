@@ -1,4 +1,4 @@
-package flarogus.multiverse
+package flarogus.multiverse.state
 
 import kotlinx.coroutines.*
 import dev.kord.rest.builder.message.create.*

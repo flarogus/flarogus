@@ -18,7 +18,7 @@ import flarogus.*
 import flarogus.multiverse.*
 
 val mentionRegex = "<@(!)?(\\d+)>".toRegex()
-val hypertextRegex = """\((.*)\)\[(https?:\/\/[a-zA-Z\.\-\_]+\/?)(.*)\]""".toRegex()
+val hypertextRegex = """\((.*)\)\[(https?:\/\/)([a-zA-Z\.\-\_]+\/?)(.*)\]""".toRegex()
 
 fun ULong.toSnowflake() = Snowflake(this)
 fun String.toSnowflakeOrNull(): Snowflake? = if (!startsWith("<")) {
@@ -31,8 +31,19 @@ fun Long.toSnowflake() = toULong().toSnowflake()
 
 fun String.stripEveryone() = this.replace("@everyone", "@еveryonе").replace("@here", "@hеrе")
 fun String.stripCodeblocks() = this.replace("```", "`'`")
+fun String.revealHypertext() = this.replace(hypertextRegex, "(\$1)[\$2\$3\$4] (\$3)")
 
-fun String.revealHypertext() = this.replace(hypertextRegex, "(\$1)[\$2\$3] (\$2)")
+suspend fun String.explicitMentions(): String {
+        var string = this
+        var match: MatchResult? = mentionRegex.find(string)
+
+        while (match != null) {
+                string = string.replaceRange(match.range, "@" + Vars.supplier.getUserOrNull(match.value.toSnowflake())?.tag ?: "invalid-user")
+                match = mentionRegex.find(string)
+        }
+
+        return string
+}
 
 fun Any?.isNotNull() = this != null
 
@@ -50,10 +61,6 @@ suspend inline fun delayUntil(limit: Long, period: Long = 50L, condition: () -> 
 
 	return false
 }
-
-/** Replies to a message */
-@Deprecated("This was created at the very beginning of the flarogus development. Use 'origin.replyWith(message)' instead.", ReplaceWith("origin.replyWith(message)"), DeprecationLevel.ERROR)
-fun replyWith(origin: MessageBehavior, message: CharSequence) = origin.replyWith(message.toString())
 
 /** Replies to a message */
 fun MessageBehavior.replyWith(message: String) = Vars.client.async {
@@ -92,41 +99,6 @@ fun sendImage(origin: MessageBehavior, text: String = "", image: BufferedImage) 
 	} catch (e: Exception) {
 		println(e)
 	}
-}
-
-
-/** Tries to find the user by uid / mention, returns null in case of an error */
-@Deprecated("dumbass")
-suspend fun userOrNull(uid: String?): User? {
-	if (uid == null || uid.isEmpty()) {
-		return null
-	}
-	if (uid.startsWith("<@")) {
-		val id = "<@(\\d*)>".toRegex().find(uid)?.groupValues?.getOrNull(1)
-		if (id != null) {
-			return userOrNull(id)
-		}
-	}
-	return Vars.supplier.getUserOrNull(Snowflake(uid.toULong()))
-}
-
-/** Tries to find a user by mention/userid, returns the author in case of error. May return null if it's a system message */
-@Deprecated("dumbass")
-suspend fun userOrAuthor(uid: String?, event: MessageCreateEvent): User? {
-	return userOrNull(uid) ?: event.message.author
-}
-
-fun countPings(string: String): Int {
-	var r = "<@(!)?\\d+>".toRegex().find(string)
-	if (r != null) {
-		var c = 0;
-		while (true) {
-			r = r?.next() ?: break
-			c++
-		}
-		return c
-	}
-	return 0
 }
 
 const val minute = 60L
@@ -180,23 +152,6 @@ fun formatTime(millis: Long): String {
 		if (c != 1L) append('s')
 	}
 }
-
-/** Utility function: calls the specified function for every message in the channel. Catches and ignores any exceptions, Errors can be used to stop execution */
-@Deprecated("dumbass", level = DeprecationLevel.ERROR)
-inline suspend fun fetchMessages(channel: MessageChannelBehavior, crossinline handler: suspend (Message) -> Unit) {
-	try {
-		channel.messages
-			.onEach {
-				try {
-					handler(it)
-				} catch (e: Exception) { //any invalid messages are ignored. this includes number format exceptions, nullpointers and etc
-					//e.printStackTrace()
-				}
-			}.collect()
-	} catch (e: Throwable) { //this one should catch Error subclasseses too
-		//e.printStackTrace()
-	}
-};
 
 val nameRegex = """^([.*])?(.*#\d\d\d\d) — .*""".toRegex()
 

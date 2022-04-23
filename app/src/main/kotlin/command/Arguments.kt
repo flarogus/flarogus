@@ -8,20 +8,28 @@ open class Arguments {
 	val positional = ArrayList<PositionalArgument<*>>()
 	val flags = ArrayList<NonPositionalArgument>()
 
-	inline fun <reified T> argument(name: String, mandatory: Boolean = true) = PositionalArgument.forType<T>(name, mandatory).also {
+	inline fun <reified T> argument(
+		name: String,
+		mandatory: Boolean = true,
+		description: String? = null
+	) = PositionalArgument.forType<T>(name, mandatory).also {
+		it.description = description
 		positional.add(it)
 	}
 
-	inline fun <reified T> required(name: String) = argument<T>(name, true)
+	inline fun <reified T> required(name: String, description: String? = null) = argument<T>(name, true, description)
 
-	inline fun <reified T> optional(name: String) = argument<T>(name, false)
+	inline fun <reified T> optional(name: String, description: String? = null) = argument<T>(name, false, description)
 
-	fun flag(name: String) = NonPositionalArgument(name).also {
+	fun flag(name: String, description: String? = null) = NonPositionalArgument(name).also {
+		it.description = description
 		flags.add(it)
 	}
 }
 
-abstract class Argument(val name: String, val mandatory: Boolean)
+abstract class Argument(val name: String, val mandatory: Boolean) {
+	var description: String? = null
+}
 
 abstract class PositionalArgument<T>(name: String, mandatory: Boolean) : Argument(name, mandatory) {
 	/** Constructs the value of this argument from a string */

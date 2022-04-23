@@ -8,10 +8,10 @@ import kotlin.math.*
 open class ArgumentDecoder(
 	val arguments: Arguments,
 	val callback: Callback<out Any?>,
-	message: String,
-	val offset: Int = 0
+	message: String = callback.message,
+	val offset: Int = callback.argumentOffset
 ) {
-	lateinit protected var argcb: Callback.ArgumentCallback
+	lateinit protected var argcb: Callback<*>.ArgumentCallback
 	val message = message + " "
 
 	protected val arg = StringBuilder(50)
@@ -72,7 +72,10 @@ open class ArgumentDecoder(
 			err("Unterminated quoted string", quoteBegin)
 		}
 
-		if (
+		val argsProivden = argcb.positional.size
+		if (argsProivden < callback.command.requiredArguments) {
+			err("This command accepts at least ${callback.command.requiredArguments} arguments, but only $argsProivden were supplied", message.length - 1)
+		}
 
 		if (errors != null && !errors!!.isEmpty()) {
 			throw IllegalArgumentException("Error(s) have occured:\n${errors.toString()}")
