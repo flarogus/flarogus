@@ -11,7 +11,7 @@ open class FlarogusCommand<R>(name: String) {
 	var action: CommandAction<R>? = null
 	var arguments: Arguments? = null
 
-	/** If any of the checks returns a string, it is considered that this command cannot be executed with the returned string as the cause. */
+	/** If any of the checks returns a string, it is considered that this command cannot be executed. The returned string is the reason. */
 	val checks = ArrayList<CommandCheck>()
 
 	/** The parent command tree. May be null if the command is a root command. */
@@ -44,10 +44,10 @@ open class FlarogusCommand<R>(name: String) {
 	}
 
 	/** Adds a check that doesn't allow a user to execute this command if they're not a superuser. */
-	open fun adminOnly() = check { u, _ -> if (u == null || u.id in Vars.superusers) null else "This command can only be executed by admins." }
+	open fun adminOnly() = check { u, _ -> if (u == null || u.id in Vars.superusers) null else "this command can only be executed by admins" }
 
 	/** Adds a check that filters bot / webhook users. */
-	open fun noBots() = check { u, _ -> if (u == null || (u.author != null && !u.author!!.isBot)) null else "Bot users can't execute this command." }
+	open fun noBots() = check { u, _ -> if (u == null || (u.author != null && !u.author!!.isBot)) null else "bot users can't execute this command" }
 
 	inline fun arguments(builder: Arguments.() -> Unit) {
 		if (arguments == null) arguments = Arguments()
@@ -84,6 +84,8 @@ open class FlarogusCommand<R>(name: String) {
 	 * Otherwise, rethrows them. */
 	open suspend fun useCallback(callback: Callback<R>) {
 		try {
+			performChecks(callback)
+
 			callback.command = this
 			if (arguments != null && !callback.hasArgs) {
 				ArgumentDecoder(arguments!!, callback).decode()
@@ -92,6 +94,14 @@ open class FlarogusCommand<R>(name: String) {
 		} catch (t: Throwable) {
 			if (callback.originalMessage == null) throw t
 			callback.reply(t)
+		}
+	}
+
+	/** Performs all checks of this command and throws an exception if any of them fail */
+	open fun performChecks(callback: Callback<*>) {
+		val errors = checks.mapNotNull { it(callback.originalMessage as? Message, callback.message) }
+		if (!erorrs.isEmpty()) {
+			throw IllegalArgumentException("Could not execute this command, because: ${errors.joinToString(", ")}")
 		}
 	}
 
