@@ -6,6 +6,8 @@ import kotlinx.serialization.*
 abstract class MultiversalEntity() {
 	/** Whether this entity was forcibly banned */
 	var isForceBanned = false
+
+	@Transient
 	var isValid = true
 		protected set
 	

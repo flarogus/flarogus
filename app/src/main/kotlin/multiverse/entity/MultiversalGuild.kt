@@ -85,8 +85,6 @@ open class MultiversalGuild(
 		return Multiverse.brodcast("${user.name} — $name", user.avatar, filter) {
 			builder(it)
 			content = content?.stripEveryone()?.revealHypertext()
-		}.let {
-			Multimessage(null, it)
 		}
 	}
 
@@ -108,8 +106,6 @@ open class MultiversalGuild(
 			}
 
 			isValid = guild != null //well...
-
-			if (discordId in Lists.whitelist) isWhitelisted = true
 		}
 	}
 

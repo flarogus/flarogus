@@ -97,7 +97,6 @@ open class MultiversalUser(
 				}
 
 				message.origin = event.message
-				Multiverse.history.add(message)
 			}
 		}
 	}
@@ -117,6 +116,18 @@ open class MultiversalUser(
 			builder(it)
 		}.also { totalSent++ }
 	}
+
+	/** Warns this user for a rule. */
+	open fun warnFor(rule: Rule, informMultiverse: Boolean) {
+		if (rule.points <= 0) return;
+		warns.add(WarnEntry(rule, System.currentTimeMillis()))
+
+		if (informMultiverse) {
+			Multiverse.brodcastSystemAsync {
+				content = "User $name was warned for rule ${rule.category}.${rule.index}: «$rule»"
+			}
+		}
+	}
 	
 	/** Updates this user */
 	override open suspend fun update() {
@@ -125,9 +136,6 @@ open class MultiversalUser(
 		if (user == null || lastUpdate + updateInterval < System.currentTimeMillis()) {
 			user = Vars.restSupplier.getUserOrNull(discordId)
 			
-			//TODO: remove this
-			Lists.usertags.getOrDefault(discordId, null)?.let { usertag = it }
-
 			isValid = user != null
 		}
 	}
@@ -141,5 +149,16 @@ open class MultiversalUser(
 		val criticalWarns = 5
 		var updateInterval = 1000L * 60 * 8
 		val messageRateLimit = 3000L
+	}
+
+	/** Represents the fact that a user has violated a rule */
+	@Serializable
+	data class WarnEntry(val rule: Rule, val received: Long = System.currentTimeMillis()) {
+		fun isValid() = received + expiration < System.currentTimeMillis()
+
+		companion object {
+			/** Time in ms required for a warn to expire. 20 days. */
+			val expiration = 1000L * 60 * 60 * 24 * 20
+		}
 	}
 }

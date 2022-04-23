@@ -5,6 +5,10 @@ import kotlinx.serialization.json.*
 import kotlinx.serialization.descriptors.*
 import kotlinx.serialization.encoding.*
 
+/**
+ * Contains all the multiversal rules.
+ * New rules should ONLY be appended to the end, as doing otherwise will make existing warns invalid!
+ */
 enum class RuleCategory(val index: Int, val description: String, val rules: List<Rule>) {
 	GENERAL(1, "list of multiversal rules", listOf(
 		Rule(1, "Do not insult, harrass, discriminate other people. This also includes fandom-related hate, stop posting it for fuck's sake."),
@@ -76,16 +80,5 @@ class RuleSerializer : KSerializer<Rule> {
 	override fun deserialize(decoder: Decoder): Rule {
 		val parts = decoder.decodeString().split(':')
 		return RuleCategory.of(parts[0].toInt(), parts[1].toInt()) ?: Rule.UNKNOWN
-	}
-}
-
-/** Represents the fact that a user has broken a rule */
-@Serializable
-data class WarnEntry(val rule: Rule, val received: Long = 0) {
-	fun isValid() = received + expiration < System.currentTimeMillis()
-
-	companion object {
-		/** Time in ms required for a warn to expire. 20 days. */
-		val expiration = 1000L * 60 * 60 * 24 * 20
 	}
 }

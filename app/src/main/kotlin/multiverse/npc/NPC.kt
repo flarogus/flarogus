@@ -16,7 +16,7 @@ abstract class NPC(open val cooldown: Long = 20000L, open val replyDelay: Long =
 	abstract val dialog: RootNode
 	
 	var lastMessage = 0L
-	val history = ArrayList<List<WebhookMessageBehavior>>(30)
+	val history = ArrayList<Multimessage>(30)
 	
 	var lastProcessed: Message? = null
 	
