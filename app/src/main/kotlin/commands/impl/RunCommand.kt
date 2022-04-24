@@ -9,8 +9,8 @@ import flarogus.*
 import flarogus.util.*
 import flarogus.multiverse.*
 
-internal val engine = ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts");
-internal val context = SimpleScriptContext()
+val engine = ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts");
+val context = SimpleScriptContext()
 
 internal val defaultImports = arrayOf(
 	"flarogus.*", "flarogus.util.*", "flarogus.multiverse.*", "ktsinterface.*", "dev.kord.core.entity.*", "dev.kord.core.entity.channel.*",
