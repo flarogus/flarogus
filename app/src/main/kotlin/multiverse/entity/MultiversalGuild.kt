@@ -84,6 +84,8 @@ open class MultiversalGuild(
 
 		return Multiverse.brodcast("${user.name} — $name", user.avatar, filter, builder).let {
 			Multimessage(null, it)
+		}.also {
+			totalUserMessages++
 		}
 	}
 

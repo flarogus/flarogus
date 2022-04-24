@@ -31,8 +31,19 @@ fun Long.toSnowflake() = toULong().toSnowflake()
 
 fun String.stripEveryone() = this.replace("@everyone", "@еveryonе").replace("@here", "@hеrе")
 fun String.stripCodeblocks() = this.replace("```", "`'`")
-
 fun String.revealHypertext() = this.replace(hypertextRegex, "[\$1](\$2\$3) (<\$2>)")
+
+suspend fun String.explicitMentions(): String {
+	var string = this
+	var match: MatchResult? = mentionRegex.find(string)
+
+	while (match != null) {
+		string = string.replaceRange(match.range, "@" + Vars.supplier.getUserOrNull(match.value.toSnowflake())?.tag ?: "invalid-user")
+		match = mentionRegex.find(string)
+	}
+
+	return string
+}
 
 fun Any?.isNotNull() = this != null
 
