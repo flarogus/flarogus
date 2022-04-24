@@ -81,6 +81,7 @@ open class MultiversalGuild(
 		crossinline builder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
 	): Multimessage {
 		if (!isWhitelisted) throw IllegalAccessException("this guild is not whitelisted")
+		totalUserMessages++
 
 		return Multiverse.brodcast("${user.name} — $name", user.avatar, filter) {
 			builder(it)
