@@ -221,6 +221,8 @@ object Multiverse {
 		} else {
 			val user = userOf(event.message.data.author.id)
 			user?.onMultiversalMessage(event) ?: event.message.replyWith("No user associated with your user id was found!")
+			
+			npcs.forEach { it.multiversalMessageReceived(event.message) }
 		}
 	};
 
