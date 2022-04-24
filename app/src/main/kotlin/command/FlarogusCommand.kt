@@ -89,6 +89,7 @@ open class FlarogusCommand<R>(name: String) {
 			callback.command = this
 			if (arguments != null && !callback.hasArgs) {
 				ArgumentDecoder(arguments!!, callback).decode()
+				callback.postprocess()
 			}
 			action?.invoke(callback)
 		} catch (t: Throwable) {
@@ -110,8 +111,8 @@ open class FlarogusCommand<R>(name: String) {
 		var current: FlarogusCommand<*>? = this
 		return buildString {
 			do {
-				append(0, " ")
-				append(0, current!!.name)
+				insert(0, " ")
+				insert(0, current!!.name)
 				current = current!!.parent
 			} while (current != null)
 		}

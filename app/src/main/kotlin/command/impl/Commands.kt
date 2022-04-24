@@ -1,5 +1,7 @@
 package flarogus.command.impl
 
+import java.awt.image.*
+import javax.imageio.*
 import kotlin.time.*
 import dev.kord.core.behavior.*
 import flarogus.*
@@ -9,6 +11,28 @@ import flarogus.command.builder.*
 
 @OptIn(kotlin.time.ExperimentalTime::class)
 fun createRootCommand() = createTree("flarogus") {
+	subtree("fun") {
+		subcommand<BufferedImage>("flaroficate") {
+			val flarsusBase = ImageIO.read({}::class.java.getResource("/flarsus.png") ?: throw RuntimeException("aaaaa le flar has escaped"))
+
+			arguments {
+			}
+		}
+	}
+
+	subtree("util") {
+		subcommand<String>("echo") {
+			description = "replies with the providen argument."
+
+			arguments { 
+				default<String>("text") { "<no text>" }
+			}
+			action {
+				result(args.arg<String>("text"))
+			}
+		}
+	}
+
 	subcommand<Long>("sus") {
 		description = "Shows info of the current instance"
 

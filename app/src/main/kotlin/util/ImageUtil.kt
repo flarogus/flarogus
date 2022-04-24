@@ -15,7 +15,7 @@ object ImageUtil {
 	};
 	
 	/** Applies the providen (argb, argb, x, y) operation to a, r, g and b components of each pixel of the target image */
-	inline fun operation(target: BufferedImage, additional: BufferedImage, op: (Int, Int, Int, Int) -> Int): BufferedImage {
+	inline fun operation(target: BufferedImage, additional: BufferedImage, op: (color1: Int, color2: Int, x: Int, y: Int) -> Int): BufferedImage {
 		val new = BufferedImage(target.width, target.height, BufferedImage.TYPE_INT_ARGB);
 		
 		val xRatio = additional.width.toDouble() / target.width;

@@ -21,14 +21,36 @@ open class Arguments {
 
 	inline fun <reified T> optional(name: String, description: String? = null) = argument<T>(name, false, description)
 
+	inline fun <reified T> default(
+		name: String,
+		description: String? = null,
+		noinline default: Callback<*>.() -> T
+	): DefaultPositionalArgument<T> {
+		return DefaultPositionalArgument.forType<T>(name, default).also {
+			it.description = description
+			positional.add(it)
+		}
+	}
+
 	fun flag(name: String, description: String? = null) = NonPositionalArgument(name).also {
 		it.description = description
 		flags.add(it)
+	}
+
+	inline fun forEach(action: (Argument) -> Unit) {
+		positional.forEach(action)
+		flags.forEach(action)
 	}
 }
 
 abstract class Argument(val name: String, val mandatory: Boolean) {
 	var description: String? = null
+
+	/** Called upon the creation of an ArgumentCallback but before it's inflation. */
+	open fun preprocess(callback: Callback<*>) {}
+
+	/** Called after the inflation of an ArgumentCallback (not guaranteed, however). */
+	open fun postprocess(callback: Callback<*>) {}
 }
 
 abstract class PositionalArgument<T>(name: String, mandatory: Boolean) : Argument(name, mandatory) {
@@ -36,7 +58,7 @@ abstract class PositionalArgument<T>(name: String, mandatory: Boolean) : Argumen
 	abstract protected fun construct(from: String): T?
 
 	/** Constructs the value of this agument from a string and throws an exception if this argument is mandatory but the value could not be constructed */
-	open fun constructFrom(from: String) = construct(from) ?: 
+	open fun constructFrom(from: String) = construct(from) ?:
 		throw IllegalArgumentException("argument $name: expected a ${
 			this::class.simpleName?.lowercase()?.let { if (it.endsWith("arg")) it.dropLast(3) else it }
 		}, but a ${determineType(from)} was found")
@@ -93,6 +115,34 @@ abstract class PositionalArgument<T>(name: String, mandatory: Boolean) : Argumen
 				it(name, mandatory) as PositionalArgument<T>
 			} ?: throw IllegalArgumentException("Type ${T::class} is not supported for argument type. Add a new entry to PositionalArgument.mapping in order to add support for it.")
 		}
+	}
+}
+
+/** 
+ * A wrapper for PositionalArgumenT that provides a default value. Note that the name and other fields of the wrapped argument are ignored.
+ * @param argument Wrapped argument
+ */
+open class DefaultPositionalArgument<T>(
+	name: String,
+	val default: Callback<*>.() -> T,
+	val argument: PositionalArgument<T>
+) : PositionalArgument<T>(name, false) {
+	override open protected fun construct(from: String) = null
+
+	override open fun constructFrom(from: String) = argument.constructFrom(from)
+
+	override open fun postprocess(callback: Callback<*>) {
+		if (callback.hasArgs && !callback.args.positional.contains(name)) {
+			callback.args.positional[name] = default(callback)
+		}
+	}
+	
+	companion object {
+		inline fun <reified T> forType(name: String, noinline default: Callback<*>.() -> T) = DefaultPositionalArgument<T>(
+			name,
+			default,
+			PositionalArgument.forType<T>("", false)
+		)
 	}
 }
 

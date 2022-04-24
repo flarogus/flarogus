@@ -1,5 +1,7 @@
 package flarogus.command
 
+import kotlin.math.*
+
 open class TreeCommand(name: String) : FlarogusCommand<Any?>(name) {
 	val subcommands = ArrayList<FlarogusCommand<*>>(10)
 
@@ -18,7 +20,10 @@ open class TreeCommand(name: String) : FlarogusCommand<Any?>(name) {
 
 			callback.command = this
 
-			val commandName = callback.message.substring(callback.argumentOffset).trimStart().takeWhile { it != ' ' }
+			val commandName = callback.message.substring(
+				min(callback.argumentOffset, callback.message.length)
+			).trimStart().takeWhile { it != ' ' }
+
 			if (commandName.isEmpty()) {
 				fallback(callback)
 			} else {
