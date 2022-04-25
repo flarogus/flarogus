@@ -1,5 +1,6 @@
 package flarogus.command
 
+import java.awt.image.*
 import kotlin.contracts.*
 import kotlinx.coroutines.*
 import dev.kord.rest.builder.message.create.*
@@ -45,13 +46,13 @@ open class Callback<R>(
 
 	/**
 	 * Asyncronously replies to a message. Does not assign a result.
-	 * Supports primitive types (including booleans), strings, exceptions; toString()s any other objects.
+	 * Supports primitive types (including booleans), strings, exceptions, buffered images; toString()s any other objects.
 	 */
 	fun reply(value: Any?) = reply { 
 		content = when (value) {
+			is String -> value
 			is Boolean -> if (value) "success." else "fail."
 			is Number -> "result: $value"
-			is String -> value
 
 			Unit, null -> "Executed with no output."
 
@@ -65,6 +66,16 @@ open class Callback<R>(
 			is Exception -> "A fatal exception has occured: $value"
 			is Error -> "A fatal error has occured:\n${value.stackTraceToString()}"
 
+			is BufferedImage -> {
+				ByteArrayOutputStream().use {
+					ImageIO.write(image, "png", it);
+					ByteArrayInputStream(it.toByteArray()).use {
+						addFile("result.png", it)
+					}
+				}
+				""
+			}
+
 			else -> "output: ${value.toString()}"
 		}
 	}
@@ -76,6 +87,11 @@ open class Callback<R>(
 	open fun result(value: R?, doReply: Boolean = true) {
 		result = value
 		if (replyResult && doReply) reply(value)
+	}
+
+	/** Throws a CommandException with the specified message */
+	open fun fail(message: String?): Nothing {
+		throw CommandException(message ?: "no reason specified")
 	}
 	
 	/** Creates and assigns an ArgumentCallback for this callback */
@@ -108,7 +124,7 @@ open class Callback<R>(
 		open fun <T> opt(name: String) = positional.opt<T>(name)
 		
 		/** Calls the function if an argument is present */
-		inline fun <T> ifPresent(name: String, action: (T) -> Unit) = positional.ifPresent(name, action)
+		inline fun <T, R> ifPresent(name: String, action: (T) -> R) = positional.ifPresent(name, action)
 
 		/** Returns whether there's a poitional argument with this name present in the callback */
 		operator fun contains(name: String) = positional.getOrDefault(name, null) != null
@@ -117,7 +133,7 @@ open class Callback<R>(
 		fun flag(name: String) = name in flags
 
 		/** Calls the function if a flag is present */
-		inline fun ifFlagged(name: String, action: () -> Unit) = flags.ifPresent(name, action)
+		inline fun <R> ifFlagged(name: String, action: () -> R) = flags.ifPresent(name, action)
 
 		open inner class PositionalArguments : HashMap<String, Any?>() {
 			/** Gets an argument. Throws an exception if it's optional and not present in the map or not present at all */
@@ -127,15 +143,15 @@ open class Callback<R>(
 			fun <T> opt(name: String) = super.getOrDefault(name, null) as T?
 
 			/** If the argument is present, calls the lambda and provides the value to it */
-			inline fun <T> ifPresent(name: String, action: (T) -> Unit) {
-				opt<T>(name)?.let(action)
+			inline fun <T, R> ifPresent(name: String, action: (T) -> R): R? {
+				return opt<T>(name)?.let(action)
 			}
 		}
 
 		open inner class NonPositionalArguments : ArrayList<String>() {
 			/** If the argument is present, calos the lambda */
-			inline fun ifPresent(argument: String, action: () -> Unit) {
-				if (argument in this) action()
+			inline fun <R> ifPresent(argument: String, action: () -> R): R? {
+				return if (argument in this) action() else null
 			}
 		}
 	}

@@ -27,7 +27,7 @@ open class TreeCommand(name: String) : FlarogusCommand<Any?>(name) {
 			if (commandName.isEmpty()) {
 				fallback(callback)
 			} else {
-				val candidateCommand = subcommands.find { it.name == commandName } ?: throw IllegalArgumentException("command '$commandName' does not exist")
+				val candidateCommand = subcommands.find { it.name.equals(commandName, true) } ?: throw IllegalArgumentException("command '$commandName' does not exist")
 				
 				// todo: can i not use indexOf?
 				val offset = callback.message.indexOf(commandName) + commandName.length + 1
