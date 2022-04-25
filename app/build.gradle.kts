@@ -25,8 +25,11 @@ dependencies {
 	implementation("dev.kord:kord-core:0.8.0-M10")
 	implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
 	
-	//note for myself: DONT REMOVE THIS DEPENDENCY YOU DUMBFUCK!
+	// note for myself: DONT REMOVE THIS DEPENDENCY YOU DUMBFUCK!
 	implementation("org.sejda.webp-imageio:webp-imageio-sejda:0.1.0")
+
+	implementation("info.debatty:java-string-similarity:2.0.0")
+
 }
 
 tasks.compileKotlin {

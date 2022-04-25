@@ -17,6 +17,9 @@ import dev.kord.common.entity.*
 import flarogus.*
 import flarogus.multiverse.*
 
+val ZERO_SNOWFLAKE = 0UL.toSnowflake()
+val Snowflake.Companion.NONE get() = ZERO_SNOWFLAKE
+
 val mentionRegex = "<@(!)?(\\d+)>".toRegex()
 val hypertextRegex = """\((.*)\)\[(https?:\/\/)([a-zA-Z\.\-\_]+\/?)(.*)\]""".toRegex()
 
@@ -38,7 +41,7 @@ suspend fun String.explicitMentions(): String {
         var match: MatchResult? = mentionRegex.find(string)
 
         while (match != null) {
-                string = string.replaceRange(match.range, "@" + Vars.supplier.getUserOrNull(match.value.toSnowflake())?.tag ?: "invalid-user")
+                string = string.replaceRange(match.range, "@" + (Vars.supplier.getUserOrNull(match.value.toSnowflake())?.tag ?: "invalid-user"))
                 match = mentionRegex.find(string)
         }
 

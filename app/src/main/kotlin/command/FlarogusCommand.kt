@@ -2,6 +2,7 @@ package flarogus.command
 
 import dev.kord.core.entity.*
 import flarogus.*
+import flarogus.util.*
 
 typealias CommandAction<R> = suspend Callback<R>.() -> Unit
 typealias CommandCheck = (message: Message?, args: String) -> String?
@@ -44,10 +45,13 @@ open class FlarogusCommand<R>(name: String) {
 	}
 
 	/** Adds a check that doesn't allow a user to execute this command if they're not a superuser. */
-	open fun adminOnly() = check { u, _ -> if (u == null || u.id in Vars.superusers) null else "this command can only be executed by admins" }
+	open fun adminOnly() = check { m, _ -> if (m == null || m.author?.id in Vars.superusers) null else "this command can only be executed by admins" }
 
 	/** Adds a check that filters bot / webhook users. */
-	open fun noBots() = check { u, _ -> if (u == null || (u.author != null && !u.author!!.isBot)) null else "bot users can't execute this command" }
+	open fun noBots() = check { m, _ -> if (m == null || (m.author != null && !m.author!!.isBot)) null else "bot users can't execute this command" }
+
+	/** Adds a check that filters invocations with no originalMessage, making it discord-only. */
+	open fun discordOnly() = check { m, _ -> if (m != null) null else "this command can not be exexcuted out-of-discord" }
 
 	inline fun arguments(builder: Arguments.() -> Unit) {
 		if (arguments == null) arguments = Arguments()
@@ -93,6 +97,8 @@ open class FlarogusCommand<R>(name: String) {
 			}
 			action?.invoke(callback)
 		} catch (t: Throwable) {
+			if (t is CommandException && t.commandName == null) t.commandName = name
+
 			if (callback.originalMessage == null) throw t
 			callback.reply(t)
 		}

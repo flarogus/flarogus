@@ -31,7 +31,7 @@ suspend fun main(vararg args: String) {
 		val arg = args.getOrNull(1) ?: throw IllegalArgumentException("no test command specified")
 		require(args.size == 2) { "only two arguments must be specified in this mode" }
 
-		val result = Vars.rootCommand(arg)
+		val result = try { Vars.rootCommand(arg) } catch (e: Exception) { e.message }
 		println(result?.toString())
 		return
 	}

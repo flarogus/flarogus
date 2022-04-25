@@ -1,6 +1,9 @@
 package flarogus.command
 
+import java.io.*
+import java.net.*
 import java.awt.image.*
+import javax.imageio.*
 import kotlin.contracts.*
 import kotlinx.coroutines.*
 import dev.kord.rest.builder.message.create.*
@@ -68,7 +71,7 @@ open class Callback<R>(
 
 			is BufferedImage -> {
 				ByteArrayOutputStream().use {
-					ImageIO.write(image, "png", it);
+					ImageIO.write(value, "png", it);
 					ByteArrayInputStream(it.toByteArray()).use {
 						addFile("result.png", it)
 					}
@@ -86,16 +89,18 @@ open class Callback<R>(
 	 */
 	open fun result(value: R?, doReply: Boolean = true) {
 		result = value
-		if (replyResult && doReply) reply(value)
+		if (replyResult && doReply) {
+			reply(value)
+		}
 	}
 
 	/** Throws a CommandException with the specified message */
 	open fun fail(message: String?): Nothing {
-		throw CommandException(message ?: "no reason specified")
+		throw CommandException(command.name, message ?: "no reason specified")
 	}
 	
 	/** Creates and assigns an ArgumentCallback for this callback */
-	internal open fun createArguments() = ArgumentCallback().also {
+	internal open suspend fun createArguments() = ArgumentCallback().also {
 		_arguments = it
 		command.arguments?.forEach {
 			it.preprocess(this)
@@ -103,7 +108,7 @@ open class Callback<R>(
 	}
 
 	/** Finalizes the creation this Callback */
-	internal open fun postprocess() {
+	internal open suspend fun postprocess() {
 		command.arguments?.forEach {
 			it.postprocess(this)
 		}

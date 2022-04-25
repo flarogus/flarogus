@@ -24,7 +24,7 @@ open class ArgumentDecoder(
 	 * Constructs an ArgumentCallback for the callback and automatically assigns it
 	 * @throws IllegalArgumentException containing all errors if the arguments are invalid
 	 */
-	open fun decode() {
+	open suspend fun decode() {
 		argcb = callback.createArguments()
 		arg.clear()
 		errors = null
@@ -82,17 +82,14 @@ open class ArgumentDecoder(
 		}
 	}
 
-	protected fun processArg(arg: String, position: Int) {
+	protected suspend fun processArg(arg: String, position: Int) {
 		if (arg.isEmpty()) return
 
 		try {
 			if (arg.startsWith("-")) {
-				if (arguments.flags.any { it.applicable(arg) }) {
-					val trimmed = if (arg.startsWith("--")) arg.substring(2) else arg.substring(1)
-					argcb.flags.add(trimmed)
-				} else {
-					err("Unresolved flag (add a '\\' before it if it's not a flag)", position - arg.length, arg.length)
-				}
+				arguments.flags.find { it.applicable(arg) }?.let { flag ->
+					argcb.flags.add(flag.name)
+				} ?: err("Unresolved flag (add a '\\' before it if it's not a flag)", position - arg.length, arg.length)
 			} else {
 				val index = argcb.positional.size
 				val argument = arguments.positional.getOrNull(index)

@@ -24,7 +24,7 @@ open class Arguments {
 	inline fun <reified T> default(
 		name: String,
 		description: String? = null,
-		noinline default: Callback<*>.() -> T
+		noinline default: suspend Callback<*>.() -> T
 	): DefaultPositionalArgument<T> {
 		return DefaultPositionalArgument.forType<T>(name, default).also {
 			it.description = description
@@ -47,18 +47,18 @@ abstract class Argument(val name: String, val mandatory: Boolean) {
 	var description: String? = null
 
 	/** Called upon the creation of an ArgumentCallback but before it's inflation. */
-	open fun preprocess(callback: Callback<*>) {}
+	open suspend fun preprocess(callback: Callback<*>) {}
 
 	/** Called after the inflation of an ArgumentCallback (not guaranteed, however). */
-	open fun postprocess(callback: Callback<*>) {}
+	open suspend fun postprocess(callback: Callback<*>) {}
 }
 
 abstract class PositionalArgument<T>(name: String, mandatory: Boolean) : Argument(name, mandatory) {
 	/** Constructs the value of this argument from a string */
-	abstract protected fun construct(from: String): T?
+	abstract suspend protected fun construct(from: String): T?
 
 	/** Constructs the value of this agument from a string and throws an exception if this argument is mandatory but the value could not be constructed */
-	open fun constructFrom(from: String) = construct(from) ?:
+	open suspend fun constructFrom(from: String) = construct(from) ?:
 		throw IllegalArgumentException("argument $name: expected a ${
 			this::class.simpleName?.lowercase()?.let { if (it.endsWith("arg")) it.dropLast(3) else it }
 		}, but a ${determineType(from)} was found")
@@ -77,23 +77,23 @@ abstract class PositionalArgument<T>(name: String, mandatory: Boolean) : Argumen
 	}
 
 	class IntArg(name: String, mandatory: Boolean) : PositionalArgument<Int>(name, mandatory) {
-		override fun construct(from: String) = from.toIntOrNull()
+		override suspend fun construct(from: String) = from.toIntOrNull()
 	}
 	
 	class LongArg(name: String, mandatory: Boolean) : PositionalArgument<Long>(name, mandatory) {
-		override fun construct(from: String) = from.toLongOrNull()
+		override suspend fun construct(from: String) = from.toLongOrNull()
 	}
 
 	class ULongArg(name: String, mandatory: Boolean) : PositionalArgument<ULong>(name, mandatory) {
-		override fun construct(from: String) = from.toULongOrNull()
+		override suspend fun construct(from: String) = from.toULongOrNull()
 	}
 
 	open class StringArg(name: String, mandatory: Boolean) : PositionalArgument<String>(name, mandatory) {
-		override fun construct(from: String) = from
+		override suspend fun construct(from: String) = from
 	}
 
 	open class SnowflakeArg(name: String, mandatory: Boolean) : PositionalArgument<Snowflake>(name, mandatory) {
-		override fun construct(from: String) = from.toSnowflakeOrNull()
+		override suspend fun construct(from: String) = from.toSnowflakeOrNull()
 	}
 
 	companion object {
@@ -124,24 +124,25 @@ abstract class PositionalArgument<T>(name: String, mandatory: Boolean) : Argumen
  */
 open class DefaultPositionalArgument<T>(
 	name: String,
-	val default: Callback<*>.() -> T,
+	val default: suspend Callback<*>.() -> T,
 	val argument: PositionalArgument<T>
 ) : PositionalArgument<T>(name, false) {
-	override open protected fun construct(from: String) = null
+	override suspend open protected fun construct(from: String) = null
 
-	override open fun constructFrom(from: String) = argument.constructFrom(from)
+	override suspend open fun constructFrom(from: String) = argument.constructFrom(from)
 
-	override open fun postprocess(callback: Callback<*>) {
+	override suspend open fun postprocess(callback: Callback<*>) {
 		if (callback.hasArgs && !callback.args.positional.contains(name)) {
 			callback.args.positional[name] = default(callback)
 		}
 	}
 	
 	companion object {
-		inline fun <reified T> forType(name: String, noinline default: Callback<*>.() -> T) = DefaultPositionalArgument<T>(
-			name,
-			default,
-			PositionalArgument.forType<T>("", false)
+		inline fun <reified T> forType(
+			name: String,
+			noinline default: suspend Callback<*>.() -> T
+		) = DefaultPositionalArgument<T>(
+			name, default, PositionalArgument.forType<T>("", false)
 		)
 	}
 }

@@ -10,6 +10,7 @@ import flarogus.*
 import flarogus.util.*
 import flarogus.command.*
 import flarogus.command.builder.*
+import flarogus.multiverse.*
 
 @OptIn(kotlin.time.ExperimentalTime::class)
 fun createRootCommand() = createTree("flarogus") {
@@ -20,38 +21,40 @@ fun createRootCommand() = createTree("flarogus") {
 			description = "Turn a user into a flarogus. -i flag can be used to flaroficate an image."
 
 			arguments {
-				optional<Snowflake>("user", "The user you want to flaroficate. Defaults to you if -i is not present.")
+				default<Snowflake>("user", "The user you want to flaroficate. Defaults to you if -i is not present.") {
+					originalMessage?.asMessage()?.author?.id ?: Snowflake.NONE
+				}
 				flag("image").alias('i')
 			}
 
 			action {
 				val url = if (args.flag("image")) {
-					originalMessage?.attachments?.find {
+					originalMessage?.asMessage()?.attachments?.find {
 						it.isImage && it.width!! < 2000 && it.height!! < 2000
 					}?.url ?: fail("no valid image attached")
 				} else {
-					(args.opt<Snowflake>("user") ?: originalMessage?.author?.id)?.getAvatarUrl() ?: fail("cannot determine user id")
+					Vars.supplier.getUserOrNull(args.arg<Snowflake>("user"))?.getAvatarUrl() ?: fail("cannot determine user id")
 				}
 	
-				val origin = ImageIO.read(URL(image))
-				val flaroficate = ImageUtil.multiply(origin, flarsusBase)
-				result(sussyImage)
+				val origin = ImageIO.read(URL(url))
+				val flaroficated = ImageUtil.multiply(origin, flarsusBase)
+				result(flaroficated)
 			}
 		}
 
 		subcommand<String>("impostor") {
 			val vowels = listOf('a', 'A', 'e', 'E', 'i', 'I', 'o', 'O', 'u', 'U', 'y', 'Y')
 
-			description = "Display the name of the user as if they were an impostor")
+			description = "Display the name of the user as if they were an impostor"
 
 			arguments {
 				default<String>("user", "The user you want to turn into an impostor. Can be a string or a mention. Defaults to you.") {
-					it.originalMessage?.data?.user?.username ?: "unknown user"
+					originalMessage?.asMessage()?.data?.author?.username ?: "unknown user"
 				}
 			}
 
 			action {
-				var name = args.arg("user")
+				var name = args.arg<String>("user")
 				name.toSnowflakeOrNull()?.let { name = Vars.supplier.getUserOrNull(it)?.username ?: "invalid-user" }
 				
 				result(buildString {
@@ -71,7 +74,54 @@ fun createRootCommand() = createTree("flarogus") {
 			}
 		}
 
-		//subcommand<BufferedImage>("merge")
+		subcommand<BufferedImage>("merge") {
+			description = "Merge pfps of two users"
+
+			arguments {
+				required<Snowflake>("first", "The first user")
+				default<Snowflake>("second", "The second user. Defaults to you.") {
+					originalMessage?.asMessage()?.author?.id ?: Snowflake.NONE
+				}
+			}
+
+			action { 
+				val image1 = Vars.supplier.getUserOrNull(args.arg<Snowflake>("first"))?.getAvatarUrl()?.let {
+					ImageIO.read(URL(it))
+				} ?: fail("invalid first user")
+
+				val image2 = Vars.supplier.getUserOrNull(args.arg<Snowflake>("second"))?.getAvatarUrl()?.let {
+					ImageIO.read(URL(it))
+				} ?: fail("invalid second user")
+
+				val result = ImageUtil.merge(image1, image2)
+				result(result)
+			}
+		}
+
+		subcommand<Unit>("daily") {
+			description = "Claim your daily reward. Can only be used once an hour."
+			discordOnly()
+
+			val dailies = arrayOf(
+				"you are brainless", "you have no friends", "you fell off", "1 social credit was deducted from your account",
+				"you lost", "amogus was sent to your house", "you are an amogus", "go commit suicide",
+				"what did you expect", "go seek for help", "this was a triumph...", "*amogus appears!*",
+				"*a vent opens right below you*", "you were voted off.", "mistakes were made"
+			)
+			
+			action {
+				val user = originalMessage?.asMessage()?.author?.id?.let { Multiverse.userOf(it) }
+				require(user != null) { "couldn't find nor acquire a user entry for your account!" }
+
+				if (System.currentTimeMillis() > user.lastReward + 1000L * 60 * 60 * 24) {
+					user.lastReward = System.currentTimeMillis()
+					reply("daily reward: " + dailies.random())
+				} else {
+					val wait = ((user.lastReward + 1000L * 60 * 60 * 24) - System.currentTimeMillis())
+					reply("you have already claimed your daily reward! wait ${formatTime(wait)}!")
+				}
+			}
+		}
 	}
 
 	subtree("util") {
