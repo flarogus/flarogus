@@ -41,7 +41,7 @@ open class TreeCommand(name: String) : FlarogusCommand<Any?>(name) {
 							appendLine("possible matches:")
 							
 							possible.forEach {
-								append('`').append(it.getFullName()).append('`')
+								append('`').append(it.getFullName()).append("` ")
 							}
 						}
 					})

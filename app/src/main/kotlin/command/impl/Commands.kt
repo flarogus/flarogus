@@ -4,8 +4,11 @@ import java.net.*
 import java.awt.image.*
 import javax.imageio.*
 import kotlin.time.*
+import kotlin.math.*
 import dev.kord.common.entity.*
+import dev.kord.rest.builder.message.create.*
 import dev.kord.core.behavior.*
+import dev.kord.core.behavior.channel.*
 import flarogus.*
 import flarogus.util.*
 import flarogus.command.*
@@ -150,6 +153,98 @@ fun createRootCommand() = createTree("flarogus") {
 					${Vars.ubid} — running for ${formatTime(System.currentTimeMillis() - Vars.startedAt)}, sussification time: ${ping} ms.
 					Time since flarogus epoch: ${formatTime(System.currentTimeMillis() - Vars.flarogusEpoch)}
 				""".trimIndent()
+			} ?: result(0L, false)
+		}
+	}
+
+	adminSubcommand<Boolean>("shutdown") {
+		description = "Shuts down an instance by it's ubid (acquired using 'flarogus sus') and optionally purge the multiverse."
+
+		arguments {
+			required<String>("ubid", "Instance id to shut down")
+			optional<Int>("purgeCount", "Number of messages to delete (only from this instance). Used to clean up after double-instance periods.")
+		}
+
+		action {
+			if (args.arg<String>("ubid") == Vars.ubid) {
+				Multiverse.shutdown()
+
+				args.ifPresent("purgeCount") { purgeCount: Int ->
+					Multiverse.history.takeLast(min(20, purgeCount)).forEach {
+						it.retranslated.forEach { it.delete() }
+					}
+				}
+
+				result(true)
+				
+				Multiverse.brodcastSystem {
+					content = "A multiverse instance is shutting down... (This is not neccesary a problem)"
+				}
+
+				Vars.client.shutdown()
+				System.exit(0) // exit completely to stop the workflow
+			} else {
+				result(false, false)
+			}
+		}
+	}
+
+	subcommand<Boolean>("report") {
+		val reportsChannel = Snowflake(944718226649124874UL)
+		val linkRegex = """discord.com/channels/\d+/(\d+)/(\d+)""".toRegex()
+
+		description = "Report an issue related to Flarogus or Multiverse. If you're reporting a violation, please, include a message link!"
+
+		arguments {
+			required<String>("message", "Content of the report. Supports message links!")
+		}
+
+		action {
+			try {
+				val msg = originalMessage?.asMessage()
+				Vars.client.unsafe.messageChannel(reportsChannel).createMessage {
+					content = """
+						${msg?.author?.tag} (channel ${msg?.channelId}, guild ${msg?.data?.guildId?.value}) reports:
+						```
+						${args.arg<String>("message").stripCodeblocks().stripEveryone().take(1800)}
+						```
+					""".trimIndent()
+
+					try {
+						val result = linkRegex.findAll(args.arg<String>("message"))
+						
+						result.forEach {
+							quoteMessage(
+								Vars.supplier.getMessage(it.groupValues[1].toSnowflake(), it.groupValues[2].toSnowflake()),
+								reportsChannel,
+								"linked message by"
+							)
+							embeds.lastOrNull()?.url = "https://" + it.value
+						}
+					} catch (e: Exception) {
+						embed { description = "failed to include a message reference: $e" }
+					}
+				}
+				
+				result(true)
+			} catch (e: Exception) {
+				throw CommandException("Could not send a report: $e")
+			}
+		}
+	}
+
+	subcommand<Unit>("server") {
+		discordOnly()
+
+		description = "DM you an invite to the official server"
+
+		action {
+			try {
+				originalMessage!!.asMessage().author!!.getDmChannel()!!.createMessage(
+					"invite to the core guild: https://discord.gg/kgGaUPx2D2"
+				)
+			} catch (e: Exception) {
+				reply(e)
 			}
 		}
 	}

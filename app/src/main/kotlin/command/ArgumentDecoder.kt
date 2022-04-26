@@ -35,38 +35,40 @@ open class ArgumentDecoder(
 		var lastChar: Char = 0.toChar()
 
 		// appending a space as a workaround in order to make sure the last argument would get processed too
-		for (index in min(offset, message.length - 1)..message.length - 1) {
-			val char = message[index]
+		try {
+			for (index in min(offset, message.length - 1)..message.length - 1) {
+				val char = message[index]
 
-			when {
-				char == '"' && lastChar != '\\' -> {
-					if (!quoteMode.also { quoteMode = !quoteMode }) {
-						if (!arg.isEmpty()) {
-							err("Illegal quotation mark. Put a backslash (\\) before it if you don't want to make a quoted string.", index)
+				when {
+					char == '"' && lastChar != '\\' -> {
+						if (!quoteMode.also { quoteMode = !quoteMode }) {
+							if (!arg.isEmpty()) {
+								err("Illegal quotation mark. Put a backslash (\\) before it if you don't want to make a quoted string.", index)
+							}
+							hasQuote = true
+							quoteBegin = index
+							arg.clear()
 						}
-						hasQuote = true
-						quoteBegin = index
-						arg.clear()
+					}
+					char == ' ' && lastChar != '\\' && !quoteMode -> {
+						if (!arg.isEmpty()) {
+							processArg(arg.toString(), index)
+							arg.clear()
+						}
+						hasQuote = false
+					}
+					char == '\\' && lastChar != '\\' -> {} //do nothing — it's an escape character
+					else -> {
+						if (hasQuote && !quoteMode) {
+							err("Trailing text after a quotation mark. Add a space after the quote.", index)
+						}
+						arg.append(char)
 					}
 				}
-				char == ' ' && lastChar != '\\' && !quoteMode -> {
-					if (!arg.isEmpty()) {
-						processArg(arg.toString(), index)
-						arg.clear()
-					}
-					hasQuote = false
-				}
-				char == '\\' && lastChar != '\\' -> {} //do nothing — it's an escape character
-				else -> {
-					if (hasQuote && !quoteMode) {
-						err("Trailing text after a quotation mark. Add a space after the quote.", index)
-					}
-					arg.append(char)
-				}
-			}
 
-			lastChar = char
-		}
+				lastChar = char
+			}
+		} catch (e: EscapeException) {}
 
 		if (quoteMode) {
 			err("Unterminated quoted string", quoteBegin)
@@ -125,4 +127,7 @@ open class ArgumentDecoder(
 			}
 		}
 	}
+
+	/** Indincates the necessity to forcibly escape a part of code */
+	class EscapeException : Exception()
 }

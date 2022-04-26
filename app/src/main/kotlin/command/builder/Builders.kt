@@ -30,3 +30,19 @@ inline fun TreeCommand.subtree(
 	it.parent = this
 	subcommands.add(it)
 }
+
+inline fun <reified T> TreeCommand.adminSubcommand(
+	name: String,
+	crossinline builder: CommandBuilder<T>
+) = subcommand<T>(name) {
+	adminOnly()
+	builder()
+}
+
+inline fun TreeCommand.adminSubtree(
+	name: String,
+	crossinline builder: TreeBuilder
+) = subtree(name) {
+	adminOnly()
+	builder()
+}
