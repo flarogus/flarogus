@@ -42,7 +42,7 @@ suspend fun main(vararg args: String) = runBlocking {
 				if (!isCommand) {
 					Vars.client.async {
 						withTimeout(40.seconds) {
-							ultiverse.messageReceived(it)
+							Multiverse.messageReceived(it)
 						}
 					}
 				}
