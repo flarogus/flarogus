@@ -41,7 +41,7 @@ suspend fun main(vararg args: String) = runBlocking {
 				val isCommand = CommandHandler.handle(it)
 				if (!isCommand) {
 					Vars.client.async {
-						withTimeout(20.seconds) {
+						withTimeout(40.seconds) {
 							ultiverse.messageReceived(it)
 						}
 					}
