@@ -1,6 +1,7 @@
 package flarogus
 
 import java.util.concurrent.*
+import javax.script.*
 import kotlin.random.*
 import kotlinx.coroutines.*
 import dev.kord.common.entity.*
@@ -41,6 +42,11 @@ object Vars {
 		794686191467233280UL.toSnowflake(), // real sushi
 		797257966973091862UL.toSnowflake()  // pineapple
 	)
+
+	/** Scripting engine */
+	val scriptEngine = ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts");
+	/* Global scripting context */
+	val scriptContext = SimpleScriptContext()
 
 	/** Whether to enable experimental stuff. Should be enabled only using the run command */
 	var experimental = false

@@ -1,11 +1,12 @@
 package flarogus.command.parser
 
+import kotlin.math.*
 import flarogus.command.*
 
-abstract class AbstractArgumentParser<T: FlarogusCommand>(
-	val content: String,
+abstract class AbstractArgumentParser<T: FlarogusCommand<out Any?>>(
 	val callback: Callback<out Any?>,
-	val command: T
+	val command: T,
+	val content: String = callback.message
 ) {
 	var index = callback.argumentOffset - 1
 	val tempBuilder = StringBuilder(25)
@@ -18,10 +19,10 @@ abstract class AbstractArgumentParser<T: FlarogusCommand>(
 	suspend fun parse() {
 		parseImpl()
 
-		if (!error.isEmpty()) throw error
+		if (!exception.isEmpty()) throw exception
 	}
 
-	abstract protected suspend fun parseImpl(): Callback.ArgumentCallback
+	abstract protected suspend fun parseImpl()
 
 	open fun currentOrNone(): Char {
 		return if (index < 0 || index >= content.length) {
@@ -31,7 +32,7 @@ abstract class AbstractArgumentParser<T: FlarogusCommand>(
 		}
 	}
 
-	open fun current(): Char = currentOrNone()?.throwIndexIfNone()
+	open fun current(): Char = currentOrNone().throwIndexIfNone()
 
 	open fun readOrNone(): Char {
 		val i = ++index
@@ -60,12 +61,15 @@ abstract class AbstractArgumentParser<T: FlarogusCommand>(
 		return tempBuilder.toString()
 	}
 
-	inline fun readWhole() = readWhile { true }
+	open fun readWhole() = readWhile { true }
 
-	inline fun readQuoted(): String {
-		if (currentOrNone() != '"') throw IllegalArgumentException("Current char is not a quote char: ${current()}")
+	open fun readQuoted(char: Char = '"'): String {
+		if (currentOrNone() != char) throw IllegalArgumentException("Current char is not a quote char: ${current()}")
+
+		var begin = index
 
 		var escape = false
+		var isClosed = false
 		return readWhile(
 			modifier = { when {
 				escape -> it
@@ -74,14 +78,19 @@ abstract class AbstractArgumentParser<T: FlarogusCommand>(
 					NONE_CHAR
 				}
 				else -> it
-			} }
-			predicate = { it != '"' }
-		})
+			} },
+			predicate = {
+				if (it == char) isClosed = true
+				it != char
+			}
+		).also {
+			if (!isClosed) error("'$char'", Type.UNTERMINATED_QUOTE, begin, it.length)
+		}
 	}
 
-	open fun lookaheadOrNone(at: Int = 1) {
+	open fun lookaheadOrNone(at: Int = 1): Char {
 		val i = index + at
-		if (i < 0 || i >= content.length) {
+		return if (i < 0 || i >= content.length) {
 			NONE_CHAR
 		} else {
 			content[i]
@@ -94,15 +103,27 @@ abstract class AbstractArgumentParser<T: FlarogusCommand>(
 
 	open fun lookbehind(at: Int = 1) = lookahead(-at)
 
-	open fun error(message: String, type: InputError.Type, at: Int = index, length: Int = 1) {
-		error.
+	open fun skip(chars: Int = 1) {
+		index += chars
+	}
+
+	inline fun skipWhile(predicate: (Char) -> Boolean) {
+		if (currentOrNone().isNone() || !predicate(currentOrNone())) return
+
+		while (readOrNone().let { !it.isNone() && predicate(it) }) {
+			skip()
+		}
+	}
+
+	open fun error(message: String, type: Type, at: Int = index, length: Int = 1) {
+		exception.errors.add(InputError(message, type, at, length))
 	}
 
 	fun Char.isNone() = this == NONE_CHAR
 
 	inline fun <T> Char.ifNone(then: () -> Unit): Char = this.also { if (isNone()) then() }
 
-	inline fun Char.throwIfNone(message: () -> String) = ifNone { throw IllegalArgumentException(message()) }
+	inline fun Char.throwIfNone(message: () -> String) = ifNone<Nothing> { throw IllegalArgumentException(message()) }
 
 	fun Char.throwIndexIfNone() = throwIfNone { "Character index out of bounds: ${index} !in [0; ${content.length}" }
 
@@ -110,17 +131,21 @@ abstract class AbstractArgumentParser<T: FlarogusCommand>(
 		val NONE_CHAR = 0.toChar()
 	}
 
-	inner open class ParseException(val errors: List<String>) : Exception() {
-		override val message get() = "Errors have occured while parsing your command:\n" + errors.joinToString('\n')
+	open class ParseException(
+		val errors: MutableList<AbstractArgumentParser<*>.InputError> = ArrayList<AbstractArgumentParser<*>.InputError>()
+	) : Exception() {
+		override val message get() = "Errors have occured while parsing your command:\n" + errors.joinToString("\n")
 
-		fun contains(type: InputError.Type) = errors.any { it.type == type }
+		fun contains(type: Type) = errors.any { it.type == type }
 
 		fun isEmpty() = errors.isEmpty()
 	}
 
-	inner open class InputError(val message: String, val type: InputError.Type, val at: Int, val length: Int) {
+	inner open class InputError(val message: String, val type: Type, val at: Int, val length: Int) {
 		override fun toString() = buildString {
-			append(type.message).append(": ").append(type).append(" at char ").append(at).appendLine(":")
+			append(type.message)
+			if (!message.isEmpty()) append(": '").append(message)
+			append("' at char ").append(at).appendLine(":")
 			
 			val hintChars = 9
 			val hintBegin = max(0, at - hintChars + 1)
@@ -131,17 +156,18 @@ abstract class AbstractArgumentParser<T: FlarogusCommand>(
 			appendLine()
 
 			repeat(at - hintBegin) { append(' ') }
-			repeat(min(hintChars, length)) { append('^') }
+			repeat(min(hintChars, hintEnd - at)) { append('^') }
 			appendLine('`')
 		}
+	}
 
-		enum class Type(val message: String) {
-			WRONG_ARGUMENT_TYPE("Wrong argument type"),
-			TRAILING_ARGUMENT("Trailing argument"),
-			UNEXPECTED_FLAG("Unexpexted flag"),
-			UNTERMINATED_QUOTE("Unterminated quoted string"),
-			MISSING_ARGUMENT("Missing argument")
-		}
+	enum class Type(val message: String) {
+		WRONG_ARGUMENT_TYPE("Wrong argument type"),
+		TRAILING_ARGUMENT("Trailing argument"),
+		UNRESOLVED_FLAG("Unresolved flag"),
+		UNTERMINATED_QUOTE("Unterminated quoted string"),
+		MISSING_ARGUMENT("Missing argument"),
+		OTHER("Other")
 	}
 }
 

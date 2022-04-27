@@ -248,4 +248,8 @@ fun createRootCommand() = createTree("flarogus") {
 			}
 		}
 	}
+
+	subcommand<Any?>("run") {
+		description = "execute an arbitrary kotlin script"
+	}
 }

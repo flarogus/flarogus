@@ -161,13 +161,15 @@ open class NonPositionalArgument(name: String) : Argument(name, false) {
 	fun applicable(string: String): Boolean = when {
 		string.startsWith("--") -> string.substring(2).let { it == name || it in aliases }
 
-		string.startsWith("-") ->
-			if (string.length != 2) {
-				throw IllegalArgumentException("When using the short argument notation, you must type a minus sign followed by exactly one char.")
-			} else {
-				shortAliases.any { it == string[1] }
+		string.startsWith("-") -> {
+			string.substring(1).any { char ->
+				shortAliases.any { char == string[1] }
 			}
+		}
 
 		else -> throw RuntimeException("A non-positional argument must begin with - or --.")
 	}
+
+	/** @see #applicable() */
+	fun applicable(char: Char) = shortAliases.any { it == char }
 }

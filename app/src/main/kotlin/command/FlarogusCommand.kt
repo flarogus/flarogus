@@ -3,6 +3,7 @@ package flarogus.command
 import dev.kord.core.entity.*
 import flarogus.*
 import flarogus.util.*
+import flarogus.command.parser.*
 
 typealias CommandAction<R> = suspend Callback<R>.() -> Unit
 typealias CommandCheck = (message: Message?, args: String) -> String?
@@ -45,7 +46,7 @@ open class FlarogusCommand<R>(name: String) {
 	}
 
 	/** Adds a check that doesn't allow a user to execute this command if they're not a superuser. */
-	open fun adminOnly() = check { m, _ -> if (m == null || m.author?.id in Vars.superusers) null else "this command can only be executed by admins" }
+	open fun adminOnly() = check { m, _ -> if (m != null && m.author?.id in Vars.superusers) null else "this command can only be executed by admins" }
 
 	/** Adds a check that filters bot / webhook users. */
 	open fun noBots() = check { m, _ -> if (m == null || (m.author != null && !m.author!!.isBot)) null else "bot users can't execute this command" }
@@ -91,10 +92,9 @@ open class FlarogusCommand<R>(name: String) {
 			performChecks(callback)
 
 			callback.command = this
-			if (arguments != null && !callback.hasArgs) {
-				ArgumentDecoder(arguments!!, callback).decode()
-				callback.postprocess()
-			}
+			CommandArgumentParser(callback, this).parse()
+			callback.postprocess()
+			
 			action?.invoke(callback)
 		} catch (t: Throwable) {
 			if (t is CommandException && t.commandName == null) t.commandName = name
