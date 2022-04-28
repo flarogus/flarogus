@@ -3,6 +3,7 @@ package flarogus.multiverse
 import java.io.*
 import java.net.*
 import kotlin.math.*
+import kotlin.time.*
 import kotlin.random.*
 import kotlin.concurrent.*
 import kotlinx.coroutines.*
@@ -30,6 +31,7 @@ import flarogus.multiverse.entity.*
 /**
  * Retranslates messages sent in any channel of guild network, aka Multiverse, into other multiverse channels
  */
+@OptIn(ExperimentalTime::class)
 object Multiverse {
 
 	/** All channels the multiverse works in */
@@ -362,49 +364,51 @@ object Multiverse {
 		val deferreds = ArrayList<Deferred<WebhookMessageBehavior?>>(universeWebhooks.size)
 		
 		//TODO remove the second branch
-		if (Vars.experimental) {
-			guilds.forEach {
-				deferreds.add(Vars.client.async {
-					it.send(
-						username = user,
-						avatar = avatar,
-						filter = filter,
-						handler = { m, w -> messages.add(WebhookMessageBehavior(w, m)) },
-						builder = messageBuilder
-					)
-					null
-				})
-			}
-		} else {
-			universeWebhooks.forEachIndexed { index, it ->
-				if (filter(it.channel) && Lists.canReceive(it.channel)) {
+		withTimeout(45.seconds) {
+			if (Vars.experimental) {
+				guilds.forEach {
 					deferreds.add(Vars.client.async {
-						try {
-							if (it.webhook != null) {
-								val message = it.webhook!!.execute(it.webhook!!.token!!) {
-									messageBuilder(it.channel.id)
-									content = content?.take(1999)?.stripEveryone()
-									allowedMentions() //forbid all mentions
-									username = user ?: "unknown user"
-									avatarUrl = avatar
-								}
-								
-								return@async WebhookMessageBehavior(it.webhook!!, message)
-							}
-						} catch (e: Exception) {
-							Log.error { "failed to retranslate a message into ${it.channel.id}: $e" }
-							
-							if (e.toString().contains("404")) it.webhook = null; //invalid webhook
-						}
-						
+						it.send(
+							username = user,
+							avatar = avatar,
+							filter = filter,
+							handler = { m, w -> messages.add(WebhookMessageBehavior(w, m)) },
+							builder = messageBuilder
+						)
 						null
 					})
 				}
+			} else {
+				universeWebhooks.forEachIndexed { index, it ->
+					if (filter(it.channel) && Lists.canReceive(it.channel)) {
+						deferreds.add(Vars.client.async {
+							try {
+								if (it.webhook != null) {
+									val message = it.webhook!!.execute(it.webhook!!.token!!) {
+										messageBuilder(it.channel.id)
+										content = content?.take(1999)?.stripEveryone()
+										allowedMentions() //forbid all mentions
+										username = user ?: "unknown user"
+										avatarUrl = avatar
+									}
+									
+									return@async WebhookMessageBehavior(it.webhook!!, message)
+								}
+							} catch (e: Exception) {
+								Log.error { "failed to retranslate a message into ${it.channel.id}: $e" }
+								
+								if (e.toString().contains("404")) it.webhook = null; //invalid webhook
+							}
+							
+							null
+						})
+					}
+				}
 			}
-		}
 		
-		deferreds.forEach { def ->
-			def.await()?.let { messages.add(it) }
+			deferreds.forEach { def ->
+				def.await()?.let { messages.add(it) }
+			}
 		}
 		
 		return messages

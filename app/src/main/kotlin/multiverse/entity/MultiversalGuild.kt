@@ -1,6 +1,8 @@
 package flarogus.multiverse.entity
 
+import kotlin.time.*
 import kotlinx.serialization.*
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import dev.kord.rest.builder.message.create.*
 import dev.kord.common.entity.*
@@ -18,6 +20,7 @@ import flarogus.multiverse.state.*
  * Currently unused.
  */
 @Serializable
+@OptIn(ExperimentalTime::class)
 open class MultiversalGuild(
 	val discordId: Snowflake
 ) : MultiversalEntity() {
@@ -91,24 +94,30 @@ open class MultiversalGuild(
 
 	override open suspend fun update() {
 		if (guild == null || lastUpdate + updateInterval < System.currentTimeMillis()) {
-			guild = Vars.restSupplier.getGuildOrNull(discordId)
+			try {
+				withTimeout(20.seconds) {
+					guild = Vars.restSupplier.getGuildOrNull(discordId)
 
-			guild?.channels?.collect {
-				if (it !is TextChannel || !it.name.contains("multiverse", true)) return@collect
+					guild?.channels?.collect {
+						if (it !is TextChannel || !it.name.contains("multiverse", true)) return@collect
 
-				channels.add(it)
-				
-				try {
-					val webhook = it.webhooks.firstOrNull { it.name == webhookName && it.token != null } ?: it.createWebhook(webhookName)
-					webhooks.add(webhook)
-				} catch (e: Exception) {
-					Log.error { "couldn't acquire a webhook for ${it.name} (${it.id}}: $e" }
+						channels.add(it)
+						
+						try {
+							val webhook = it.webhooks.firstOrNull { it.name == webhookName && it.token != null } ?: it.createWebhook(webhookName)
+							webhooks.add(webhook)
+						} catch (e: Exception) {
+							Log.error { "couldn't acquire a webhook for ${it.name} (${it.id}}: $e" }
+						}
+					}
+
+					isValid = guild != null //well...
+
+					if (discordId in Lists.whitelist) isWhitelisted = true
 				}
+			} catch (e: TimeoutCancellationException) {
+				println(e)
 			}
-
-			isValid = guild != null //well...
-
-			if (discordId in Lists.whitelist) isWhitelisted = true
 		}
 	}
 
