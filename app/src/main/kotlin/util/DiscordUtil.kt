@@ -38,7 +38,7 @@ suspend fun String.explicitMentions(): String {
 	var match: MatchResult? = mentionRegex.find(string)
 
 	while (match != null) {
-		string = string.replaceRange(match.range, "@" + Vars.supplier.getUserOrNull(match.value.toSnowflake())?.tag ?: "invalid-user")
+		string = string.replaceRange(match.range, "@" + Vars.supplier.getUserOrNull(match.value.toSnowflake())?.tag?.replace("@", " ") ?: "invalid-user")
 		match = mentionRegex.find(string)
 	}
 
