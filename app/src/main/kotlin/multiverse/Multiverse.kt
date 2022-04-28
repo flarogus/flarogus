@@ -31,7 +31,7 @@ import flarogus.multiverse.entity.*
 /**
  * Retranslates messages sent in any channel of guild network, aka Multiverse, into other multiverse channels
  */
-OptIn(ExperimentalTime::class)
+@OptIn(ExperimentalTime::class)
 object Multiverse {
 
 	/** All channels the multiverse works in */
