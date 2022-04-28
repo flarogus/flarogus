@@ -61,7 +61,7 @@ open class Callback<R>(
 
 			is IllegalArgumentException -> "Illegal argument(s):\n${value.message}"
 			is IllegalStateException -> "Illegal state:\n${value.message}"
-			is IllegalAccessException -> "You are not allowed to execute this command:\n${value.message}"
+			is IllegalAccessException -> "Illegal access:\n${value.message}"
 			is CommandException -> {
 				value.commandName = command.getFullName()
 				value.message

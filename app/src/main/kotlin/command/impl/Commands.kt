@@ -5,6 +5,7 @@ import java.awt.image.*
 import javax.imageio.*
 import kotlin.time.*
 import kotlin.math.*
+import kotlinx.coroutines.*
 import dev.kord.common.entity.*
 import dev.kord.rest.builder.message.create.*
 import dev.kord.core.behavior.*
@@ -18,6 +19,10 @@ import flarogus.multiverse.*
 @OptIn(kotlin.time.ExperimentalTime::class)
 fun createRootCommand() = createTree("flarogus") {
 	subtree("fun") {
+		description = "Commands made for fun."
+
+		addMinesweeperSubcommand()
+
 		subcommand<BufferedImage>("flaroficate") {
 			val flarsusBase = ImageIO.read({}::class.java.getResource("/flarsus.png") ?: throw RuntimeException("aaaaa le flar has escaped"))
 
@@ -128,6 +133,8 @@ fun createRootCommand() = createTree("flarogus") {
 	}
 
 	subtree("util") {
+		description = "Utility commands."
+
 		subcommand<String>("echo") {
 			description = "replies with the providen argument."
 
@@ -240,16 +247,58 @@ fun createRootCommand() = createTree("flarogus") {
 
 		action {
 			try {
-				originalMessage!!.asMessage().author!!.getDmChannel()!!.createMessage(
+				originalMessage!!.asMessage().author!!.getDmChannel().createMessage(
 					"invite to the core guild: https://discord.gg/kgGaUPx2D2"
 				)
 			} catch (e: Exception) {
-				reply(e)
+				reply("Could not create a DM channel. Ensure that you allow everyone to DM you. $e")
 			}
 		}
 	}
 
-	subcommand<Any?>("run") {
+	adminSubcommand<Any?>("run") {
+		val codeblockRegex = "```([a-z]*)?((?s).*)```".toRegex()
+		val defaultImports = arrayOf(
+			"flarogus.*", "flarogus.util.*", "flarogus.multiverse.*", "ktsinterface.*", "dev.kord.core.entity.*", "dev.kord.core.entity.channel.*",
+			"dev.kord.common.entity.*", "dev.kord.rest.builder.*", "dev.kord.rest.builder.message.*", "dev.kord.rest.builder.message.create.*",
+			"dev.kord.core.behavior.*", "dev.kord.core.behavior.channel.*", "kotlinx.coroutines.*", "kotlinx.coroutines.flow.*", "kotlin.system.*",
+			"kotlinx.serialization.*", "kotlinx.serialization.json.*", "flarogus.multiverse.state.*", "flarogus.multiverse.entity.*"
+		).map { "import $it;" }.joinToString("")
+
 		description = "execute an arbitrary kotlin script"
+
+		arguments {
+			required<String>("script", "A kotlin script. Can contain a code block.")
+
+			flag("su", "Run as a superuser. Mandatory.")
+			flag("imports", "Add default imports").alias('i')
+			flag("trace", "Display stack trace upon an exception").alias('t')
+		}
+
+		action {
+			require(args.flag("su")) { "This command requires the --su flag to be present." }
+
+			var script = args.arg<String>("script").let {
+				codeblockRegex.find(it)?.groupValues?.getOrNull(2) ?: it
+			}
+			if (args.flag("imports")) script = "$defaultImports\n$script"
+
+			Vars.scriptEngine.put("message", message)
+			val result = try {
+				Vars.scriptEngine.eval(script, Vars.scriptContext).let {
+					when (it) {
+						is Deferred<*> -> it.await()
+						is Job -> it.join()
+						else -> it
+					}
+				}.also { result(it, false) }
+			} catch (e: Throwable) {
+				result(e, false)
+				(e.cause ?: e).let {
+					if (args.flag("trace")) it.stackTraceToString() else it.toString()
+				}
+			}
+			reply("```\n$result\n```")
+		}
 	}
 }

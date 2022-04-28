@@ -56,7 +56,7 @@ open class CommandArgumentParser(
 				}
 			}
 
-			// flag. this one is processed on-spot.
+			// flag. this one is processed on-spot
 			'-' -> {
 				val flagStr = readArgument()
 
@@ -67,10 +67,10 @@ open class CommandArgumentParser(
 					} ?: error(flagStr, Type.UNRESOLVED_FLAG, index - flagStr.length, flagStr.length)
 				} else {
 					// short flag
-					flagStr.substring(1).forEach { flagChar ->
+					flagStr.substring(1).forEachIndexed { num, flagChar ->
 						command.arguments!!.flags.find { it.applicable(flagChar) }?.let { flag ->
 							argcb.flags.add(flag.name)
-						} ?: error("-$flagChar", Type.UNRESOLVED_FLAG, index - flagStr.length, flagStr.length)
+						} ?: error("-$flagChar", Type.UNRESOLVED_FLAG, index - flagStr.length + 1 + num, 1)
 					}
 				}
 

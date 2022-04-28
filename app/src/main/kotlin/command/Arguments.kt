@@ -73,6 +73,8 @@ abstract class PositionalArgument<T>(name: String, mandatory: Boolean) : Argumen
 
 		value.startsWith("<@") && value.endsWith(">") -> "mention"
 
+		value.startsWith("<#") && value.endsWith(">") -> "channel mention"
+
 		else -> "string"
 	}
 
@@ -96,6 +98,24 @@ abstract class PositionalArgument<T>(name: String, mandatory: Boolean) : Argumen
 		override suspend fun construct(from: String) = from.toSnowflakeOrNull()
 	}
 
+	open class UserArg(name: String, mandatory: Boolean) : PositionalArgument<User>(name, mandatory) {
+		override suspend fun construct(from: String) = from.toSnowflakeOrNull()?.let {
+			Vars.supplier.getUserOrNull(it) ?: throw RuntimeException("User with id $it doesn't exist")
+		}
+	}
+
+	open class ChannelArg(name: String, mandatory: Boolean) : PositionalArgument<Channel>(name, mandatory) {
+		override suspend fun construct(from: String) = from.toSnowflakeOrNull()?.let {
+			Vars.supplier.getChannelOrNull(it) ?: throw RuntimeException("Channel with id $it doesn't exist")
+		}
+	}
+
+	open class MessageChannelArg(name: String, mandatory: Boolean) : PositionalArgument<MessageChannel>(name, mandatory) {
+		override suspend fun construct(from: String) = from.toSnowflakeOrNull()?.let {
+			(Vars.supplier.getChannelOrNull(it) as? MessageChannel) ?: throw RuntimeException("Channel with id $it doesn't exist or is not a message channel")
+		}
+	}
+
 	companion object {
 		/** 
 		 * Maps possible argument classes to their constructors. 
@@ -107,7 +127,11 @@ abstract class PositionalArgument<T>(name: String, mandatory: Boolean) : Argumen
 			Long::class to { n, m -> LongArg(n, m) },
 			ULong::class to { n, m -> ULongArg(n, m) },
 			String::class to { n, m -> StringArg(n, m) },
-			Snowflake::class to { n, m -> SnowflakeArg(n, m) }
+
+			Snowflake::class to { n, m -> SnowflakeArg(n, m) },
+			Channel::class to { n, m -> ChannelArg(n, m) },
+			MessageChannel::class to { n, m -> MessageChannelArg(n, m) },
+			User::class to { n, m -> UserArg(n, m) }
 		)
 
 		inline fun <reified T> forType(name: String, mandatory: Boolean): PositionalArgument<T> {

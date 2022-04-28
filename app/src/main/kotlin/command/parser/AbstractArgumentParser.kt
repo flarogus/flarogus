@@ -141,11 +141,11 @@ abstract class AbstractArgumentParser<T: FlarogusCommand<out Any?>>(
 		fun isEmpty() = errors.isEmpty()
 	}
 
-	inner open class InputError(val message: String, val type: Type, val at: Int, val length: Int) {
+	inner open class InputError(val message: String, val type: Type, val at: Int, val hintLength: Int) {
 		override fun toString() = buildString {
 			append(type.message)
 			if (!message.isEmpty()) append(": '").append(message)
-			append("' at char ").append(at).appendLine(":")
+			append("' at char ").append(at + 1).appendLine(":")
 			
 			val hintChars = 9
 			val hintBegin = max(0, at - hintChars + 1)
@@ -156,7 +156,7 @@ abstract class AbstractArgumentParser<T: FlarogusCommand<out Any?>>(
 			appendLine()
 
 			repeat(at - hintBegin) { append(' ') }
-			repeat(min(hintChars, hintEnd - at)) { append('^') }
+			repeat(min(hintLength, hintEnd - at + 1)) { append('^') }
 			appendLine('`')
 		}
 	}
