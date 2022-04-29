@@ -1,24 +1,24 @@
 package flarogus.command.impl
 
-import java.io.*;
 import java.net.*;
+import java.time.*
 import java.time.format.*;
 import java.awt.*;
 import java.awt.image.*;
 import javax.imageio.*;
 import kotlin.time.*;
-import kotlinx.coroutines.*;
-import dev.kord.core.behavior.channel.*;
+import kotlinx.datetime.*
 import dev.kord.core.entity.*;
-import dev.kord.core.event.message.*;
 import dev.kord.common.entity.*;
 import flarogus.util.*;
+import flarogus.multiverse.*
 import flarogus.command.*
 import flarogus.command.builder.*
 
 private val avatarFrame = ImageIO.read({}::class.java.getResource("/frame.png") ?: throw RuntimeException("avatar frame is gone"))
 private val infoFont = Font("Courier New", Font.PLAIN, 17);
 private val dateFormatter = DateTimeFormatter.ofPattern("yyyy.mm.dd HH:mm")
+private val timezone = ZoneId.of("Z")
 private val background = Color(30, 10, 40)
 private val padding = 10;
 
@@ -39,21 +39,30 @@ fun TreeCommand.addUserinfoSubcommand() = subcommand<BufferedImage?>("userinfo")
 
 	action {
 		val user = args.arg<User>("user")
+		// we are searching manually because we don't want non-multiversal users there
+		val multiversalUser = Multiverse.users.find { it.discordId == user.id }?.also { it.update() }
 		
-		val userpfp = ImageIO.read(URL(user?.getAvatarUrl() ?: throw CommandException("userinfo", "could not retreive user avatar")))
+		val userpfp = ImageIO.read(URL(user.getAvatarUrl()))
 		val cropped = ImageUtil.multiply(avatarFrame, userpfp);
 
-		val lines = ArrayList<String>(10)
-		
-		lines.apply {
-			clear()
-			add((if (user.isBot) "bot" else "user") + " info")
+		val lines = ArrayList<String>(10).apply {
+			add((if (user.isBot) "Bot" else "User") + " info")
 			add(user.tag)
-			add("impostor: " + if (user.discriminator.toInt() % 7 == 0) "yes" else "no")
-			add("user id: ${user.id}")
+			add("Impostor: " + if (user.discriminator.toInt() % 7 == 0) "yes" else "no")
+			add("User id: ${user.id}")
 
-			add("age: ${formatTime(user.id.timeMark.elapsedNow().toLong(DurationUnit.MILLISECONDS))}")
-			add("registered at ${dateFormatter.format(user.id.timeMark as java.time.temporal.TemporalAccessor)} UTC")
+			add("Age: ${formatTime(user.id.timeMark.elapsedNow().toLong(DurationUnit.MILLISECONDS))}")
+			add("Registered at ${dateFormatter.format(user.id.timestamp.toJavaInstant().atZone(timezone))} UTC")
+
+			add("---------")
+
+			if (multiversalUser != null) {
+				add("Messages in the multiverse: ${multiversalUser.totalSent}")
+				add("Warning points: ${multiversalUser.warningPoints}")
+				add("Is banned: ${if (multiversalUser.canSend()) "no" else "yes"}")
+			} else {
+				add("This user hasn't been in the multiverse yet.")
+			}
 		}
 		
 		var graphics = cropped.createGraphics();

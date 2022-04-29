@@ -22,6 +22,8 @@ open class CommandArgumentParser(
 			while (index < content.length) {
 				val begin = index
 
+				skipWhile { it == ' ' || it == '\n' }
+
 				try {
 					readUnit()
 				} catch (e: Exception) {

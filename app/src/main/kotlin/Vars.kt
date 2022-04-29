@@ -48,6 +48,16 @@ object Vars {
 	/* Global scripting context */
 	val scriptContext = SimpleScriptContext()
 
+	/** ```language *some script* ``` */
+	val codeblockRegex = "```([a-z]*)?((?s).*)```".toRegex()
+	/** Default imports. Used for the script engine. */
+	val defaultImports = arrayOf(
+		"flarogus.*", "flarogus.util.*", "flarogus.multiverse.*", "ktsinterface.*", "dev.kord.core.entity.*", "dev.kord.core.entity.channel.*",
+		"dev.kord.common.entity.*", "dev.kord.rest.builder.*", "dev.kord.rest.builder.message.*", "dev.kord.rest.builder.message.create.*",
+		"dev.kord.core.behavior.*", "dev.kord.core.behavior.channel.*", "kotlinx.coroutines.*", "kotlinx.coroutines.flow.*", "kotlin.system.*",
+		"kotlinx.serialization.*", "kotlinx.serialization.json.*", "flarogus.multiverse.state.*", "flarogus.multiverse.entity.*"
+	).map { "import $it;" }.joinToString("")
+
 	/** Whether to enable experimental stuff. Should be enabled only using the run command */
 	var experimental = false
 	

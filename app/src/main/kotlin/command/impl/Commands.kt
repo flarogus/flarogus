@@ -17,7 +17,7 @@ import flarogus.command.builder.*
 import flarogus.multiverse.*
 
 @OptIn(kotlin.time.ExperimentalTime::class)
-fun createRootCommand() = createTree("flarogus") {
+fun createRootCommand() = createTree("!flarogus") {
 	subtree("fun") {
 		description = "Commands made for fun."
 
@@ -134,6 +134,8 @@ fun createRootCommand() = createTree("flarogus") {
 
 	subtree("util") {
 		description = "Utility commands."
+
+		addUserinfoSubcommand()
 
 		subcommand<String>("echo") {
 			description = "replies with the providen argument."
@@ -257,14 +259,6 @@ fun createRootCommand() = createTree("flarogus") {
 	}
 
 	adminSubcommand<Any?>("run") {
-		val codeblockRegex = "```([a-z]*)?((?s).*)```".toRegex()
-		val defaultImports = arrayOf(
-			"flarogus.*", "flarogus.util.*", "flarogus.multiverse.*", "ktsinterface.*", "dev.kord.core.entity.*", "dev.kord.core.entity.channel.*",
-			"dev.kord.common.entity.*", "dev.kord.rest.builder.*", "dev.kord.rest.builder.message.*", "dev.kord.rest.builder.message.create.*",
-			"dev.kord.core.behavior.*", "dev.kord.core.behavior.channel.*", "kotlinx.coroutines.*", "kotlinx.coroutines.flow.*", "kotlin.system.*",
-			"kotlinx.serialization.*", "kotlinx.serialization.json.*", "flarogus.multiverse.state.*", "flarogus.multiverse.entity.*"
-		).map { "import $it;" }.joinToString("")
-
 		description = "execute an arbitrary kotlin script"
 
 		arguments {
@@ -279,9 +273,9 @@ fun createRootCommand() = createTree("flarogus") {
 			require(args.flag("su")) { "This command requires the --su flag to be present." }
 
 			var script = args.arg<String>("script").let {
-				codeblockRegex.find(it)?.groupValues?.getOrNull(2) ?: it
+				Vars.codeblockRegex.find(it)?.groupValues?.getOrNull(2) ?: it
 			}
-			if (args.flag("imports")) script = "$defaultImports\n$script"
+			if (args.flag("imports")) script = "${Vars.defaultImports}\n$script"
 
 			Vars.scriptEngine.put("message", message)
 			val result = try {
