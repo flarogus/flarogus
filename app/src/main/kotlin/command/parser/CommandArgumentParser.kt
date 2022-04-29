@@ -20,9 +20,9 @@ open class CommandArgumentParser(
 			argcb = callback.createArguments()
 
 			while (index < content.length) {
-				val begin = index
-
 				skipWhile { it == ' ' || it == '\n' }
+
+				val begin = index
 
 				try {
 					readUnit()
