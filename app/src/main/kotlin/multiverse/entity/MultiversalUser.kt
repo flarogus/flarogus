@@ -129,8 +129,6 @@ open class MultiversalUser(
 			try {
 				withTimeout(30.seconds) {
 					val newuser = Vars.restSupplier.getUserOrNull(discordId)
-					isValid = user != null
-
 					if (newuser != null) user = newuser
 
 					//TODO: remove this
@@ -140,6 +138,8 @@ open class MultiversalUser(
 				println(e)
 			}
 		}
+
+		isValid = user != null
 	}
 	
 	/** Whether this user can send multiversal messages */

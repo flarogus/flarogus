@@ -97,8 +97,6 @@ open class MultiversalGuild(
 			try {
 				withTimeout(20.seconds) {
 					val newguild = Vars.restSupplier.getGuildOrNull(discordId)
-					isValid = newguild != null //well...
-
 					if (newguild != null) guild = newguild
 
 					guild?.channels?.collect {
@@ -120,6 +118,7 @@ open class MultiversalGuild(
 				println(e)
 			}
 		}
+		isValid = guild != null //well...
 	}
 
 	companion object {
