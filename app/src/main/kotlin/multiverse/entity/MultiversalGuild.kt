@@ -1,6 +1,8 @@
 package flarogus.multiverse.entity
 
+import kotlin.time.*
 import kotlinx.serialization.*
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import dev.kord.rest.builder.message.create.*
 import dev.kord.common.entity.*
@@ -18,6 +20,7 @@ import flarogus.multiverse.state.*
  * Currently unused.
  */
 @Serializable
+@OptIn(ExperimentalTime::class)
 open class MultiversalGuild(
 	val discordId: Snowflake
 ) : MultiversalEntity() {
@@ -89,7 +92,7 @@ open class MultiversalGuild(
 		}
 	}
 
-	override open suspend fun update() {
+	override open suspend fun updateImpl() {
 		if (guild == null || lastUpdate + updateInterval < System.currentTimeMillis()) {
 			guild = Vars.restSupplier.getGuildOrNull(discordId)
 
@@ -107,6 +110,8 @@ open class MultiversalGuild(
 			}
 
 			isValid = guild != null //well...
+
+			if (discordId in Lists.whitelist) isWhitelisted = true
 		}
 	}
 

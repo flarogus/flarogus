@@ -16,13 +16,13 @@ private val maxH = 30
 
 private val openFlag = 0b10000
 
-fun TreeCommand.addMinesweeperSubcommand() = subcommand<Nothing?>("minesweeper") {
-	discordOnly()
+fun TreeCommand.addMinesweeperSubcommand() = subcommand<Unit?>("minesweeper") {
+	discordOnly() // there's no way this command can be ran in an annonymous way.
 
 	description = "Play minesweeper in discord."
 
 	arguments {
-		default<Int>("width", "The width of the field. Defaults to 12. Maximum $maxW".) { 12 }
+		default<Int>("width", "The width of the field. Defaults to 12. Maximum $maxW.") { 12 }
 		default<Int>("height", "The height of the field. Defaults to 8. Maximum $maxH.") { 18 }
 
 		default<Int>("mines", "The number of mines on the field. Defaults to (w * h / 3.3).") {
@@ -116,7 +116,7 @@ fun TreeCommand.addMinesweeperSubcommand() = subcommand<Nothing?>("minesweeper")
 				}
 				append('\n')
 			}
-			if (!isEmpty()) originalMessage.channel.createMessage(toString())
+			if (!isEmpty()) originalMessage!!.channel.createMessage(toString())
 		}
 	}
 }

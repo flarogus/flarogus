@@ -3,6 +3,7 @@ package flarogus.multiverse
 import java.io.*
 import java.net.*
 import kotlin.math.*
+import kotlin.time.*
 import kotlin.random.*
 import kotlin.concurrent.*
 import kotlinx.coroutines.*
@@ -28,6 +29,7 @@ import flarogus.multiverse.entity.*
 /**
  * Retranslates messages sent in any channel of guild network, aka Multiverse, into other multiverse channels
  */
+@OptIn(ExperimentalTime::class)
 object Multiverse {
 
 	/** All channels the multiverse works in */
@@ -108,6 +110,8 @@ object Multiverse {
 		
 		val user = userOf(event.message.data.author.id)
 		user?.onMultiversalMessage(event) ?: event.message.replyWith("No user associated with your user id was found!")
+
+		npcs.forEach { it.multiversalMessageReceived(event.message) }
 	};
 
 	private fun setupEvents() {
@@ -255,25 +259,33 @@ object Multiverse {
 
 		lastJob?.join() //wait for the completeion of that coroutine
 		
-		guilds.forEach {
-			deferreds.add(Vars.client.launch {
-				it.send(
-					username = user,
-					avatar = avatar,
-					filter = filter,
-					handler = { m, w -> messages.add(WebhookMessageBehavior(w, m)) },
-					builder = messageBuilder
-				)
-			})
-		}
-		
-		deferreds.forEach { def ->
-			def.join()
-		}
+		try {
+			withTimeout(45.seconds) {
+				guilds.forEach {
+					deferreds.add(Vars.client.launch {
+						it.send(
+							username = user,
+							avatar = avatar,
+							filter = filter,
+							handler = { m, w -> messages.add(WebhookMessageBehavior(w, m)) },
+							builder = messageBuilder
+						)
+					})
+				}
+				
+				deferreds.forEach { def ->
+					def.join()
+				}
 
-		val multimessage = Multimessage(null, messages)
-		Multiverse.history.add(multimessage)
-		multimessage
+				val multimessage = Multimessage(null, messages)
+				Multiverse.history.add(multimessage)
+				
+				multimessage
+			}
+		} catch (e: TimeoutCancellationException) {
+			println(e)
+			throw e
+		}
 	}.also {
 		lastJob = it
 	}

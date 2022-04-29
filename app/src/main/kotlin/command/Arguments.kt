@@ -2,6 +2,9 @@ package flarogus.command
 
 import kotlin.reflect.*
 import dev.kord.common.entity.*
+import dev.kord.core.entity.*
+import dev.kord.core.entity.channel.*
+import flarogus.*
 import flarogus.util.*
 
 open class Arguments {

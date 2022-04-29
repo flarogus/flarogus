@@ -1,6 +1,7 @@
 package flarogus
 
 import java.util.*
+import kotlin.time.*
 import kotlin.concurrent.*;
 import kotlinx.coroutines.*;
 import kotlinx.coroutines.flow.*;
@@ -20,6 +21,7 @@ import flarogus.multiverse.*
 
 val autorunChannel = Snowflake(962823075357949982UL)
 
+@OptIn(ExperimentalTime::class)
 suspend fun main(vararg args: String) {
 	Vars.loadState()
 
@@ -51,10 +53,14 @@ suspend fun main(vararg args: String) {
 					val cropped = it.message.content.substring(Vars.rootCommand.name.length).trimStart()
 					Vars.rootCommand(it.message, cropped)
 				} else {
-					Multiverse.messageReceived(it)
+					Vars.client.async {
+						withTimeout(45.seconds) {
+							Multiverse.messageReceived(it)
+						}
+					}
 				}
 			} catch (e: Throwable) {
-				Log.error { "an uncaught exception has occurred while evaluating a command ran by ${it.message.author?.tag}: $e" }
+				Log.error { "an uncaught exception has occurred while processing a message sent by ${it.message.author?.tag}: $e" }
 			}
 		}.launchIn(Vars.client)
 	

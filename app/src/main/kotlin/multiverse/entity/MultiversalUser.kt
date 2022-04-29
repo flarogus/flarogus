@@ -2,7 +2,9 @@
 package flarogus.multiverse.entity
 
 import java.net.*
+import kotlin.time.*
 import kotlinx.serialization.*
+import kotlinx.coroutines.*
 import dev.kord.common.entity.*
 import dev.kord.rest.builder.message.create.*
 import dev.kord.core.entity.*
@@ -18,6 +20,7 @@ import flarogus.multiverse.state.*
  * Currently unused.
  */
 @Serializable
+@OptIn(ExperimentalTime::class)
 open class MultiversalUser(
 	val discordId: Snowflake
 ) : MultiversalEntity() {
@@ -114,6 +117,7 @@ open class MultiversalUser(
 		update()
 		return guild.retranslateUserMessage(this, filter) {
 			builder(it)
+			content = content?.revealHypertext()?.explicitMentions()
 		}.also { totalSent++ }
 	}
 
@@ -130,7 +134,7 @@ open class MultiversalUser(
 	}
 	
 	/** Updates this user */
-	override open suspend fun update() {
+	override open suspend fun updateImpl() {
 		warns.removeAll { !it.isValid() }
 
 		if (user == null || lastUpdate + updateInterval < System.currentTimeMillis()) {

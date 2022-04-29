@@ -20,7 +20,7 @@ import flarogus.multiverse.*
 val ZERO_SNOWFLAKE = 0UL.toSnowflake()
 val Snowflake.Companion.NONE get() = ZERO_SNOWFLAKE
 
-val mentionRegex = "<@(!)?(\\d+)>".toRegex()
+val mentionRegex = "<[@#](!)?(\\d+)>".toRegex()
 val hypertextRegex = """\((.*)\)\[(https?:\/\/)([a-zA-Z\.\-\_]+\/?)(.*)\]""".toRegex()
 
 fun ULong.toSnowflake() = Snowflake(this)
@@ -37,15 +37,15 @@ fun String.stripCodeblocks() = this.replace("```", "`'`")
 fun String.revealHypertext() = this.replace(hypertextRegex, "(\$1)[\$2\$3\$4] (\$3)")
 
 suspend fun String.explicitMentions(): String {
-        var string = this
-        var match: MatchResult? = mentionRegex.find(string)
+	var string = this
+	var match: MatchResult? = mentionRegex.find(string)
 
-        while (match != null) {
-                string = string.replaceRange(match.range, "@" + (Vars.supplier.getUserOrNull(match.value.toSnowflake())?.tag ?: "invalid-user"))
-                match = mentionRegex.find(string)
-        }
+	while (match != null) {
+		string = string.replaceRange(match.range, "@" + Vars.supplier.getUserOrNull(match.value.toSnowflake())?.tag?.replace(mentionRegex, "[MENTION]") ?: "invalid-user")
+		match = mentionRegex.find(string)
+	}
 
-        return string
+	return string
 }
 
 fun Any?.isNotNull() = this != null

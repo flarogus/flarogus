@@ -22,26 +22,28 @@ private val dateFormatter = DateTimeFormatter.ofPattern("yyyy.mm.dd HH:mm")
 private val background = Color(30, 10, 40)
 private val padding = 10;
 
-private val lines = ArrayList<String>(15)
-
 /** result:
 /------\ impostor#3661
 |avatar| impostor: yes
 \------/ ...
 */
 @OptIn(kotlin.time.ExperimentalTime::class)
-fun addUserinfoSubcommand() = subcommand<BufferedImage?>() {
+fun TreeCommand.addUserinfoSubcommand() = subcommand<BufferedImage?>("userinfo") {
+	description = "Display info of the providen user / bot."
+
 	arguments {
-		default<Snowflake>("user", "The user whose info you want to get. Can be an id or a mention. If not present, uses the caller instead.") {
-			discordMessage?.asMessage()?.author?.id ?: Snowflake.NONE
+		default<User>("user", "The user whose info you want to get. Can be an id or a mention. If not present, uses the caller instead.") {
+			originalMessage?.asMessage()?.author?.asUser() ?: error("Anonymous caller can not call this command without a user id.")
 		}
 	}
 
 	action {
-		val user = Vars.supplier.getUser(args.arg<Snowflake>("user"))
+		val user = args.arg<User>("user")
 		
 		val userpfp = ImageIO.read(URL(user?.getAvatarUrl() ?: throw CommandException("userinfo", "could not retreive user avatar")))
 		val cropped = ImageUtil.multiply(avatarFrame, userpfp);
+
+		val lines = ArrayList<String>(10)
 		
 		lines.apply {
 			clear()
@@ -49,9 +51,9 @@ fun addUserinfoSubcommand() = subcommand<BufferedImage?>() {
 			add(user.tag)
 			add("impostor: " + if (user.discriminator.toInt() % 7 == 0) "yes" else "no")
 			add("user id: ${user.id}")
-			//i wasted 3 hours of my life trying to figure out how to do these two. i utterly failed. fuck instant and other stuff.
+
 			add("age: ${formatTime(user.id.timeMark.elapsedNow().toLong(DurationUnit.MILLISECONDS))}")
-			//add("registered at ${dateFormatter.format(user.id.timestamp as java.time.temporal.TemporalAccessor)} UTC")
+			add("registered at ${dateFormatter.format(user.id.timeMark as java.time.temporal.TemporalAccessor)} UTC")
 		}
 		
 		var graphics = cropped.createGraphics();
@@ -89,20 +91,8 @@ fun addUserinfoSubcommand() = subcommand<BufferedImage?>() {
 			graphics.drawString(lines[i], x, y)
 		}
 		
-		ByteArrayOutputStream().use {
-			ImageIO.write(newImage, "png", it);
-			ByteArrayInputStream(it.toByteArray()).use {
-				message.channel.createMessage {
-					messageReference = message.id
-					addFile("impostor.png", it)
-				}
-			}
-		}
+		result(newImage)
 		
 		graphics.dispose()
-	},
-	
-	header = "userid: String?",
-	
-	description = "Displays info of the providen user. If no user id is providen, shows info of the caller"
-)
+	}
+}
