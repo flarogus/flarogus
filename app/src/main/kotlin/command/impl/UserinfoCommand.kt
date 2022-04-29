@@ -17,7 +17,7 @@ import flarogus.command.builder.*
 
 private val avatarFrame = ImageIO.read({}::class.java.getResource("/frame.png") ?: throw RuntimeException("avatar frame is gone"))
 private val infoFont = Font("Courier New", Font.PLAIN, 17);
-private val dateFormatter = DateTimeFormatter.ofPattern("yyyy.mm.dd HH:mm")
+private val dateFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
 private val timezone = ZoneId.of("Z")
 private val background = Color(30, 10, 40)
 private val padding = 10;
