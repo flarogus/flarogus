@@ -64,6 +64,8 @@ object Multiverse {
 	val users = ArrayList<MultiversalUser>(90)
 	/** Currently unused. */
 	val guilds = ArrayList<MultiversalGuild>(30)
+
+	var lastJob: Job? = null
 	
 	/** Sets up the multiverse */
 	suspend fun start() {
@@ -363,53 +365,59 @@ object Multiverse {
 		val messages = ArrayList<WebhookMessageBehavior>(universeWebhooks.size)
 		val deferreds = ArrayList<Deferred<WebhookMessageBehavior?>>(universeWebhooks.size)
 		
-		//TODO remove the second branch
-		withTimeout(45.seconds) {
-			if (Vars.experimental) {
-				guilds.forEach {
-					deferreds.add(Vars.client.async {
-						it.send(
-							username = user,
-							avatar = avatar,
-							filter = filter,
-							handler = { m, w -> messages.add(WebhookMessageBehavior(w, m)) },
-							builder = messageBuilder
-						)
-						null
-					})
-				}
-			} else {
-				universeWebhooks.forEachIndexed { index, it ->
-					if (filter(it.channel) && Lists.canReceive(it.channel)) {
+		val prevJob = lastJob
+
+		Vars.client.async { // this is fixed on the "commands" branch
+			prevJob?.join()
+
+			//TODO remove the second branch
+			withTimeout(45.seconds) {
+				if (Vars.experimental) {
+					guilds.forEach {
 						deferreds.add(Vars.client.async {
-							try {
-								if (it.webhook != null) {
-									val message = it.webhook!!.execute(it.webhook!!.token!!) {
-										messageBuilder(it.channel.id)
-										content = content?.take(1999)?.stripEveryone()
-										allowedMentions() //forbid all mentions
-										username = user ?: "unknown user"
-										avatarUrl = avatar
-									}
-									
-									return@async WebhookMessageBehavior(it.webhook!!, message)
-								}
-							} catch (e: Exception) {
-								Log.error { "failed to retranslate a message into ${it.channel.id}: $e" }
-								
-								if (e.toString().contains("404")) it.webhook = null; //invalid webhook
-							}
-							
+							it.send(
+								username = user,
+								avatar = avatar,
+								filter = filter,
+								handler = { m, w -> messages.add(WebhookMessageBehavior(w, m)) },
+								builder = messageBuilder
+							)
 							null
 						})
 					}
+				} else {
+					universeWebhooks.forEachIndexed { index, it ->
+						if (filter(it.channel) && Lists.canReceive(it.channel)) {
+							deferreds.add(Vars.client.async {
+								try {
+									if (it.webhook != null) {
+										val message = it.webhook!!.execute(it.webhook!!.token!!) {
+											messageBuilder(it.channel.id)
+											content = content?.take(1999)?.stripEveryone()
+											allowedMentions() //forbid all mentions
+											username = user ?: "unknown user"
+											avatarUrl = avatar
+										}
+										
+										return@async WebhookMessageBehavior(it.webhook!!, message)
+									}
+								} catch (e: Exception) {
+									Log.error { "failed to retranslate a message into ${it.channel.id}: $e" }
+									
+									if (e.toString().contains("404")) it.webhook = null; //invalid webhook
+								}
+								
+								null
+							})
+						}
+					}
+				}
+			
+				deferreds.forEach { def ->
+					def.await()?.let { messages.add(it) }
 				}
 			}
-		
-			deferreds.forEach { def ->
-				def.await()?.let { messages.add(it) }
-			}
-		}
+		}.also { lastJob = it }.await()
 		
 		return messages
 	}
