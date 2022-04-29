@@ -96,7 +96,10 @@ open class MultiversalGuild(
 		if (guild == null || lastUpdate + updateInterval < System.currentTimeMillis()) {
 			try {
 				withTimeout(20.seconds) {
-					guild = Vars.restSupplier.getGuildOrNull(discordId)
+					val newguild = Vars.restSupplier.getGuildOrNull(discordId)
+					isValid = newguild != null //well...
+
+					if (newguild != null) guild = newguild
 
 					guild?.channels?.collect {
 						if (it !is TextChannel || !it.name.contains("multiverse", true)) return@collect
@@ -110,8 +113,6 @@ open class MultiversalGuild(
 							Log.error { "couldn't acquire a webhook for ${it.name} (${it.id}}: $e" }
 						}
 					}
-
-					isValid = guild != null //well...
 
 					if (discordId in Lists.whitelist) isWhitelisted = true
 				}

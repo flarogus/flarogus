@@ -128,12 +128,13 @@ open class MultiversalUser(
 		if (user == null || lastUpdate + updateInterval < System.currentTimeMillis()) {
 			try {
 				withTimeout(30.seconds) {
-					user = Vars.restSupplier.getUserOrNull(discordId)
-					
+					val newuser = Vars.restSupplier.getUserOrNull(discordId)
+					isValid = user != null
+
+					if (newuser != null) user = newuser
+
 					//TODO: remove this
 					Lists.usertags.getOrDefault(discordId, null)?.let { usertag = it }
-
-					isValid = user != null
 				}
 			} catch (e: TimeoutCancellationException) {
 				println(e)
