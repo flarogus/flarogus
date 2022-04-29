@@ -1,4 +1,3 @@
-
 package flarogus.multiverse.entity
 
 import java.net.*
@@ -138,10 +137,11 @@ open class MultiversalUser(
 		warns.removeAll { !it.isValid() }
 
 		if (user == null || lastUpdate + updateInterval < System.currentTimeMillis()) {
-			user = Vars.restSupplier.getUserOrNull(discordId)
-			
-			isValid = user != null
+			val newuser = Vars.restSupplier.getUserOrNull(discordId)
+			if (newuser != null) user = newuser
 		}
+
+		isValid = user != null
 	}
 	
 	/** Whether this user can send multiversal messages */

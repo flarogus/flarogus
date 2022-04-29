@@ -253,41 +253,45 @@ object Multiverse {
 		avatar: String? = null,
 		crossinline filter: (TextChannel) -> Boolean = { true },
 		crossinline messageBuilder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
-	): Deferred<Multimessage> = Vars.client.async {
-		val messages = ArrayList<WebhookMessageBehavior>(guilds.size * 2)
-		val deferreds = ArrayList<Job>(guilds.size * 2)
+	): Deferred<Multimessage> {
+		val prevJob = lastJob
 
-		lastJob?.join() //wait for the completeion of that coroutine
-		
-		try {
-			withTimeout(45.seconds) {
-				guilds.forEach {
-					deferreds.add(Vars.client.launch {
-						it.send(
-							username = user,
-							avatar = avatar,
-							filter = filter,
-							handler = { m, w -> messages.add(WebhookMessageBehavior(w, m)) },
-							builder = messageBuilder
-						)
-					})
-				}
-				
-				deferreds.forEach { def ->
-					def.join()
-				}
+		return Vars.client.async {
+			val messages = ArrayList<WebhookMessageBehavior>(guilds.size * 2)
+			val deferreds = ArrayList<Job>(guilds.size * 2)
 
-				val multimessage = Multimessage(null, messages)
-				Multiverse.history.add(multimessage)
-				
-				multimessage
+			prevJob?.join() //wait for the completeion of that coroutine
+			
+			try {
+				withTimeout(45.seconds) {
+					guilds.forEach {
+						deferreds.add(Vars.client.launch {
+							it.send(
+								username = user,
+								avatar = avatar,
+								filter = filter,
+								handler = { m, w -> messages.add(WebhookMessageBehavior(w, m)) },
+								builder = messageBuilder
+							)
+						})
+					}
+					
+					deferreds.forEach { def ->
+						def.join()
+					}
+
+					val multimessage = Multimessage(null, messages)
+					Multiverse.history.add(multimessage)
+					
+					multimessage
+				}
+			} catch (e: TimeoutCancellationException) {
+				println(e)
+				throw e
 			}
-		} catch (e: TimeoutCancellationException) {
-			println(e)
-			throw e
+		}.also {
+			lastJob = it
 		}
-	}.also {
-		lastJob = it
 	}
 
 	/** @see #brodcastSystemAsync() */
@@ -328,6 +332,5 @@ object Multiverse {
 
 	/** Returns whether a message with this id is a retranslated message */
 	fun isRetranslatedMessage(id: Snowflake) = history.any { it.retranslated.any { it.id == id } }
-	
 }
 

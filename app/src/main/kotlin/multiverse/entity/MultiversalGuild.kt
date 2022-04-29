@@ -108,11 +108,9 @@ open class MultiversalGuild(
 					Log.error { "couldn't acquire a webhook for ${it.name} (${it.id}}: $e" }
 				}
 			}
-
-			isValid = guild != null //well...
-
-			if (discordId in Lists.whitelist) isWhitelisted = true
 		}
+
+		isValid = guild != null //well...
 	}
 
 	companion object {

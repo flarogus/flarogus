@@ -24,7 +24,6 @@ val autorunChannel = Snowflake(962823075357949982UL)
 @OptIn(ExperimentalTime::class)
 suspend fun main(vararg args: String) {
 	Vars.loadState()
-
 	val botToken = args.getOrNull(0)
 	if (botToken == null) {
 		println("[ERROR] no token nor '--test' specified")
