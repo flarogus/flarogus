@@ -120,8 +120,11 @@ fun initCommands() {
 			
 			val dailies = arrayOf(
 				"you are brainless", "you have no friends", "you fell off", "1 social credit was deducted from your account",
-				"you lost", "amogus was sent to your house", "you are an amogus", "go commit suicide",
-				"what did you expect", "go seek for help", "this was a triumph..."
+				"you lost", "amogus was sent to your house", "you are an amogus", "go commit suicidе",
+				"what did you expect", "go seek for help", "this was a triumph...", "you were killed by the impostor",
+				"you get nothing", "you are sus", "nothing, try again tomorrow","you have mere seconds", "you ruin everything you touch", 
+				"you will never be happy", "your parents dont love you", "you are so fat, if you were an impostor, you would get stuck in the vent",
+				"you will never finish your tasks"
 			)
 
 			register("daily") {
