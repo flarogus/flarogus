@@ -19,7 +19,7 @@ abstract class MultiversalEntity() {
 			withTimeout(30.seconds) {
 				updateImpl()
 			}
-		} catch (e: TimeoutCancellationException) {
+		} catch (e: Exception) {
 			println(e)
 		}
 	}

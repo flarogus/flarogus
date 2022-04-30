@@ -265,15 +265,19 @@ object Multiverse {
 			try {
 				withTimeout(45.seconds) {
 					guilds.forEach {
-						deferreds.add(Vars.client.launch {
-							it.send(
-								username = user,
-								avatar = avatar,
-								filter = filter,
-								handler = { m, w -> messages.add(WebhookMessageBehavior(w, m)) },
-								builder = messageBuilder
-							)
-						})
+						try {
+							deferreds.add(Vars.client.launch {
+								it.send(
+									username = user,
+									avatar = avatar,
+									filter = filter,
+									handler = { m, w -> messages.add(WebhookMessageBehavior(w, m)) },
+									builder = messageBuilder
+								)
+							})
+						} catch (e: Exception) {
+							Log.error { "Exception while retranslating a message into ${it.name}: $e" }
+						}
 					}
 					
 					deferreds.forEach { def ->
