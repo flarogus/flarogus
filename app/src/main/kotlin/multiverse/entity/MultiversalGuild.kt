@@ -59,16 +59,23 @@ open class MultiversalGuild(
 		if (!isWhitelisted) return
 
 		webhooks.forEach { webhook ->
-			val channel = channels.find { it.id == webhook.channelId } 
-			if (channel == null || !filter(channel)) return@forEach
+			try {
+				val channel = channels.find { it.id == webhook.channelId } 
+				if (channel == null || !filter(channel)) return@forEach
 
-			webhook.execute(webhook.token!!) {
-				builder(webhook.channelId)
-				content = content?.take(1999)?.stripEveryone()
-				allowedMentions() //forbid all mentions
-				this.username = username
-				avatarUrl = avatar
-			}.also { handler(it, webhook) }
+				webhook.execute(webhook.token!!) {
+					builder(webhook.channelId)
+					content = content?.take(1999)?.stripEveryone()
+					allowedMentions() //forbid all mentions
+					this.username = username
+					avatarUrl = avatar
+				}.also { handler(it, webhook) }
+			} catch (e: Exception) {
+				webhooks.remove(webhook)
+				channels.removeAll { it.id == webhook.channelId }
+				lastUpdate = 0L // force next uldate
+				Log.error { "An exception has occurred while transmitting a message to '$name': '$e'. Webhook and channel invalidated." }
+			}
 		}
 		totalSent++
 	}
@@ -106,6 +113,11 @@ open class MultiversalGuild(
 					webhooks.add(webhook)
 				} catch (e: Exception) {
 					Log.error { "couldn't acquire a webhook for ${it.name} (${it.id}}: $e" }
+					channels.remove(it)
+
+					try { 
+						it.createMessage("Failed to acquire a webhook for this channel. Next attempt in 10 minutes.") 
+					} catch (e: Exception) {}
 				}
 			}
 		}
