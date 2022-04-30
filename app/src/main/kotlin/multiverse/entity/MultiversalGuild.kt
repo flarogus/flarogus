@@ -119,7 +119,7 @@ open class MultiversalGuild(
 							channels.remove(it)
 
 							try { 
-								it.createMessage("Failed to acquire a webhook for this channel. Ignoring.") 
+								it.createMessage("Failed to acquire a webhook for this channel. Next attempt in 10 minutes.") 
 							} catch (e: Exception) {}
 						}
 					}
