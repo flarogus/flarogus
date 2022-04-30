@@ -74,7 +74,6 @@ suspend fun main(vararg args: String) {
 		}
 	}
 	
-<<<<<<< HEAD
 	if (IS_MULTIVERSE_ENABLED) {
 		Vars.client.launch {
 			delay(10000L)
