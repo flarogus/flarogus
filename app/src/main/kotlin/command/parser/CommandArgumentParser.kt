@@ -3,6 +3,7 @@ package flarogus.command.parser
 import flarogus.command.*
 import flarogus.command.parser.AbstractArgumentParser.*
 
+/** Parses qrguments of normal commands. */
 open class CommandArgumentParser(
 	callback: Callback<out Any?>,
 	command: FlarogusCommand<out Any?>

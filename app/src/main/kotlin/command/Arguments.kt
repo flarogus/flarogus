@@ -62,9 +62,9 @@ abstract class PositionalArgument<T>(name: String, mandatory: Boolean) : Argumen
 
 	/** Constructs the value of this agument from a string and throws an exception if this argument is mandatory but the value could not be constructed */
 	open suspend fun constructFrom(from: String) = construct(from) ?:
-		throw IllegalArgumentException("argument $name: expected a ${
+		throw IllegalArgumentException("argument $name: expected a '${
 			this::class.simpleName?.lowercase()?.let { if (it.endsWith("arg")) it.dropLast(3) else it }
-		}, but a ${determineType(from)} was found")
+		}', but a '${determineType(from)}' was found")
 	
 	/** Determines the type of the value and returns its name */
 	protected open fun determineType(value: String) = when {
@@ -169,7 +169,7 @@ open class DefaultPositionalArgument<T>(
 			name: String,
 			noinline default: suspend Callback<*>.() -> T
 		) = DefaultPositionalArgument<T>(
-			name, default, PositionalArgument.forType<T>("", false)
+			name, default, PositionalArgument.forType<T>(name, false)
 		)
 	}
 }

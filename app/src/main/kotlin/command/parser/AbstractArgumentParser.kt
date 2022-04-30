@@ -85,6 +85,7 @@ abstract class AbstractArgumentParser<T: FlarogusCommand<out Any?>>(
 			}
 		).also {
 			if (!isClosed) error("'$char'", Type.UNTERMINATED_QUOTE, begin, it.length)
+			skip() // skip the quotation mark
 		}
 	}
 
@@ -143,9 +144,12 @@ abstract class AbstractArgumentParser<T: FlarogusCommand<out Any?>>(
 
 	inner open class InputError(val message: String, val type: Type, val at: Int, val hintLength: Int) {
 		override fun toString() = buildString {
-			append(type.message)
-			if (!message.isEmpty()) append(": '").append(message)
-			append("' at char ").append(at + 1).appendLine(":")
+			if (!type.message.isEmpty()) append(type.message)
+			if (!message.isEmpty()) {
+				if (!type.message.isEmpty()) append(": ")
+				append("'").append(message).append("'")
+			}
+			append(" at char ").append(at + 1).appendLine(":")
 			
 			val hintChars = 9
 			val hintBegin = max(0, at - hintChars + 1)
@@ -156,7 +160,7 @@ abstract class AbstractArgumentParser<T: FlarogusCommand<out Any?>>(
 			appendLine()
 
 			repeat(at - hintBegin) { append(' ') }
-			repeat(min(hintLength, hintEnd - at + 1)) { append('^') }
+			repeat(min(hintLength, hintEnd - at + 2)) { append('^') }
 			appendLine('`')
 		}
 	}
@@ -167,7 +171,7 @@ abstract class AbstractArgumentParser<T: FlarogusCommand<out Any?>>(
 		UNRESOLVED_FLAG("Unresolved flag"),
 		UNTERMINATED_QUOTE("Unterminated quoted string"),
 		MISSING_ARGUMENT("Missing argument"),
-		OTHER("Other")
+		OTHER("")
 	}
 }
 

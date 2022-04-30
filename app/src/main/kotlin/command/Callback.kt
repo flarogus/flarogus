@@ -11,6 +11,7 @@ import dev.kord.core.entity.*
 import dev.kord.core.behavior.*
 import flarogus.*
 import flarogus.util.*
+import flarogus.command.parser.*
 
 /**
  * A callback of a command.
@@ -66,6 +67,7 @@ open class Callback<R>(
 				value.commandName = command.getFullName()
 				value.message
 			}
+			is AbstractArgumentParser.ParseException -> value.message
 			is Exception -> "A fatal exception has occured: $value"
 			is Error -> "A fatal error has occured:\n${value.stackTraceToString()}"
 
