@@ -374,16 +374,20 @@ object Multiverse {
 			withTimeout(45.seconds) {
 				if (Vars.experimental) {
 					guilds.forEach {
-						deferreds.add(Vars.client.async {
-							it.send(
-								username = user,
-								avatar = avatar,
-								filter = filter,
-								handler = { m, w -> messages.add(WebhookMessageBehavior(w, m)) },
-								builder = messageBuilder
-							)
-							null
-						})
+						try {
+							deferreds.add(Vars.client.async {
+								it.send(
+									username = user,
+									avatar = avatar,
+									filter = filter,
+									handler = { m, w -> messages.add(WebhookMessageBehavior(w, m)) },
+									builder = messageBuilder
+								)
+								null
+							})
+						} catch (e: Exception) {
+							Log.error { "Exception while retranslating a message into ${it.name}: $e" }
+						}
 					}
 				} else {
 					universeWebhooks.forEachIndexed { index, it ->
