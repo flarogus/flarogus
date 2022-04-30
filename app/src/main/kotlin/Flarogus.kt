@@ -74,12 +74,24 @@ suspend fun main(vararg args: String) {
 		}
 	}
 	
+<<<<<<< HEAD
 	if (IS_MULTIVERSE_ENABLED) {
 		Vars.client.launch {
 			delay(10000L)
 			try {
-				Multiverse.start()
-				Log.info { "mutliverse instance ${Vars.ubid} has started" }
+				var errors = 0
+
+				// we can't allow it to not start up.
+				while (!Multiverse.isRunning && Vars.client.isActive) {
+					try {
+						Multiverse.start()
+					} catch (e: Exception) {
+						errors++
+						delay(3000L)
+					}
+				}
+
+				Log.info { "mutliverse instance ${Vars.ubid} has started with $errors errors." }
 
 				// execute all scripts defined in the autorun channel	
 				val output = buildString {
