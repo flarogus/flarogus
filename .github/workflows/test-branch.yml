@@ -1,0 +1,28 @@
+name: TEST
+
+on: 
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'branch to test'
+        required: true
+
+jobs:
+  emergencyMetting:
+    name: 'test'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.branch }}
+      
+      - name: Compile
+        run: |
+          chmod +x ./gradlew
+          ./gradlew deploy
+      
+      - name: Run
+        run: java -jar -Dkotlin.script.classpath=./build/app.jar ./build/app.jar ${{ secrets.TEST_TOKEN }}
+
