@@ -10,6 +10,7 @@ import kotlin.time.*;
 import kotlinx.datetime.*
 import dev.kord.core.entity.*;
 import dev.kord.common.entity.*;
+import flarogus.*
 import flarogus.util.*;
 import flarogus.multiverse.*
 import flarogus.command.*
@@ -17,7 +18,6 @@ import flarogus.command.builder.*
 
 private val avatarFrame = ImageIO.read({}::class.java.getResource("/frame.png") ?: throw RuntimeException("avatar frame is gone"))
 private val infoFont = Font("Courier New", Font.PLAIN, 17);
-private val dateFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
 private val timezone = ZoneId.of("Z")
 private val background = Color(30, 10, 40)
 private val padding = 10;
@@ -52,7 +52,7 @@ fun TreeCommand.addUserinfoSubcommand() = subcommand<BufferedImage?>("userinfo")
 			add("User id: ${user.id}")
 
 			add("Age: ${formatTime(user.id.timeMark.elapsedNow().toLong(DurationUnit.MILLISECONDS))}")
-			add("Registered at ${dateFormatter.format(user.id.timestamp.toJavaInstant().atZone(timezone))} UTC")
+			add("Registered at ${Vars.dateFormatter.format(user.id.timestamp.toJavaInstant().atZone(timezone))} UTC")
 
 			add("---------")
 
@@ -81,7 +81,7 @@ fun TreeCommand.addUserinfoSubcommand() = subcommand<BufferedImage?>("userinfo")
 		height = Math.max(padding * 2 + cropped.height, height)
 		graphics.dispose()
 		
-		val newImage = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+		val newImage = BufferedImage(width, height + padding, BufferedImage.TYPE_INT_ARGB)
 		graphics = newImage.createGraphics()
 		graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 		graphics.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);

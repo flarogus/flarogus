@@ -1,5 +1,6 @@
 package flarogus
 
+import java.time.format.*
 import java.util.concurrent.*
 import javax.script.*
 import kotlin.random.*
@@ -34,6 +35,7 @@ object Vars {
 	val flarogusGuild = Snowflake(932524169034358877UL)
 	
 	val threadPool = Executors.newFixedThreadPool(5)
+	val dateFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
 	
 	/** Superusers that are allowed to do most things */
 	val superusers = mutableSetOf<Snowflake>(

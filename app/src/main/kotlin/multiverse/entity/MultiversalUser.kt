@@ -1,6 +1,7 @@
 package flarogus.multiverse.entity
 
 import java.net.*
+import java.time.*
 import kotlin.time.*
 import kotlinx.serialization.*
 import kotlinx.coroutines.*
@@ -158,6 +159,10 @@ open class MultiversalUser(
 	/** Represents the fact that a user has violated a rule */
 	@Serializable
 	data class WarnEntry(val rule: Rule, val received: Long = System.currentTimeMillis()) {
+		val instant: Instant get() = Instant.ofEpochMilli(received)
+
+		val expires: Instant get() = Instant.ofEpochMilli(received + expiration)
+		
 		fun isValid() = received + expiration < System.currentTimeMillis()
 
 		companion object {

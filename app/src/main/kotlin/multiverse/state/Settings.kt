@@ -103,11 +103,6 @@ data class State(
 	var epoch: Long = Vars.flarogusEpoch,
 	var logLevel: Int = Log.level.level,
 
-	var warns: Map<Snowflake, MutableList<Rule>> = Lists.warns,
-	var whitelist: List<Snowflake> = Lists.whitelist,
-	var blacklist: List<Snowflake> = Lists.blacklist,
-	var usertags: Map<Snowflake, String> = Lists.usertags,
-
 	var history: List<Multimessage> = Multiverse.history.takeLast(100),
 
 	var users: List<MultiversalUser> = Multiverse.users,
@@ -118,15 +113,6 @@ data class State(
 		Vars.superusers.addAll(runWhitelist)
 		Vars.flarogusEpoch = epoch
 		Log.level = Log.LogLevel.of(logLevel)
-
-		warns.forEach { user, warns ->
-			Lists.warns[user] = warns
-		}
-		whitelist.forEach { if (it !in Lists.whitelist) Lists.whitelist.add(it) }
-		blacklist.forEach { if (it !in Lists.blacklist) Lists.blacklist.add(it) }
-		usertags.forEach { user, tag ->
-			Lists.usertags[user] = tag
-		}
 
 		Multiverse.history.addAll(history)
 

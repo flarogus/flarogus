@@ -48,24 +48,11 @@ suspend fun String.explicitMentions(): String {
 	return string
 }
 
-fun Any?.isNotNull() = this != null
-
 fun User.getAvatarUrl() = avatar?.url ?: "https://cdn.discordapp.com/embed/avatars/${discriminator.toInt() % 5}.png"
 
-/** Waits up to [limit] ms for [condition] to become true. Returns true if the condition returned true, false if [limit] was reached. */
-suspend inline fun delayUntil(limit: Long, period: Long = 50L, condition: () -> Boolean): Boolean {
-	if (condition()) return true
+fun User?.isSuperuser() = this != null && this.id in Vars.superusers
 
-	val begin = System.currentTimeMillis()
-	do {
-		delay(period)
-		if (condition()) return true
-	} while (System.currentTimeMillis() < begin + limit)
-
-	return false
-}
-
-/** Replies to a message */
+/** Asynchronously eplies to a message */
 fun MessageBehavior.replyWith(message: String) = Vars.client.async {
 	try {
 		channel.createMessage {
@@ -77,7 +64,7 @@ fun MessageBehavior.replyWith(message: String) = Vars.client.async {
 	}
 }
 
-/** Reply based on condition, useful for commands */
+/** Asynchronous reply based on a condition, useful for commands */
 fun MessageBehavior.replyWithResult(
 	condition: Boolean,
 	success: String = "success.",

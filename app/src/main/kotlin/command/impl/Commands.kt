@@ -8,6 +8,7 @@ import kotlin.math.*
 import kotlinx.coroutines.*
 import dev.kord.common.entity.*
 import dev.kord.rest.builder.message.create.*
+import dev.kord.core.entity.*
 import dev.kord.core.behavior.*
 import dev.kord.core.behavior.channel.*
 import flarogus.*
@@ -15,9 +16,141 @@ import flarogus.util.*
 import flarogus.command.*
 import flarogus.command.builder.*
 import flarogus.multiverse.*
+import flarogus.multiverse.entity.*
 
 @OptIn(kotlin.time.ExperimentalTime::class)
 fun createRootCommand() = createTree("!flarogus") {
+	subtree("multiverse") {
+		description = "Commands related to the multiverse."
+
+		addAdminSubtree()
+
+		subcommand<Int>("warnings") {
+			description = "Show the warnings of a user"
+
+			arguments {
+				default<User>("user", "The user whose warnings you want to see. Defaults to you.") {
+					originalMessage?.asMessage()?.author ?: error("anonymous caller must specify the target user")
+				}
+
+				action {
+					val user = Multiverse.userOf(args.arg<User>("user").id)?.also { it.update() }
+					require(user != null) { "Could not acquire multiversal user entry for this user" }
+
+					val points = user.warningPoints
+					result(points, false)
+
+					reply { embed {
+						title = "User $user has $points warning points"
+						
+						user.warns.forEachIndexed { index, warn ->
+							val expires = warn.expires.formatUTC()
+
+							field {
+								value = "$index — expires at $expires. «${warn.rule}»"
+							}
+						}
+					} }
+				}
+			}
+		}
+
+		subcommand<List<MultiversalUser>>("lastusers") {
+			description = "List last users who have recently (within 8 hours) sent a message in the multiverse"
+			
+			arguments {
+				default<Int>("max", "Maximum user count. Defaults to 20.") { 20 }
+			}
+
+			action {
+				val users = Multiverse.users.sortedBy { -it.lastSent }.take(args.arg<Int>("max"))
+				result(users, false)
+				reply(users.map { "${it.name} — ${it.discordId}" }.joinToString("\n"))
+			}
+		}
+
+		subcommand<Unit>("rules") {
+			discordOnly()
+			
+			action {
+				reply {
+					RuleCategory.values().forEach {
+						embed { description = it.toString() }
+					}
+				}
+			}
+		}
+
+		subcommand<Int>("deletereply") {
+			discordOnly()
+
+			description = "Delete a message sent in the multiverse by replying to it."
+
+			arguments {
+				flag("origin", "Delete original message").alias('o')
+
+			}
+
+			action {
+				val msg = originalMessage!!.asMessage()
+				val reply = msg.referencedMessage ?: fail("you must reply to a multiversal message")
+				
+				val multimessage = Multiverse.history.find { reply.id in it } ?: fail("This message wasn't found in the history. Perhaps, it was sent too long time ago or is not a multiversal message?")
+				
+				if (!msg.author.isSuperuser() && multimessage.origin?.asMessage()?.data?.author?.id != msg.data.author.id) {
+					throw IllegalAccessException("you are not allowed to delete others' messages")
+				}
+
+				var deleted = 0
+				
+				multimessage.retranslated.forEach { 
+					try { 
+						it.delete();
+						deleted++
+					} catch (ignored: Exception) {}
+				}
+				
+				Log.info { "${msg.author?.tag} deleted a multiversal message with id ${multimessage.origin?.id}" }
+				Multiverse.history.remove(multimessage)
+
+				if (args.flag("origin")) {
+					try {
+						multimessage.origin?.delete()?.also { deleted++ }
+					} catch (e: Exception) {
+						multimessage.origin?.replyWith("""
+							This message was deleted from other multiversal channels but this (original) message could not be deleted.
+							Check whether the bot has the necessary permissions.
+						""".trimIndent())
+					}
+				}
+				
+				result(deleted, false)
+				reply("Deleted a total of $deleted messages")
+			}
+		}
+
+		subcommand<String>("replyinfo") {
+			discordOnly()
+
+			description = "View info about a message sent in the multiverse by replying to it"
+
+			action {
+				val reply = originalMessage!!.asMessage().referencedMessage ?: fail("You must reply to a multiversal message")
+				val msg = Multiverse.history.find { reply in it } ?: fail("this message wasn't found in the history. perhaps, it was sent too long time ago?")
+
+				val originMsg = msg.origin?.asMessage() ?: fail("This message doesn't have an origin.")
+				val author = User(originMsg.data.author, Vars.client)
+
+				result("""
+					Multiversal message #${originMsg.id}
+					Author: ${author.tag}, uid: ${author.id}
+					Channel id: ${originMsg.channelId}
+					Guild id: ${originMsg.getChannel().data.guildId.value}
+				""".trimIndent())
+			}
+		}
+	}
+
 	subtree("fun") {
 		description = "Commands made for fun."
 
@@ -112,9 +245,12 @@ fun createRootCommand() = createTree("!flarogus") {
 
 			val dailies = arrayOf(
 				"you are brainless", "you have no friends", "you fell off", "1 social credit was deducted from your account",
-				"you lost", "amogus was sent to your house", "you are an amogus", "go commit suicide",
-				"what did you expect", "go seek for help", "this was a triumph...", "*amogus appears!*",
-				"*a vent opens right below you*", "you were voted off.", "mistakes were made"
+				"*a vent opens right below you*", "you were voted off.", "mistakes were made",
+				"you lost", "amogus was sent to your house", "you are an amogus", "go commit suicidе",
+				"what did you expect", "go seek for help", "this was a triumph...", "you were killed by the impostor",
+				"you get nothing", "you are sus", "nothing, try again tomorrow","you have mere seconds", "you ruin everything you touch", 
+				"you will never be happy", "your parents dont love you", "you are so fat, if you were an impostor, you would get stuck in the vent",
+				"you will never finish your tasks"
 			)
 			
 			action {
