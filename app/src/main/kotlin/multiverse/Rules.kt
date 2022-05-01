@@ -43,7 +43,7 @@ enum class RuleCategory(val index: Int, val description: String, val rules: List
 
 	override fun toString() = buildString {
 		append(super.toString()).append(": ").append(description).append("\n\n")
-		rules.forEachIndexed { i: Int, it -> append(i + 1).append(". ").append(it).append('\n') }
+		rules.forEachIndexed { i: Int, it -> append(it).append('\n') }
 	};
 	
 	operator fun get(number: Int): Rule = (rules.getOrNull(number - 1) ?: throw IllegalArgumentException("rule '${super.toString()}.$index' doesn't exist!"))
@@ -61,6 +61,7 @@ class Rule(val points: Int = -1, val description: String) {
 	var index = -1
 	
 	override fun toString() = buildString {
+		append(category).append(".").append(index + 1).append(". ")
 		append(description)
 		if (points > 0) append(" [").append(points).append(" warning points]")
 	};

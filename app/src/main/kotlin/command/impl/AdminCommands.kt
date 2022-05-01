@@ -101,4 +101,101 @@ fun TreeCommand.addAdminSubtree() = adminSubtree("admin") {
 			result(args.arg<MultiversalUser>("user").usertag)
 		}
 	}
+
+	presetAdminSubtree("warn") {
+		description = "Manage warnings of users."
+
+		presetArguments {
+			required<MultiversalUser>("user", "The user whose warnings you want to manage.")
+		}
+
+		subcommand<Unit>("add", "Warn a user.") {
+			arguments {
+				required<Int>("number", "The number of the rule you want to warn the user for")
+				default<Int>("category", "Rule category to which the rule belongs. 1 (general) by default.") {
+					1
+				}
+			}
+
+			action {
+				val rule = RuleCategory.of(args.arg<Int>("category"), args.arg<Int>("number") - 1)
+				require(rule != null) { "Rule ${args.arg<Int>("category")}.${args.arg<Int>("number")} does not exist." }
+
+				args.arg<MultiversalUser>("user").warnFor(rule, true)
+			}
+		}
+
+		val checkCommand = FlarogusCommand.find("!flarogus multiverse warnings")
+
+		subaction<Unit>("check", "Check warnings of the user. This command delegates to '${checkCommand.getFullName()}'") {
+			checkCommand(originalMessage, args.arg<MultiversalUser>("user").discordId.toString())
+		}
+
+		subaction<Unit>("clear", "Clear warnings of the user") {
+			val user = args.arg<MultiversalUser>("user")
+			user.warns.clear()
+
+			Multiverse.brodcastSystem { content = "User ${user.name} just had their warns cleared." }
+		}
+	}
+
+	adminSubcommand<Boolean>("echo", "Send a system message in the multiverse") {
+		arguments {
+			required<String>("message", "Content of the system message. Trimmed.")
+		}
+
+		action {
+			Multiverse.brodcastSystem {
+				content = args.arg<String>("message").trim()
+			}
+			result(true)
+		}
+	}
+
+	adminSubcommand<Boolean>("setloglevel", "Set the level of logging.") {
+		arguments {
+			required<String>("level", "New log level")
+		}
+
+		action {
+			Log.level = Log.LogLevel.valueOf(it[1].uppercase())
+			Log.force { "log level was set to ${Log.level}!" }
+			result(true)
+		}
+	}
+
+	adminSubcommand<Int>("purge", "Deletes messages from the multiverse. Use with caution!") {
+		arguments {
+			required<Int>("count", "Number of messages to delete")
+			flag("delete-origin").alias('o')
+		}
+
+		action {
+			val deleteOrigin = args.flag("delete-origin")
+
+			var errors = 0
+			var deleted = 0
+			Multiverse.history.takeLast(min(args.arg<Int>("count"), Multiverse.history.size)).forEach {
+				it.retranslated.forEach { 
+					try {
+						it.delete()
+						deleted++
+					} catch (e: Exception) {
+						errors++
+					}
+				}
+				
+				if (deleteOrigin) {
+					try {
+						it.origin?.delete()?.also { deleted++ }
+					} catch (e: Exception) {
+						errors++
+					}
+				}
+			}
+			
+			result(deleted, false)
+			reply("$deleted messages were deleted successfully, $errors messages could not be deleted.")
+		}
+	}
 }
