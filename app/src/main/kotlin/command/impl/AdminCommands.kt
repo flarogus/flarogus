@@ -1,5 +1,6 @@
 package flarogus.command.impl
 
+import kotlin.math.*
 import flarogus.command.*
 import flarogus.command.builder.*
 import flarogus.multiverse.*
@@ -125,10 +126,16 @@ fun TreeCommand.addAdminSubtree() = adminSubtree("admin") {
 			}
 		}
 
-		val checkCommand = FlarogusCommand.find("!flarogus multiverse warnings")
+		val checkCommand = FlarogusCommand.find("!flarogus multiverse warnings") as FlarogusCommand<Int>
 
-		subaction<Unit>("check", "Check warnings of the user. This command delegates to '${checkCommand.getFullName()}'") {
-			checkCommand(originalMessage, args.arg<MultiversalUser>("user").discordId.toString())
+		subaction<Int>("check", "Check warnings of the user. This command delegates to '${checkCommand.getFullName()}'") {
+			val arg = args.arg<MultiversalUser>("user").discordId.toString()
+
+			result(if (originalMessage != null) {
+				checkCommand(originalMessage.asMessage(), arg).result
+			} else {
+				checkCommand(arg)
+			})
 		}
 
 		subaction<Unit>("clear", "Clear warnings of the user") {
@@ -158,7 +165,7 @@ fun TreeCommand.addAdminSubtree() = adminSubtree("admin") {
 		}
 
 		action {
-			Log.level = Log.LogLevel.valueOf(it[1].uppercase())
+			Log.level = Log.LogLevel.valueOf(args.arg<String>("level").uppercase())
 			Log.force { "log level was set to ${Log.level}!" }
 			result(true)
 		}

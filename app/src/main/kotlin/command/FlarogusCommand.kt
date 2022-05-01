@@ -132,7 +132,7 @@ open class FlarogusCommand<R>(name: String) {
 		val allCommands = HashSet<FlarogusCommand<*>>(50)
 
 		/** Returns a command whose full name matches is equal to the providen argument */
-		fun find(fullName: String, ignoreCase: Boolean = true): FlarogusCommand<*> {
+		fun find(fullName: String, ignoreCase: Boolean = true): FlarogusCommand<*>? {
 			return allCommands.find { it.getFullName().equals(fullName, ignoreCase) }
 		}
 	}

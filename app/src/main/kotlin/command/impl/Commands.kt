@@ -30,7 +30,7 @@ fun createRootCommand() = createTree("!flarogus") {
 
 			arguments {
 				default<MultiversalUser>("user", "The user whose warnings you want to see. Defaults to you.") {
-					val id = originalMessage?.author?.id?.let {
+					originalMessage?.asMessage()?.author?.id?.let {
 						Multiverse.userOf(it)
 					} ?: error("anonymous caller must specify the target user")
 				}

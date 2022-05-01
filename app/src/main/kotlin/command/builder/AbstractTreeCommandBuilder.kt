@@ -14,7 +14,7 @@ abstract class AbstractTreeCommandBuilder<T: TreeCommand>(
 		noinline builder: CommandAction<R>
 	) {
 		subcommand<R>(name) {
-			description = description
+			if (description != null) this.description = description
 
 			action(builder)
 		}
