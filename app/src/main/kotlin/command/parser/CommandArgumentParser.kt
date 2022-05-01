@@ -32,7 +32,7 @@ open class CommandArgumentParser(
 				}
 			}
 
-			if (command.requiredArguments > argcb.positional.size) {
+			if (command.requiredArguments > positionalArgIndex) {
 				error("", Type.MISSING_ARGUMENT, content.length - 1, 1)
 			}
 		}	
