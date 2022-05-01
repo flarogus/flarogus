@@ -12,6 +12,11 @@ open class TreeCommand(name: String) : FlarogusCommand<Any?>(name) {
 		description = "This command contains subcommands."
 	}
 
+	open fun addChild(command: FlarogusCommand<*>) {
+		subcommands.add(command)
+		command.parent = this
+	}
+
 	/** Do not use. */
 	override open fun action(action: suspend Callback<Any?>.() -> Unit): Unit {
 		throw RuntimeException("TreeCommand.action() should not be used.")

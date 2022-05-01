@@ -19,16 +19,14 @@ inline fun <reified T> TreeCommand.subcommand(
 	name: String,
 	builder: CommandBuilder<T>
 ) = createCommand(name, builder).also { 
-	it.parent = this
-	subcommands.add(it)
+	addChild(it)
 }
 
 inline fun TreeCommand.subtree(
 	name: String,
 	builder: TreeBuilder
 ) = createTree(name, builder).also {
-	it.parent = this
-	subcommands.add(it)
+	addChild(it)
 }
 
 inline fun <reified T> TreeCommand.adminSubcommand(
