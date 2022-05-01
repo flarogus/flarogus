@@ -109,6 +109,15 @@ object Multiverse {
 	suspend fun messageReceived(event: MessageCreateEvent) {
 		if (!isRunning || isOwnMessage(event.message)) return
 		if (!universes.any { event.message.channel.id == it.id }) return
+
+		if (event.message.type.let {
+			it !is MessageType.Unknown 
+			&& it !is MessageType.Default 
+			&& it !is MessageType.Reply
+		}) {
+			event.message.replyWith("This message type (${event.message.type}) is not supported by the multoverse.")
+			return
+		}
 		
 		if (!Vars.experimental) {
 			val userid = event.message.author?.id
@@ -267,7 +276,7 @@ object Multiverse {
 					if (multimessage != null) {
 						multimessage!!.edit(false) {
 							content = buildString {
-								appendLine(event.new.content.value ?: "")
+								appendLine(event.new.content.value ?: multimessage!!.origin!!.asMessage().content)
 								event.new.attachments.value?.forEach { attachment ->
 									if (attachment.size >= maxFileSize) {
 										appendLine(attachment.url)
