@@ -27,6 +27,8 @@ open class MultiversalUser(
 	@Transient
 	open var user: User? = null
 
+	val isSuperuser: Boolean get() = discordId in Vars.superusers
+
 	val warns = ArrayList<WarnEntry>()
 	val warningPoints get() = warns.fold(0) { total: Int, warn -> total + warn.rule.points }
 
@@ -97,7 +99,7 @@ open class MultiversalUser(
 						}
 					}
 
-					if (content!!.isEmpty() && event.message.data.attachments.isEmpty()) content = "<no content>"
+		if (content!!.isEmpty() && event.message.data.attachments.isEmpty()) content = "<no content>"
 				}
 
 				message.origin = event.message

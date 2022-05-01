@@ -6,6 +6,8 @@ import dev.kord.core.entity.*
 import dev.kord.core.entity.channel.*
 import flarogus.*
 import flarogus.util.*
+import flarogus.multiverse.*
+import flarogus.multiverse.entity.*
 
 open class Arguments {
 	val positional = ArrayList<PositionalArgument<*>>()
@@ -119,6 +121,18 @@ abstract class PositionalArgument<T>(name: String, mandatory: Boolean) : Argumen
 		}
 	}
 
+	open class MultiversalGuildArg(name: String, mandatory: Boolean) : PositionalArgument<MultiversalGuild>(name, mandatory) {
+		override suspend fun construct(from: String) = from.toSnowflakeOrNull()?.let {
+			Multiverse.guildOf(it) ?: throw RuntimeException("Multiversal guild with id $it doesn't exist")
+		}
+	}
+
+	open class MultiversalUserArg(name: String, mandatory: Boolean) : PositionalArgument<MultiversalUser>(name, mandatory) {
+		override suspend fun construct(from: String) = from.toSnowflakeOrNull()?.let {
+			Multiverse.userOf(it) ?: throw RuntimeException("Multiversal user with id $it doesn't exist")
+		}
+	}
+
 	companion object {
 		/** 
 		 * Maps possible argument classes to their constructors. 
@@ -132,9 +146,12 @@ abstract class PositionalArgument<T>(name: String, mandatory: Boolean) : Argumen
 			String::class to { n, m -> StringArg(n, m) },
 
 			Snowflake::class to { n, m -> SnowflakeArg(n, m) },
-			Channel::class to { n, m -> ChannelArg(n, m) },
 			MessageChannel::class to { n, m -> MessageChannelArg(n, m) },
-			User::class to { n, m -> UserArg(n, m) }
+			Channel::class to { n, m -> ChannelArg(n, m) },
+			User::class to { n, m -> UserArg(n, m) },
+
+			MultiversalUser::class to { n, m -> MultiversalUserArg(n, m) },
+			MultiversalGuild::class to { n, m -> MultiversalGuildArg(n, m) }
 		)
 
 		inline fun <reified T> forType(name: String, mandatory: Boolean): PositionalArgument<T> {

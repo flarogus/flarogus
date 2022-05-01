@@ -8,8 +8,14 @@ abstract class AbstractTreeCommandBuilder<T: TreeCommand>(
 	abstract fun onEachSubcommand(command: FlarogusCommand<*>)
 
 	/** Adds a subcommand with this action and no additional arguments */
-	inline fun <reified R> subaction(name: String, noinline builder: CommandAction<R>) {
+	inline fun <reified R> subaction(
+		name: String,
+		description: String? = null,
+		noinline builder: CommandAction<R>
+	) {
 		subcommand<R>(name) {
+			description = description
+
 			action(builder)
 		}
 	}
