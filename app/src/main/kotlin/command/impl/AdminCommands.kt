@@ -126,9 +126,9 @@ fun TreeCommand.addAdminSubtree() = adminSubtree("admin") {
 			}
 		}
 
-		val checkCommand = FlarogusCommand.find("!flarogus multiverse warnings") as FlarogusCommand<Int>
+		val checkCommand by lazy { FlarogusCommand.find("!flarogus multiverse warnings") as FlarogusCommand<Int> }
 
-		subaction<Int>("check", "Check warnings of the user. This command delegates to '${checkCommand.getFullName()}'") {
+		subaction<Int>("check", "Check warnings of the user. This command delegates to the 'multiverse warnings' command.") {
 			val arg = args.arg<MultiversalUser>("user").discordId.toString()
 
 			result(if (originalMessage != null) {
