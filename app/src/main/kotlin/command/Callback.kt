@@ -6,6 +6,7 @@ import java.awt.image.*
 import javax.imageio.*
 import kotlin.contracts.*
 import kotlinx.coroutines.*
+import dev.kord.rest.builder.message.*
 import dev.kord.rest.builder.message.create.*
 import dev.kord.core.entity.*
 import dev.kord.core.behavior.*
@@ -47,6 +48,11 @@ open class Callback<R>(
 			content = content?.stripEveryone()?.take(1999)
 		}
 	}
+
+	/** Asyncronously replies to a message with an embed. Same as `reply { embed { ... } }`. */
+	inline fun replyEmbed(
+		crossinline builder: EmbedBuilder.() -> Unit
+	) = reply { embed(builder) }
 
 	/**
 	 * Asyncronously replies to a message. Does not assign a result.

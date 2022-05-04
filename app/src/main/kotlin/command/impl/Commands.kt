@@ -56,7 +56,7 @@ fun createRootCommand() = createTree("!flarogus") {
 		}
 
 		subcommand<List<MultiversalUser>>("lastusers") {
-			description = "List last users who have recently (within 8 hours) sent a message in the multiverse"
+			description = "List last users who have recently sent a message in the multiverse"
 			
 			arguments {
 				default<Int>("max", "Maximum user count. Defaults to 20.") { 20 }

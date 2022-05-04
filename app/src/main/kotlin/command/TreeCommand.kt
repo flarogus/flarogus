@@ -10,6 +10,8 @@ open class TreeCommand(name: String) : FlarogusCommand<Any?>(name) {
 
 	init {
 		description = "This command contains subcommands."
+
+		addHelpSubcommand()
 	}
 
 	open fun addChild(command: FlarogusCommand<*>) {
@@ -17,10 +19,18 @@ open class TreeCommand(name: String) : FlarogusCommand<Any?>(name) {
 		command.parent = this
 	}
 
-	/** Do not use. */
+	open fun addHelpSubcommand() {
+		if (subcommands.any { it is HelpCommand }) throw RuntimeException("Tree command $name already has a help subcommand")
+
+		addChild(HelpCommand())
+	}
+
+	/** Do not use. Tree commands can not have an action. */
 	override open fun action(action: suspend Callback<Any?>.() -> Unit): Unit {
 		throw RuntimeException("TreeCommand.action() should not be used.")
 	}
+
+	override open fun summaryArguments(): String? = null
 
 	override suspend open fun useCallback(callback: Callback<Any?>): Unit {
 		try {

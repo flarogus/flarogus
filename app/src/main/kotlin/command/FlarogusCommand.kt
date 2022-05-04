@@ -54,6 +54,12 @@ open class FlarogusCommand<R>(name: String) {
 	/** Adds a check that filters invocations with no originalMessage, making it discord-only. */
 	open fun discordOnly() = check { m, _ -> if (m != null) null else "this command can not be exexcuted out-of-discord" }
 
+	/** Returns a summary description of command's arguments or null if it has no arguments. */
+	open fun summaryArguments(): String? = arguments?.let {
+		// bless functional programming patterns.
+		(it.flags + it.positional).joinToString(" ")
+	}
+
 	inline fun arguments(builder: Arguments.() -> Unit) {
 		if (arguments == null) arguments = Arguments()
 		arguments!!.apply(builder)
