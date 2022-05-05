@@ -39,7 +39,7 @@ open class MultiversalGuild(
 	var totalSent = 0
 	var totalUserMessages = 0
 
-	/** Whether this guild is allowed to participate in multiverse */
+	/** Whether this guild is allowed to participate in the multiverse */
 	var isWhitelisted = false
 
 	/** 
@@ -104,7 +104,7 @@ open class MultiversalGuild(
 			guild = Vars.restSupplier.getGuildOrNull(discordId)
 
 			guild?.channels?.collect {
-				if (it !is TextChannel || !it.name.contains(Channels.multiverseChannelName, true)) return@collect
+				if (it !is TopGuildMessageChannel || !isValidChannel(it)) return@collect
 
 				channels.add(it)
 				
@@ -122,11 +122,27 @@ open class MultiversalGuild(
 			}
 		}
 
-		isValid = guild != null //well...
+		isValid = guild != null // well...
+
+		// remove all invalid webhooks
+		webhooks.removeAll { webhook ->
+			!channels.any { it.id == webhook.channelId }
+		}
 	}
 
+	
 	companion object {
 		val updateInterval = 1000L * 60 * 10
 		val webhookName = "MultiverseWebhook"
+
+		/** Checks if this channel is a valid multiversal channel */
+		fun isValidChannel(channel: TopGuildMessageChannel): Boolean {
+			val perms = it.getEffectivePermissions(Vars.botId)
+
+			return channel.name.contains(Channels.multiverseChannelName, true)
+				&& Permission.ViewChannel in perms
+				&& Permission.SendMessages in perms
+				&& Permission.ManageWebhooks in perms
+		}
 	}
 }
