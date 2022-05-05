@@ -13,7 +13,7 @@ class HelpCommand : FlarogusCommand<Unit>("help") {
 	init {
 		discordOnly()
 		
-		description = "View the list of commands. Specify an argument to view info of a subcommand."
+		description = "View a help message. Specify an argument to view info of a subcommand."
 
 		arguments {
 			optional<String>("subcommand", "Subcommand whose help you want to see.")
@@ -49,7 +49,7 @@ class HelpCommand : FlarogusCommand<Unit>("help") {
 
 					description = subcommand.description + "\n" + splitter
 
-					if (subcommand.arguments != null) {
+					if (subcommand.arguments != null && !subcommand.arguments!!.isEmpty()) {
 						if (!subcommand.arguments!!.flags.isEmpty()) {
 							field {
 								name = "flags"
@@ -66,9 +66,8 @@ class HelpCommand : FlarogusCommand<Unit>("help") {
 								}.joinToString("\n")
 							}
 						}
-						if (subcommand.arguments!!.let { it.positional.isEmpty() && it.flags.isEmpty() }) {
-							field { name = "this command has no arguments nor flags." }
-						}
+					} else {
+						field { name = "this command has no arguments nor flags." }
 					}
 				} else {
 					title = parent.getFullName()

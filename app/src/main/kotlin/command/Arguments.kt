@@ -53,6 +53,8 @@ open class Arguments {
 		positional.forEach(action)
 		flags.forEach(action)
 	}
+
+	open fun isEmpty() = positional.isEmpty() && flags.isEmpty()
 }
 
 /** Represents an argument of a command. */
@@ -65,7 +67,7 @@ abstract class Argument(val name: String, var mandatory: Boolean) {
 	/** Called after the inflation of an ArgumentCallback (not guaranteed, however). */
 	open suspend fun postprocess(callback: Callback<*>) {}
 
-	override open fun toString() = name
+	override open fun toString() = name;
 }
 
 /** Represents a positional argument of a command. */
