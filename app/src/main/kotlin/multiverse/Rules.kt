@@ -11,13 +11,14 @@ import kotlinx.serialization.encoding.*
  */
 enum class RuleCategory(val index: Int, val description: String, val rules: List<Rule>) {
 	GENERAL(1, "list of multiversal rules", listOf(
-		Rule(1, "Do not insult, harrass, discriminate other people. This also includes fandom-related hate, stop posting it for fuck's sake."),
+		Rule(1, "Do not insult or harrass other people. This also includes fandom-related hate, stop posting it for fuck's sake."),
 		Rule(1, "Do not spam / flood the multiverse. Meme dumps are allowed as long as they don't disturb other users."),
 		Rule(4, "Posting scam links is strictly prohibited and can result in an immediate ban, unless the link was successfully blocked by the filter."),
 		Rule(2, "Avoid posting nsfw-content. Posting explicit images / videos / gifs is prohibited. Videos with a questionable preview are counted too."),
 		Rule(2, "Do not advertise discord servers without consent."),
 		Rule(1, "Avoid speaking foreign languages that other users can't understand (if they can understand it, it's fine) and do not encode text messages."),
-		Rule(10, "Spam raids are forbidden, any raider is to be banned immediately.")
+		Rule(10, "Spam raids are forbidden, any raider is to be banned immediately."),
+		Rule(2, "Addiction to r1: racism, fascism, nationalism, homophobia, transphobia and other forms of discrimination are forbidden")
 	)),
 	
 	ADDITIONAL(2, "notes", listOf(

@@ -107,6 +107,14 @@ object Multiverse {
 	suspend fun messageReceived(event: MessageCreateEvent) {
 		if (!isRunning || isOwnMessage(event.message)) return
 		if (!guilds.any { it.channels.any { it.id == event.message.channel.id } }) return
+		if (event.message.type.let {
+			it !is MessageType.Unknown 
+			&& it !is MessageType.Default 
+			&& it !is MessageType.Reply
+		}) {
+			event.message.replyWith("This message type (${event.message.type}) is not supported by the multiverse.")
+			return
+		}
 		
 		val user = userOf(event.message.data.author.id)
 		user?.onMultiversalMessage(event) ?: event.message.replyWith("No user associated with your user id was found!")
@@ -151,7 +159,7 @@ object Multiverse {
 					if (multimessage != null) {
 						val origin = multimessage!!.origin?.asMessage()
 						val newContent = buildString {
-							appendLine(event.new.content.value ?: "")
+							appendLine(event.new.content.value ?: multimessage!!.origin!!.asMessage().content)
 							origin?.attachments?.forEach { attachment ->
 								if (attachment.size >= maxFileSize) {
 									appendLine(attachment.url)

@@ -62,7 +62,7 @@ open class MultiversalUser(
 			lastSent = System.currentTimeMillis()
 
 			if (delay > 0) {
-				event.message.replyWith("This message was not retranslated because was rate limited. Please, wait $messageRateLimit ms.")
+				event.message.replyWith("This message was not retranslated because you were rate limited. Please, wait $messageRateLimit ms.")
 				return
 			} else if (ScamDetector.hasScam(event.message.content)) {
 				event.message.replyWith("[!] your message contains a potential scam. if you're not a bot, remove any links and try again")
