@@ -61,7 +61,7 @@ data class Multimessage(
 		}
 	}
 
-	suspend inline fun edit(modifyOrigin: Boolean, crossinline builder: suspend MessageModifyBuilder.() -> Unit) {
+	suspend inline fun edit(modifyOrigin: Boolean = false, crossinline builder: suspend MessageModifyBuilder.() -> Unit) {
 		retranslated.forEach {
 			try { it.edit { builder() } } catch (ignored: Exception) { }
 		}

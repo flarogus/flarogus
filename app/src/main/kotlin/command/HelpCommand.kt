@@ -66,6 +66,9 @@ class HelpCommand : FlarogusCommand<Unit>("help") {
 								}.joinToString("\n")
 							}
 						}
+						if (subcommand.arguments!!.let { it.positional.isEmpty() && it.flags.isEmpty() }) {
+							field { name = "this command has no arguments nor flags." }
+						}
 					}
 				} else {
 					title = parent.getFullName()
@@ -87,7 +90,7 @@ class HelpCommand : FlarogusCommand<Unit>("help") {
 								name = "__${name}__"
 							} else {
 								subcommand.summaryArguments()?.let { 
-									name += "[${subcommand.summaryArguments()}]"
+									name += " [${subcommand.summaryArguments()}]"
 								}
 							}
 

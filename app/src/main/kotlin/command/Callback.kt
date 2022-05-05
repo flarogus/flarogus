@@ -36,16 +36,28 @@ open class Callback<R>(
 	/** Whether this collback has arguments */
 	val hasArgs: Boolean get() = _arguments != null
 
+	/** The result of the command associated with this callback. */
 	var result: R? = null
+	/** Whether this callback should send a reply when the command replies to the original message or assigns a result. */
 	var replyResult: Boolean = true
+	/** Whether this message has sent a response to the original message. */
+	var hasResponded = false
 	
 	/** Asyncronously replies to a message. Does not assign a result. */
 	inline fun reply(
 		crossinline builder: MessageCreateBuilder.() -> Unit
-	) = if (originalMessage == null) null else Vars.client.async {
-		originalMessage!!.reply {
-			builder()
-			content = content?.stripEveryone()?.take(1999)
+	): Deferred<Message>? {
+		hasResponded = true
+
+		return if (originalMessage == null || !replyResult) {
+			null
+		} else {
+			Vars.client.async {
+				originalMessage!!.reply {
+					builder()
+					content = content?.stripEveryone()?.take(1999)
+				}
+			}
 		}
 	}
 
@@ -64,7 +76,7 @@ open class Callback<R>(
 			is Boolean -> if (value) "success." else "fail."
 			is Number -> "result: $value"
 
-			Unit, null -> "Executed with no output."
+			Unit, null -> "No output."
 
 			is IllegalArgumentException -> "Illegal argument(s):\n${value.message}"
 			is IllegalStateException -> "Illegal state:\n${value.message}"
@@ -97,7 +109,7 @@ open class Callback<R>(
 	 */
 	open fun result(value: R?, doReply: Boolean = true) {
 		result = value
-		if (replyResult && doReply) {
+		if (doReply) {
 			reply(value)
 		}
 	}

@@ -255,7 +255,7 @@ object Multiverse {
 	 * Automatically adds the multimessage into the history.
 	 *
 	 * @return The multimessage containing all created messages but no origin.
-	 **/
+	 */
 	inline fun brodcastAsync(
 		user: String? = null,
 		avatar: String? = null,

@@ -87,6 +87,12 @@ class AmogusNPC : NPC(1000L * 30 * 1) {
 					- "touch grass"
 					- "do you know anything else?!"
 				}
+
+				If { "lol" in it || "lmao" in it || "lmfao" in it } then random {
+					- "what's funny"
+					- "stop laughing"
+					- "peak comedy."
+				}
 				
 				//just a generic answer
 				If { it.contains("you") } then random {
@@ -100,7 +106,7 @@ class AmogusNPC : NPC(1000L * 30 * 1) {
 				}
 			}
 			
-			If { it.contains(":sus:") } then random {
+			If { ":sus:" in it || ":amogus:" in it } then random {
 				- ""
 				
 				- "STOP " and random {
@@ -121,6 +127,12 @@ class AmogusNPC : NPC(1000L * 30 * 1) {
 				- "no"
 				- "NO!"
 				- "stop"
+
+				- "will you ever " and random {
+					- "stop"
+					- "shut"
+					- "get banned"
+				} and repeat(0, 3, "?")
 				
 				- "shut up" and random {
 					- ""
@@ -135,7 +147,7 @@ class AmogusNPC : NPC(1000L * 30 * 1) {
 				- "sussy"
 				- "SHUT BEFORE I BAN U"
 				- run { phrasegen(6, 's', 's', 'u', 'u', 'a', 'm', 'o', 'g') } and repeat(1, 4, "!")
-				- run { phrasegen(7, 'u', 's', 'o', 'm', 'g') } and phrasegen(3, '!', '?')
+				- run { phrasegen(7, 'u', 's', 'o', 'm', 'g') } and run { phrasegen(3, '!', '?') }
 			}
 			
 			//else

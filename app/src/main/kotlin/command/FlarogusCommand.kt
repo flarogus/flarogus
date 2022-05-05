@@ -52,12 +52,12 @@ open class FlarogusCommand<R>(name: String) {
 	open fun noBots() = check { m, _ -> if (m == null || (m.author != null && !m.author!!.isBot)) null else "bot users can't execute this command" }
 
 	/** Adds a check that filters invocations with no originalMessage, making it discord-only. */
-	open fun discordOnly() = check { m, _ -> if (m != null) null else "this command can not be exexcuted out-of-discord" }
+	open fun discordOnly() = check { m, _ -> if (m != null) null else "this command can not be executed outside of discord" }
 
 	/** Returns a summary description of command's arguments or null if it has no arguments. */
 	open fun summaryArguments(): String? = arguments?.let {
 		// bless functional programming patterns.
-		(it.flags + it.positional).joinToString(" ")
+		(it.flags + it.positional).joinToString(", ")
 	}
 
 	inline fun arguments(builder: Arguments.() -> Unit) {
@@ -102,6 +102,10 @@ open class FlarogusCommand<R>(name: String) {
 			callback.postprocess()
 			
 			action?.invoke(callback)
+
+			if (!callback.hasResponded && callback.result == null) {
+				callback.reply("Command executed with no output.")
+			}
 		} catch (t: Throwable) {
 			if (t is CommandException && t.commandName == null) t.commandName = name
 

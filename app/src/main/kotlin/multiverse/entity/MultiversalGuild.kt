@@ -104,7 +104,7 @@ open class MultiversalGuild(
 			guild = Vars.restSupplier.getGuildOrNull(discordId)
 
 			guild?.channels?.collect {
-				if (it !is TopGuildMessageChannel || !isValidChannel(it)) return@collect
+				if (it !is TextChannel || it !is TopGuildMessageChannel || !isValidChannel(it)) return@collect
 
 				channels.add(it)
 				
@@ -136,8 +136,8 @@ open class MultiversalGuild(
 		val webhookName = "MultiverseWebhook"
 
 		/** Checks if this channel is a valid multiversal channel */
-		fun isValidChannel(channel: TopGuildMessageChannel): Boolean {
-			val perms = it.getEffectivePermissions(Vars.botId)
+		suspend fun isValidChannel(channel: TopGuildMessageChannel): Boolean {
+			val perms = channel.getEffectivePermissions(Vars.botId)
 
 			return channel.name.contains(Channels.multiverseChannelName, true)
 				&& Permission.ViewChannel in perms

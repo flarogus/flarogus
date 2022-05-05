@@ -428,7 +428,7 @@ fun createRootCommand() = createTree("!flarogus") {
 					if (args.flag("trace")) it.stackTraceToString() else it.toString()
 				}
 			}
-			reply("```\n$result\n```")
+			reply("```\n${result.toString().take(1950)}\n```")
 		}
 	}
 }
