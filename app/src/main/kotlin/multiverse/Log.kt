@@ -15,8 +15,7 @@ import flarogus.util.*
 object Log {
 	var level = LogLevel.INFO
 		set(level: LogLevel) { if (level.level > LogLevel.ERROR.level) throw IllegalArgumentException("illegal log level") else field = level }
-	val logChannelId = Snowflake(942139405718663209UL)
-	val logChannel by lazy { Vars.client.unsafe.messageChannel(logChannelId) }
+	val logChannel by lazy { Vars.client.unsafe.messageChannel(Channels.log) }
 
 	val buffer = ArrayList<String>()
 	lateinit var logTimer: Timer

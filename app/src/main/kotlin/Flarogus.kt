@@ -19,9 +19,7 @@ import flarogus.command.*;
 import flarogus.command.builder.*
 import flarogus.multiverse.*
 
-val autorunChannel = Snowflake(962823075357949982UL)
-
-const val IS_MULTIVERSE_ENABLED = false
+const val IS_MULTIVERSE_ENABLED = true
 
 @OptIn(ExperimentalTime::class)
 suspend fun main(vararg args: String) {
@@ -95,7 +93,7 @@ suspend fun main(vararg args: String) {
 				// execute all scripts defined in the autorun channel	
 				val output = buildString {
 					appendLine("executing autorun scripts:")
-					(Vars.supplier.getChannelOrNull(autorunChannel) as? TextChannel)?.messages?.toList()?.forEachIndexed { index, it ->
+					(Vars.supplier.getChannelOrNull(Channels.autorun) as? TextChannel)?.messages?.toList()?.forEachIndexed { index, it ->
 						append(index).append(": ")
 				
 						val script = Vars.codeblockRegex.find(it.content)?.groupValues?.getOrNull(2) ?: it.content

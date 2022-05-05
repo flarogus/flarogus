@@ -25,10 +25,9 @@ import flarogus.multiverse.state.*
 import flarogus.multiverse.entity.*
 
 object Settings {
-
-	val settingsChannel by lazy { Vars.client.unsafe.messageChannel(Snowflake(937781472394358784UL)) }
+	val settingsChannel by lazy { Vars.client.unsafe.messageChannel(Channels.settings) }
 	var settingsMessage: Message? = null
-	val fileStorageChannel by lazy { Vars.client.unsafe.messageChannel(Snowflake(949667466156572742UL)) }
+	val fileStorageChannel by lazy { Vars.client.unsafe.messageChannel(Channels.fileStorage) }
 	
 	/** Tries to update the state. Retries up to [attempts - 1] times if an exception was thrown. */
 	suspend fun updateState(attempts: Int = 3) {

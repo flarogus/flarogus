@@ -104,7 +104,7 @@ open class MultiversalGuild(
 			guild = Vars.restSupplier.getGuildOrNull(discordId)
 
 			guild?.channels?.collect {
-				if (it !is TextChannel || !it.name.contains("multiverse", true)) return@collect
+				if (it !is TextChannel || !it.name.contains(Channels.multiverseChannelName, true)) return@collect
 
 				channels.add(it)
 				

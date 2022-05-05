@@ -18,6 +18,9 @@ object Vars {
 	val supplier get() = client.defaultSupplier
 	val restSupplier by lazy { RestEntitySupplier(client) }
 
+	/** If true, the multiverse works in the test mode. */
+	val testMode = true
+
 	val rootCommand = createRootCommand()
 	
 	/** The unique bot id used for shutdown command */
