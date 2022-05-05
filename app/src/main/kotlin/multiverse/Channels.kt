@@ -3,7 +3,7 @@ package flarogus.multiverse
 import dev.kord.common.entity.*
 import flarogus.*
 
-val Channels = if (Vars.testMode) NormalChannels else TestChannels
+val Channels = if (!Vars.testMode) NormalChannels else TestChannels
 
 abstract class AbstractChannels(
 	val multiverseChannelName: String,
