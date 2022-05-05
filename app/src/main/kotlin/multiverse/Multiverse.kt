@@ -79,9 +79,9 @@ object Multiverse {
 			brodcastSystem { _ ->
 				embed { description = """
 					***This channel is a part of the Multiverse. There's ${channels - 1} other channels.***
-					Call `flarogus multiverse rules` to see the rules
-					Use `flarogus report` to report an issue
-					Refer to `flarogus multiverse help` for useful commands
+					Call `!flarogus multiverse rules` to see the rules
+					Use `!flarogus report` to report an issue
+					Refer to `!flarogus multiverse help` for useful commands
 				""".trimIndent() }
 			}
 		}
