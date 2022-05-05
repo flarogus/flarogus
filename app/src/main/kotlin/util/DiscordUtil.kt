@@ -147,17 +147,25 @@ val nameRegex = """^([.*])?(.*#\d\d\d\d) — .*""".toRegex()
 
 /** 
  * Adds an embed referencing the original message
- * @param toChannel id of the channel this message is sent to. 0 if not present.
+ * @param toChannel id of the channel this message is being sent to. 0 if not present.
  */
 suspend fun MessageCreateBuilder.quoteMessage(message: Message?, toChannel: Snowflake?, titleText: String = "reply to") {
 	if (message != null) {
 		val author = User(message.data.author, Vars.client) //gotta construct one myself if the default api doesn't allow that
 		val authorName = nameRegex.find(author.username)?.groupValues?.getOrNull(2) ?: "${author.username}#${author.discriminator}"
 
-		//message in the same channel the new message is being sent to
-		val closest = Multiverse.history.find { message in it }?.let {
-			if (it.origin?.channelId == toChannel) it.origin else it.retranslated.find { it.channelId == toChannel }
-		}?.asMessage()
+		// message in the same channel the new message is being sent to
+		val multimessage = Multiverse.history.find { message in it }
+		// first, check if the message is in the same channel as the current one. If it is not, try to find it in the multiverse.
+		val closest = let {
+			if (toChannel == message.channelId) {
+				message
+			} else {
+				multimessage?.let {
+					if (it.origin?.channelId == toChannel) it.origin else it.retranslated.find { it.channelId == toChannel }
+				}?.asMessage()
+			}
+		}
 		val closestChannel = closest?.getChannel()
 		
 		embed {
@@ -168,7 +176,7 @@ suspend fun MessageCreateBuilder.quoteMessage(message: Message?, toChannel: Snow
 				append(message.content.take(100).replace("/", "\\/"))
 				if (message.content.length > 100) append("...")
 				
-				message.attachments.forEach {
+				multimessage?.origin?.asMessage()?.attachments?.forEach {
 					append('\n').append("file <").append(it.filename).append('>')
 				}
 			}.let { if (it.length > 200) it.take(200) + "..." else it }
