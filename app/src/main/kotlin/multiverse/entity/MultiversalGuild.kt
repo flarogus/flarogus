@@ -131,6 +131,8 @@ open class MultiversalGuild(
 			}
 		}
 		isValid = guild != null //well...
+
+		lastUpdate = System.currentTimeMillis()
 	}
 
 	companion object {
