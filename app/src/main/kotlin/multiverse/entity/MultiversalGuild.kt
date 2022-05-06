@@ -101,7 +101,9 @@ open class MultiversalGuild(
 
 	override open suspend fun updateImpl() {
 		if (guild == null || lastUpdate + updateInterval < System.currentTimeMillis()) {
-			guild = Vars.restSupplier.getGuildOrNull(discordId)
+			val newguild = Vars.restSupplier.getGuildOrNull(discordId)
+
+			if (newguild != null) guild = newguild
 
 			guild?.channels?.collect {
 				if (it !is TextChannel || it !is TopGuildMessageChannel || !isValidChannel(it)) return@collect
@@ -128,6 +130,8 @@ open class MultiversalGuild(
 		webhooks.removeAll { webhook ->
 			!channels.any { it.id == webhook.channelId }
 		}
+
+		lastUpdate = System.currentTimeMillis()
 	}
 
 	

@@ -146,6 +146,8 @@ open class MultiversalUser(
 		}
 
 		isValid = user != null
+
+		lastUpdate = System.currentTimeMillis()
 	}
 	
 	/** Whether this user can send multiversal messages */
