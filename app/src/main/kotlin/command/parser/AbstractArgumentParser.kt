@@ -8,7 +8,7 @@ abstract class AbstractArgumentParser<T: FlarogusCommand<out Any?>>(
 	val command: T,
 	val content: String = callback.message
 ) {
-	var index = callback.argumentOffset - 1
+	var index = max(callback.argumentOffset - 1, 0)
 	val tempBuilder = StringBuilder(25)
 	val exception = ParseException()
 
@@ -116,6 +116,8 @@ abstract class AbstractArgumentParser<T: FlarogusCommand<out Any?>>(
 		}
 	}
 
+	open fun skipWhitespace() = skipWhile { it == ' ' || it == '\n' }
+
 	open fun error(message: String, type: Type, at: Int = index, length: Int = 1) {
 		exception.errors.add(InputError(message, type, at, length))
 	}
@@ -171,6 +173,7 @@ abstract class AbstractArgumentParser<T: FlarogusCommand<out Any?>>(
 		UNRESOLVED_FLAG("Unresolved flag"),
 		UNTERMINATED_QUOTE("Unterminated quoted string"),
 		MISSING_ARGUMENT("Missing argument"),
+		ILLEGAL_CHARACTER("Illegal character"),
 		OTHER("")
 	}
 }

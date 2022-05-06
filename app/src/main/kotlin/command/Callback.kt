@@ -139,7 +139,7 @@ open class Callback<R>(
 		val flags: NonPositionalArguments = NonPositionalArguments()
 
 		init {
-			if (command.arguments == null) throw IllegalStateException("an argument-less command cannot have argument callbacks!")	
+			// if (command.arguments == null) throw IllegalStateException("an argument-less command cannot have argument callbacks!")	
 		}
 
 		/** Returns a positional argument or throws an exception if it is optional and not present */

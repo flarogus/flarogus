@@ -2,6 +2,7 @@ package flarogus.command
 
 import kotlin.math.*
 import info.debatty.java.stringsimilarity.*
+import flarogus.command.parser.*
 
 val levenshtein = NormalizedLevenshtein()
 
@@ -25,22 +26,16 @@ open class TreeCommand(name: String) : FlarogusCommand<Any?>(name) {
 		addChild(HelpCommand())
 	}
 
-	/** Do not use. Tree commands can not have an action. */
-	override open fun action(action: suspend Callback<Any?>.() -> Unit): Unit {
-		throw RuntimeException("TreeCommand.action() should not be used.")
-	}
-
-	override open fun summaryArguments(): String? = null
-
 	override suspend open fun useCallback(callback: Callback<Any?>): Unit {
 		try {
 			performChecks(callback)
 
 			callback.command = this
-
-			val commandName = callback.message.substring(
-				min(callback.argumentOffset, callback.message.length)
-			).trimStart().takeWhile { it != ' ' }
+			val commandName = TreeCommandArgumentParser(callback, this).also {
+				it.parse()
+			}.resultSubcommand
+			
+			action?.invoke(callback)
 
 			if (commandName.isEmpty()) {
 				fallback(callback)

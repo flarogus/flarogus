@@ -13,15 +13,15 @@ open class CommandArgumentParser(
 	var positionalArgIndex = 0
 
 	override protected suspend fun parseImpl() {
+		argcb = callback.createArguments()
+
 		if (command.arguments == null) {
 			if (!content.substring(index).trim().isEmpty()) {
 				error("this command accepts no arguments.", Type.TRAILING_ARGUMENT, index, content.length - index)
 			}
 		} else {
-			argcb = callback.createArguments()
-
 			while (index < content.length) {
-				skipWhile { it == ' ' || it == '\n' }
+				skipWhitespace()
 
 				val begin = index
 
@@ -40,7 +40,7 @@ open class CommandArgumentParser(
 
 	/** Reads from the current position to the next space and processes it */
 	protected open suspend fun readUnit() {
-		skipWhile { it == ' ' || it == '\n' }
+		skipWhitespace()
 
 		val arg = when (currentOrNone()) {
 			// for absokutely no reason, the string has ended
@@ -53,6 +53,7 @@ open class CommandArgumentParser(
 			'<' -> {
 				if (lookaheadOrNone() == '<') {
 					skip()
+					skipWhitespace()
 					readWhole()
 				} else {
 					readArgument()
