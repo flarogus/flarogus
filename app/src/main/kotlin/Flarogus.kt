@@ -30,7 +30,7 @@ suspend fun main(vararg args: String) = runBlocking {
 	
 	Vars.loadState()
 	Vars.client = Kord(botToken) {
-		requestHandler { KtorRequestHandler(it.httpClient, ParallelRequestRateLimiter(), token = botToken) }
+		// requestHandler { KtorRequestHandler(it.httpClient, ParallelRequestRateLimiter(), token = botToken) }
 	}
 	
 	Vars.client.events
