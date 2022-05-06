@@ -67,7 +67,7 @@ class HelpCommand : FlarogusCommand<Unit>("help") {
 							}
 						}
 					} else {
-						field { name = "this command has no arguments nor flags." }
+						field { value = "this command has no arguments nor flags." }
 					}
 				} else {
 					title = parent.getFullName()
