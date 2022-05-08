@@ -125,6 +125,8 @@ open class MultiversalGuild(
 					}
 				}
 			}
+
+			lastUpdate = System.currentTimeMillis()
 		}
 
 		isValid = guild != null // well...
@@ -133,8 +135,6 @@ open class MultiversalGuild(
 		webhooks.removeAll { webhook ->
 			!channels.any { it.id == webhook.channelId }
 		}
-
-		lastUpdate = System.currentTimeMillis()
 	}
 
 	

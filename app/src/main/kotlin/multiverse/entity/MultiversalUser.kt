@@ -99,7 +99,7 @@ open class MultiversalUser(
 						}
 					}
 
-		if (content!!.isEmpty() && event.message.data.attachments.isEmpty()) content = "<no content>"
+					if (content!!.isEmpty() && event.message.data.attachments.isEmpty()) content = "<no content>"
 				}
 
 				message.origin = event.message
@@ -143,11 +143,11 @@ open class MultiversalUser(
 		if (user == null || lastUpdate + updateInterval < System.currentTimeMillis()) {
 			val newuser = Vars.restSupplier.getUserOrNull(discordId)
 			if (newuser != null) user = newuser
+
+			lastUpdate = System.currentTimeMillis()
 		}
 
 		isValid = user != null
-
-		lastUpdate = System.currentTimeMillis()
 	}
 	
 	/** Whether this user can send multiversal messages */
