@@ -19,7 +19,7 @@ object Vars {
 	val restSupplier by lazy { RestEntitySupplier(client) }
 
 	/** If true, the multiverse works in the test mode. */
-	val testMode = true
+	val testMode = false
 
 	val rootCommand = createRootCommand()
 	
