@@ -18,15 +18,21 @@ fun TreeCommand.addAdminSubtree() = adminSubtree("admin") {
 			}.joinToString("\n"))
 		}
 
-		subaction<String>("all") { list { true } }
-
-		subaction<String>("unwhitelisted") { list { !it.isWhitelisted } }
-
-		subaction<String>("whitelisted") { list { it.isWhitelisted } }
-
-		subaction<String>("blacklisted") { list { it.isForceBanned } }
-
-		subaction<String>("invalid") { list { !it.isValid } }
+		subaction<String>("all") {
+			list { true && it.isValid }
+		}
+		subaction<String>("unwhitelisted") { 
+			list { !it.isWhitelisted && it.isValid }
+		}
+		subaction<String>("whitelisted") {
+			list { it.isWhitelisted && it.isValid }
+		}
+		subaction<String>("blacklisted") {
+			list { it.isForceBanned && it.isValid }
+		}
+		subaction<String>("invalid") {
+			list { !it.isValid }
+		}
 	}
 
 	presetAdminSubtree("blacklist") {

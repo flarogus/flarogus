@@ -105,21 +105,24 @@ open class MultiversalGuild(
 
 			if (newguild != null) guild = newguild
 
-			guild?.channels?.collect {
-				if (it !is TextChannel || it !is TopGuildMessageChannel || !isValidChannel(it)) return@collect
+			// no need to search for channels if it is not whitelisted
+			if (isWhitelisted) {
+				guild?.channels?.collect {
+					if (it !is TextChannel || it !is TopGuildMessageChannel || !isValidChannel(it)) return@collect
 
-				channels.add(it)
-				
-				try {
-					val webhook = it.webhooks.firstOrNull { it.name == webhookName && it.token != null } ?: it.createWebhook(webhookName)
-					webhooks.add(webhook)
-				} catch (e: Exception) {
-					Log.error { "couldn't acquire a webhook for ${it.name} (${it.id}}: $e" }
-					channels.remove(it)
+					channels.add(it)
+					
+					try {
+						val webhook = it.webhooks.firstOrNull { it.name == webhookName && it.token != null } ?: it.createWebhook(webhookName)
+						webhooks.add(webhook)
+					} catch (e: Exception) {
+						Log.error { "couldn't acquire a webhook for ${it.name} (${it.id}}: $e" }
+						channels.remove(it)
 
-					try { 
-						it.createMessage("Failed to acquire a webhook for this channel. Next attempt in 10 minutes.") 
-					} catch (e: Exception) {}
+						try { 
+							it.createMessage("Failed to acquire a webhook for this channel. Next attempt in 10 minutes.") 
+						} catch (e: Exception) {}
+					}
 				}
 			}
 		}
