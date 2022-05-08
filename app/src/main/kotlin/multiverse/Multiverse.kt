@@ -31,16 +31,6 @@ import flarogus.multiverse.entity.*
  */
 @OptIn(ExperimentalTime::class)
 object Multiverse {
-
-	/** All channels the multiverse works in */
-	//val universes = ArrayList<TextChannel>(50)
-	/** All webhooks multiverse retranslates to */
-	//val universeWebhooks = ArrayList<UniverseEntry>(50)
-	
-	/** Rate limitation map */
-	//val ratelimited = HashMap<Snowflake, Long>(150)
-	//val ratelimit = 2000L
-	
 	/** Array containing all messages sent in this instance */
 	val history = ArrayList<Multimessage>(1000)
 	
@@ -127,7 +117,7 @@ object Multiverse {
 			.filterIsInstance<MessageDeleteEvent>()
 			.filter { isRunning }
 			.filter { event -> !isRetranslatedMessage(event.messageId) }
-			.filter { event -> isMultiversalChannel(event.messageId) }
+			.filter { event -> isMultiversalChannel(event.channelId) }
 			.filter { event -> event.guildId != null && guildOf(event.guildId!!).let { it != null && !it.isForceBanned } }
 			.onEach { event ->
 				var multimessage: Multimessage? = null
@@ -183,57 +173,8 @@ object Multiverse {
 	/** Searches for channels with "multiverse" in their names in all guilds this bot is in */
 	suspend fun findChannels() {
 		Vars.client.rest.user.getCurrentUserGuilds().forEach {
-			//the following methods are way too costly to invoke them for every guild
-			//if (universes.any { ch -> ch.data.guildId.value == it.id }) return@forEach
-
 			guildOf(it.id)?.update() //this will add an entry if it didnt exist
-			
-			//val guild = Vars.restSupplier.getGuildOrNull(it.id) //gCUG() returns a flow of partial discord guilds.
-                        //
-			//if (guild != null && it.id !in Lists.blacklist && guild.id !in Lists.blacklist) guild.channels.collect {
-			//	var c = it as? TextChannel
-                        //
-			//	if (c != null && c.data.name.toString().contains("multiverse") && c.id !in Lists.blacklist) {
-			//		if (!universes.any { it.id.value == c.id.value }) {
-			//			universes += c
-			//		}
-			//	}
-			//}
 		}
-		
-		//acquire webhooks for these channels
-		//universes.forEach { universe ->
-		//	val entry = universeWebhooks.find { it.channel.id == universe.id } ?: UniverseEntry(null, universe).also { universeWebhooks.add(it) }
-		//	
-		//	if (entry.webhook != null) return@forEach
-		//	
-		//	try {
-		//		var webhook: Webhook? = null
-		//		universe.webhooks.collect {
-		//			if (it.name == webhookName) webhook = it
-		//		}
-		//		if (webhook == null) {
-		//			webhook = universe.createWebhook(webhookName)
-		//		}
-		//		entry.webhook = webhook
-		//	} catch (e: Exception) {
-		//		if (!entry.hasReported) Log.error { "Could not acquire webhook for ${universe.name} (${universe.id}): $e" }
-		//		
-		//		if (!entry.hasReported) {
-		//			val reason = if (e.toString().contains("Missing Permission")) "missing 'MANAGE_WEBHOOKS' permission!" else e.toString()
-		//			entry.hasReported = true
-		//			
-		//			try {
-		//				entry.channel.createEmbed { description = """
-		//					[ERROR] Could not acquire a webhook: $reason
-		//					----------
-		//					Webhookless communication is deprecated and __IS NO LONGER SUPPORTED__.
-		//					Contact the server's staff or allow the bot to manage webhooks yourself.
-		//				""".trimIndent() }
-		//			} catch (e: Exception) {}
-		//		}
-		//	}	
-		//}
 	};
 	
 	/** Updates everything */
