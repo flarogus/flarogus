@@ -240,7 +240,7 @@ fun createRootCommand() = createTree("!flarogus") {
 		}
 
 		subcommand<Unit>("daily") {
-			description = "Claim your daily reward. Can only be used once an hour."
+			description = "Claim your daily reward. Can only be used once a day."
 			discordOnly()
 
 			val dailies = arrayOf(
@@ -327,7 +327,7 @@ fun createRootCommand() = createTree("!flarogus") {
 				}
 
 				Vars.client.shutdown()
-				System.exit(0) // exit completely to stop the workflow
+				System.exit(0) // stop the workflow
 			} else {
 				result(false, false)
 			}
