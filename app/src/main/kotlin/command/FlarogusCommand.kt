@@ -46,10 +46,10 @@ open class FlarogusCommand<R>(name: String) {
 	}
 
 	/** Adds a check that doesn't allow a user to execute this command if they're not a superuser. */
-	open fun adminOnly() = check { m, _ -> if (m != null && m.author?.id in Vars.superusers) null else "this command can only be executed by admins" }
+	open fun adminOnly() = check { m, _ -> if (m != null && m.author.isSuperuser()) null else "this command can only be executed by admins" }
 
 	/** Adds a check that doesn't allow a user to execute this command unless they're a moderator */
-	open fun modOnly() = check { m, _ -> if (m != null && m.author?.id in Vars.moderators) null else "this command can only be executed by moderators" }
+	open fun modOnly() = check { m, _ -> if (m != null && m.author.isModerator()) null else "this command can only be executed by moderators" }
 
 	/** Adds a check that filters bot / webhook users. */
 	open fun noBots() = check { m, _ -> if (m == null || (m.author != null && !m.author!!.isBot)) null else "bot users can't execute this command" }
