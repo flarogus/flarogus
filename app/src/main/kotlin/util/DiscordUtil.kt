@@ -51,6 +51,7 @@ suspend fun String.explicitMentions(): String {
 fun User.getAvatarUrl() = avatar?.url ?: "https://cdn.discordapp.com/embed/avatars/${discriminator.toInt() % 5}.png"
 
 fun User?.isSuperuser() = this != null && this.id in Vars.superusers
+fun User?.isModerator() = this != null && (this.id in Vars.moderators || isSuperuser())
 
 /** Asynchronously eplies to a message */
 fun MessageBehavior.replyWith(message: String) = Vars.client.async {

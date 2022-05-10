@@ -48,6 +48,10 @@ object Vars {
 		797257966973091862UL.toSnowflake()  // pineapple
 	)
 
+	val moderators = mutableSetOf<Snowflake>(
+		// todo: permanent mods?
+	)
+
 	/** Scripting engine */
 	val scriptEngine = ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts");
 	/* Global scripting context */

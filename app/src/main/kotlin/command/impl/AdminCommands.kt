@@ -6,10 +6,14 @@ import flarogus.command.builder.*
 import flarogus.multiverse.*
 import flarogus.multiverse.entity.*
 
-fun TreeCommand.addAdminSubtree() = adminSubtree("admin") {
-	description = "Admin-only commands that allow to manage the multiverse"
+fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
+	modOnly()
 
-	presetAdminSubtree("listguilds") {
+	description = "Mod/admin-only commands that allow to manage the multiverse"
+
+	presetSubtree("listguilds") {
+		adminOnly()
+
 		description = "List multiversal guilds."
 		
 		fun Callback<String>.list(predicate: (MultiversalGuild) -> Boolean) {
@@ -35,7 +39,9 @@ fun TreeCommand.addAdminSubtree() = adminSubtree("admin") {
 		}
 	}
 
-	presetAdminSubtree("blacklist") {
+	presetSubtree("blacklist") {
+		adminOnly()
+
 		description = "Manage the blacklist"
 
 		presetArguments {
@@ -58,7 +64,7 @@ fun TreeCommand.addAdminSubtree() = adminSubtree("admin") {
 		}
 	}
 
-	presetAdminSubtree("whitelist") {
+	presetSubtree("whitelist") {
 		description = "Manage the whitelist"
 
 		presetArguments {
@@ -81,7 +87,7 @@ fun TreeCommand.addAdminSubtree() = adminSubtree("admin") {
 		}
 	}
 
-	presetAdminSubtree("tag") {
+	presetSubtree("tag") {
 		description = "Manage the tag of a user."
 
 		presetArguments {
@@ -109,7 +115,7 @@ fun TreeCommand.addAdminSubtree() = adminSubtree("admin") {
 		}
 	}
 
-	presetAdminSubtree("warn") {
+	presetSubtree("warn") {
 		description = "Manage warnings of users."
 
 		presetArguments {
@@ -152,7 +158,9 @@ fun TreeCommand.addAdminSubtree() = adminSubtree("admin") {
 		}
 	}
 
-	adminSubcommand<Boolean>("echo", "Send a system message in the multiverse") {
+	subcommand<Boolean>("echo", "Send a system message in the multiverse") {
+		adminOnly()
+
 		arguments {
 			required<String>("message", "Content of the system message. Trimmed.")
 		}
@@ -165,7 +173,9 @@ fun TreeCommand.addAdminSubtree() = adminSubtree("admin") {
 		}
 	}
 
-	adminSubcommand<Boolean>("setloglevel", "Set the level of logging.") {
+	subcommand<Boolean>("setloglevel", "Set the level of logging.") {
+		adminOnly()
+
 		arguments {
 			required<String>("level", "New log level")
 		}
@@ -177,7 +187,7 @@ fun TreeCommand.addAdminSubtree() = adminSubtree("admin") {
 		}
 	}
 
-	adminSubcommand<Int>("purge", "Deletes messages from the multiverse. Use with caution!") {
+	subcommand<Int>("purge", "Deletes messages from the multiverse. Use with caution!") {
 		arguments {
 			required<Int>("count", "Number of messages to delete")
 			flag("delete-origin").alias('o')

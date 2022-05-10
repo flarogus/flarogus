@@ -16,7 +16,7 @@ private val maxH = 30
 
 private val openFlag = 0b10000
 
-fun TreeCommand.addMinesweeperSubcommand() = subcommand<Unit?>("minesweeper") {
+fun TreeCommandBuilder.addMinesweeperSubcommand() = subcommand<Unit?>("minesweeper") {
 	discordOnly() // there's no way this command can be ran in an annonymous way.
 
 	description = "Play minesweeper in discord."

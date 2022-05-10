@@ -11,44 +11,44 @@ abstract class AbstractTreeCommandBuilder<T: TreeCommand>(
 	inline fun <reified R> subaction(
 		name: String,
 		description: String? = null,
-		noinline builder: CommandAction<R>
+		noinline subaction: CommandAction<R>
 	) {
-		subcommand<R>(name) {
-			if (description != null) this.description = description
-
-			action(builder)
+		subcommand<R>(name, description) {
+			action(subaction)
 		}
 	}
 
+	fun addChild(command: FlarogusCommand<*>) = this.command.addChild(command)
+
 	inline fun <reified T> subcommand(
 		name: String,
-		builder: CommandBuilder<T>
-	) = command.subcommand<T>(name) {
-		onEachSubcommand(this)
+		description: String? = null,
+		builder: CommandBuilder<T>.() -> Unit
+	) = createCommand<T>(name, description) {
+		onEachSubcommand(this@createCommand.command)
 		builder()
-	}
+	}.also { addChild(it) }
 
 	inline fun subtree(
 		name: String,
-		builder: TreeBuilder
-	) = command.subtree(name) {
-		onEachSubcommand(this)
+		description: String? = null,
+		builder: TreeCommandBuilder.() -> Unit
+	) = createTree(name, description) {
+		onEachSubcommand(this@createTree.command)
 		builder()
-	}
+	}.also { addChild(it) }
 
-	inline fun <reified T> adminSubcommand(
+	inline fun presetSubtree(
 		name: String,
-		crossinline builder: CommandBuilder<T>
-	) = subcommand<T>(name) {
-		adminOnly()
+		description: String? = null,
+		builder: PresetTreeBuilder.() -> Unit
+	) = createPresetTree(name, description) {
+		onEachSubcommand(this@createPresetTree.command)
 		builder()
-	}
+	}.also { addChild(it) }
+}
 
-	inline fun adminSubtree(
-		name: String,
-		crossinline builder: TreeBuilder
-	) = subtree(name) {
-		adminOnly()
-		builder()
-	}
+class TreeCommandBuilder(name: String) : AbstractTreeCommandBuilder<TreeCommand>(TreeCommand(name)) {
+	override fun build() = command
+	override fun onEachSubcommand(command: FlarogusCommand<*>) {}
 }

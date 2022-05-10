@@ -5,7 +5,17 @@ import flarogus.command.*
 abstract class AbstractCommandBuilder<R, T: FlarogusCommand<R>>(
 	val command: T
 ) {
+	var description: String
+		get() = command.description
+		set(value: String) { command.description = value }
+	
 	abstract fun build(): T
+
+	inline fun arguments(builder: Arguments.() -> Unit) = command.arguments(builder)
+
+	fun action(act: CommandAction<R>) {
+		command.action(act)
+	}
 
 	fun check(check: CommandCheck) {
 		command.checks.add(check)
@@ -13,7 +23,15 @@ abstract class AbstractCommandBuilder<R, T: FlarogusCommand<R>>(
 
 	fun adminOnly() = command.adminOnly()
 
+	fun modOnly() = command.modOnly()
+
 	fun noBots() = command.noBots()
 
 	fun discordOnly() = command.discordOnly()
+}
+
+class CommandBuilder<R>(
+	name: String
+) : AbstractCommandBuilder<R, FlarogusCommand<R>>(FlarogusCommand<R>(name)) {
+	override fun build() = command
 }

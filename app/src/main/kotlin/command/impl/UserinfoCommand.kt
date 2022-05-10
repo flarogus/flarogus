@@ -28,7 +28,7 @@ private val padding = 10;
 \------/ ...
 */
 @OptIn(kotlin.time.ExperimentalTime::class)
-fun TreeCommand.addUserinfoSubcommand() = subcommand<BufferedImage?>("userinfo") {
+fun TreeCommandBuilder.addUserinfoSubcommand() = subcommand<BufferedImage?>("userinfo") {
 	description = "Display info of the providen user / bot."
 
 	arguments {

@@ -97,7 +97,7 @@ fun createRootCommand() = createTree("!flarogus") {
 				
 				val multimessage = Multiverse.history.find { reply.id in it } ?: fail("This message wasn't found in the history. Perhaps, it was sent too long time ago or is not a multiversal message?")
 				
-				if (!msg.author.isSuperuser() && multimessage.origin?.asMessage()?.data?.author?.id != msg.data.author.id) {
+				if (!msg.author.isModerator() && multimessage.origin?.asMessage()?.data?.author?.id != msg.data.author.id) {
 					throw IllegalAccessException("you are not allowed to delete others' messages")
 				}
 
@@ -302,7 +302,9 @@ fun createRootCommand() = createTree("!flarogus") {
 		}
 	}
 
-	adminSubcommand<Boolean>("shutdown") {
+	subcommand<Boolean>("shutdown") {
+		adminOnly()
+
 		description = "Shuts down an instance by it's ubid (acquired using 'flarogus sus') and optionally purge the multiverse."
 
 		arguments {
@@ -394,13 +396,15 @@ fun createRootCommand() = createTree("!flarogus") {
 		}
 	}
 
-	adminSubcommand<Any?>("run") {
+	subcommand<Any?>("run") {
+		adminOnly()
+
 		description = "execute an arbitrary kotlin script"
 
 		arguments {
 			required<String>("script", "A kotlin script. Can contain a code block.")
 
-			flag("su", "Run as a superuser. Mandatory.")
+			flag("su", "Run as a superuser. Mandatory.").alias('s')
 			flag("imports", "Add default imports").alias('i')
 			flag("trace", "Display stack trace upon an exception").alias('t')
 		}
@@ -421,7 +425,12 @@ fun createRootCommand() = createTree("!flarogus") {
 						is Job -> it.join()
 						else -> it
 					}
-				}.also { result(it, false) }
+				}.also { 
+					result(it, false)
+
+					val msg = originalMessage?.asMessage()
+					Log.info { "${msg?.author?.tag} has successfully executed a kotlin script (${msg?.id} in ${msg?.channelId})" }
+				}
 			} catch (e: Throwable) {
 				result(e, false)
 				(e.cause ?: e).let {

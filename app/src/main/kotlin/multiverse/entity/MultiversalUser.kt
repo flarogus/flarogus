@@ -28,6 +28,7 @@ open class MultiversalUser(
 	open var user: User? = null
 
 	val isSuperuser: Boolean get() = discordId in Vars.superusers
+	val isModerator: Boolean get() = discordId in Vars.moderators || isSuperuser
 
 	val warns = ArrayList<WarnEntry>()
 	val warningPoints get() = warns.fold(0) { total: Int, warn -> total + warn.rule.points }
