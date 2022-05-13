@@ -138,7 +138,8 @@ open class MultiversalGuild(
 		}
 	}
 
-	
+	override fun toString() = name
+
 	companion object {
 		val updateInterval = 1000L * 60 * 10
 		val webhookName = "MultiverseWebhook"

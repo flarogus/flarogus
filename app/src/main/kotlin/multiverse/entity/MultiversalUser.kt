@@ -156,6 +156,8 @@ open class MultiversalUser(
 		return !isForceBanned && warningPoints < criticalWarns && isValid
 	}
 
+	override fun toString() = name
+
 	companion object {
 		val criticalWarns = 5
 		var updateInterval = 1000L * 60 * 8
@@ -169,7 +171,7 @@ open class MultiversalUser(
 
 		val expires: Instant get() = Instant.ofEpochMilli(received + expiration)
 		
-		fun isValid() = received + expiration < System.currentTimeMillis()
+		fun isValid() = received + expiration > System.currentTimeMillis()
 
 		companion object {
 			/** Time in ms required for a warn to expire. 20 days. */

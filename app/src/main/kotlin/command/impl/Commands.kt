@@ -354,6 +354,7 @@ fun createRootCommand() = createTree("!flarogus") {
 				Vars.client.unsafe.messageChannel(reportsChannel).createMessage {
 					content = """
 						${msg?.author?.tag} (channel ${msg?.channelId}, guild ${msg?.data?.guildId?.value}) reports:
+
 						```
 						${args.arg<String>("message").stripCodeblocks().stripEveryone().take(1800)}
 						```
@@ -419,7 +420,7 @@ fun createRootCommand() = createTree("!flarogus") {
 			}
 			if (args.flag("imports")) script = "${Vars.defaultImports}\n$script"
 
-			Vars.scriptEngine.put("message", message)
+			Vars.scriptEngine.put("message", originalMessage?.asMessage())
 			val result = try {
 				Vars.scriptEngine.eval(script, Vars.scriptContext).let {
 					when (it) {
