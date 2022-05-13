@@ -49,20 +49,25 @@ class HelpCommand : FlarogusCommand<Unit>("help") {
 
 					description = subcommand.description + "\n" + splitter
 
+					field {
+						name = "Usage"
+						value = "${subcommand.getFullName()} ${subcommand.summaryArguments()}"
+					}
+
 					if (subcommand.arguments != null && !subcommand.arguments!!.isEmpty()) {
 						if (!subcommand.arguments!!.flags.isEmpty()) {
 							field {
-								name = "flags"
-								value = subcommand.arguments!!.flags.map {
-									"$it (${it.description})"
+								name = "Flags"
+								value = subcommand.arguments!!.flags.mapIndexed { i, it ->
+									"$i. $it (${it.description})"
 								}.joinToString("\n")
 							}
 						}
 						if (!subcommand.arguments!!.positional.isEmpty()) {
 							field {
-								name = "positional arguments"
-								value = subcommand.arguments!!.positional.map {
-									"$it: ${it.type} (${it.description})"
+								name = "Positional arguments"
+								value = subcommand.arguments!!.positional.mapIndexed { i, it ->
+									"$i. ${it.name}: ${it.type} — ${it.description}"
 								}.joinToString("\n")
 							}
 						}

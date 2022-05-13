@@ -32,6 +32,7 @@ open class MultiversalGuild(
 	val webhooks = HashSet<Webhook>()
 
 	var nameOverride: String? = null
+		get() = if (field == null || field!!.isEmpty()) null else field
 	val name: String get() = nameOverride ?: guild?.name ?: "unknown guild"
 	
 	@Transient

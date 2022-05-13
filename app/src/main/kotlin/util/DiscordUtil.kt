@@ -41,7 +41,8 @@ suspend fun String.explicitMentions(): String {
 	var match: MatchResult? = mentionRegex.find(string)
 
 	while (match != null) {
-		string = string.replaceRange(match.range, "@" + Vars.supplier.getUserOrNull(match.value.toSnowflake())?.tag?.replace(mentionRegex, "[MENTION]") ?: "invalid-user")
+		val replacement = Vars.supplier.getUserOrNull(match.value.toSnowflake())?.tag?.replace(mentionRegex, "[MENTION]") ?: ("[${match.groupValues[1]}]")
+		string = string.replaceRange(match.range, "@" + replacement)
 		match = mentionRegex.find(string)
 	}
 

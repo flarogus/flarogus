@@ -60,7 +60,7 @@ open class FlarogusCommand<R>(name: String) {
 	/** Returns a summary description of command's arguments or null if it has no arguments. */
 	open fun summaryArguments(): String? = arguments?.let {
 		// bless functional programming patterns.
-		(it.flags + it.positional).joinToString(", ")
+		(it.flags + it.positional).joinToString(" ")
 	}
 
 	inline fun arguments(builder: Arguments.() -> Unit) {

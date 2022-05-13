@@ -25,6 +25,8 @@ fun createRootCommand() = createTree("!flarogus") {
 
 		addAdminSubtree()
 
+		addManagementSubtree()
+
 		subcommand<Int>("warnings") {
 			description = "Show the warnings of a user"
 

@@ -49,7 +49,7 @@ object Vars {
 	)
 
 	val moderators = mutableSetOf<Snowflake>(
-		// todo: permanent mods?
+		649306040604557322.toSnowflake() // bluewolf
 	)
 
 	/** Scripting engine */

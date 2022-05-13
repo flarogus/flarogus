@@ -102,7 +102,7 @@ abstract class PositionalArgument<T>(name: String, mandatory: Boolean) : Argumen
 		else -> "string"
 	}
 
-	override open fun toString() = if (mandatory) name else "($name)"
+	override open fun toString() = if (mandatory) "<$name>" else "[$name]"
 
 	class IntArg(name: String, mandatory: Boolean) : PositionalArgument<Int>(name, mandatory) {
 		override suspend fun construct(from: String) = from.toIntOrNull()
@@ -200,6 +200,8 @@ open class DefaultPositionalArgument<T>(
 	val default: suspend Callback<*>.() -> T,
 	val argument: PositionalArgument<T>
 ) : PositionalArgument<T>(name, false) {
+	override val type get() = argument.type
+
 	init {
 		argument.mandatory = false
 	}
