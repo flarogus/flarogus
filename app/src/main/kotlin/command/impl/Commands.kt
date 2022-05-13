@@ -3,6 +3,7 @@ package flarogus.command.impl
 import java.net.*
 import java.awt.image.*
 import javax.imageio.*
+import javax.script.*
 import kotlin.time.*
 import kotlin.math.*
 import kotlinx.coroutines.*
@@ -420,7 +421,10 @@ fun createRootCommand() = createTree("!flarogus") {
 			}
 			if (args.flag("imports")) script = "${Vars.defaultImports}\n$script"
 
-			Vars.scriptEngine.put("message", originalMessage?.asMessage())
+			val msg = originalMessage?.asMessage()
+			Vars.scriptEngine.put("message", msg)
+			Vars.scriptContext.setAttribute("message", msg, ScriptContext.ENGINE_SCOPE)
+
 			val result = try {
 				Vars.scriptEngine.eval(script, Vars.scriptContext).let {
 					when (it) {
@@ -430,8 +434,6 @@ fun createRootCommand() = createTree("!flarogus") {
 					}
 				}.also { 
 					result(it, false)
-
-					val msg = originalMessage?.asMessage()
 					Log.info { "${msg?.author?.tag} has successfully executed a kotlin script (${msg?.id} in ${msg?.channelId})" }
 				}
 			} catch (e: Throwable) {
