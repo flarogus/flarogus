@@ -92,8 +92,6 @@ open class CommandArgumentParser(
 			else -> readArgument()
 		}
 
-		println("arg read: $arg")
-
 		if (substitutions) {
 			var match: MatchResult? = commandSubstitutionRegex.find(arg)
 
@@ -101,11 +99,9 @@ open class CommandArgumentParser(
 
 			while (match != null) {
 				var command = match.groupValues[1]
-				print("substituting command $command [[")
 				if (command.startsWith("!flarogus")) command = command.substring("!flarogus".length)
 
 				val result: Any? = Vars.rootCommand(msg, command, false).result
-				println("]] with $result")
 
 				arg = arg.replaceRange(match.range, result?.toString()?.replace("$(", "$\u0000(") ?: "")
 
@@ -126,8 +122,8 @@ open class CommandArgumentParser(
 	open fun readArgument(): String {
 		var depth = 0
 
-		current() + readWhile {
-			if (currentOrNone() == '$' && it == '(') depth++
+		return current() + readWhile {
+			if (lookbehindOrNone() == '$' && it == '(') depth++
 			if (it == ')') depth--
 
 			(it != ' ' && it != '\n') || depth > 0
