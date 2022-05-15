@@ -94,7 +94,7 @@ class HelpCommand : FlarogusCommand<Unit>("help") {
 								name = "__${name}__"
 							} else {
 								subcommand.summaryArguments()?.let { 
-									name += " [${subcommand.summaryArguments()}]"
+									name += " ${subcommand.summaryArguments()}"
 								}
 							}
 

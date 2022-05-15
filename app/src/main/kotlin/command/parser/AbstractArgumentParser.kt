@@ -6,8 +6,9 @@ import flarogus.command.*
 abstract class AbstractArgumentParser<T: FlarogusCommand<out Any?>>(
 	val callback: Callback<out Any?>,
 	val command: T,
-	val content: String = callback.message
+	val originalContent: String = callback.message
 ) {
+	var content = originalContent
 	var index = max(callback.argumentOffset - 1, 0)
 	val tempBuilder = StringBuilder(25)
 	val exception = ParseException()
@@ -84,8 +85,27 @@ abstract class AbstractArgumentParser<T: FlarogusCommand<out Any?>>(
 				it != char
 			}
 		).also {
-			if (!isClosed) error("'$char'", Type.UNTERMINATED_QUOTE, begin, it.length)
+			if (!isClosed) error("$char", Type.UNTERMINATED_QUOTE, begin, it.length)
 			skip() // skip the quotation mark
+		}
+	}
+
+	/** Reads everything between a pair of two different characters, allowing nested pairs. */
+	open fun readPair(begin: Char, end: Char): String {
+		require(begin != end) { "The begin char can not be equal to the end char" }
+		require(currentOrNone() == begin) { "The current char is not the begin char" }
+
+		var beginIndex = index
+		var depth = 1
+
+		return readWhile {
+			if (it == begin) depth++
+			if (it == end) depth--
+
+			it != end || depth > 0
+		}.also {
+			if (depth > 0) error("$end", Type.UNTERMINATED_CONSTRUCT, beginIndex, it.length + 1)
+			skip() // skip the end char
 		}
 	}
 
@@ -112,7 +132,6 @@ abstract class AbstractArgumentParser<T: FlarogusCommand<out Any?>>(
 		if (currentOrNone().isNone() || !predicate(currentOrNone())) return
 
 		while (readOrNone().let { !it.isNone() && predicate(it) }) {
-			skip()
 		}
 	}
 
@@ -171,7 +190,8 @@ abstract class AbstractArgumentParser<T: FlarogusCommand<out Any?>>(
 		WRONG_ARGUMENT_TYPE("Wrong argument type"),
 		TRAILING_ARGUMENT("Trailing argument"),
 		UNRESOLVED_FLAG("Unresolved flag"),
-		UNTERMINATED_QUOTE("Unterminated quoted string"),
+		UNTERMINATED_QUOTE("Unterminated quoted string: expected an ending char"),
+		UNTERMINATED_CONSTRUCT("Unterminated construction: expected an ending char"),
 		MISSING_ARGUMENT("Missing argument"),
 		ILLEGAL_CHARACTER("Illegal character"),
 		OTHER("")

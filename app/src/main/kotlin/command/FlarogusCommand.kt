@@ -57,11 +57,11 @@ open class FlarogusCommand<R>(name: String) {
 	/** Adds a check that filters invocations with no originalMessage, making it discord-only. */
 	open fun discordOnly() = check { m, _ -> if (m != null) null else "this command can not be executed outside of discord" }
 
-	/** Returns a summary description of command's arguments or null if it has no arguments. */
-	open fun summaryArguments(): String? = arguments?.let {
+	/** Returns a summary description of command's arguments or an empty string if it has no arguments. */
+	open fun summaryArguments(): String = arguments?.let {
 		// bless functional programming patterns.
 		(it.flags + it.positional).joinToString(" ")
-	}
+	} ?: ""
 
 	inline fun arguments(builder: Arguments.() -> Unit) {
 		if (arguments == null) arguments = Arguments()
@@ -77,8 +77,11 @@ open class FlarogusCommand<R>(name: String) {
 		updateArgumentCount()
 	}
 
-	open suspend operator fun invoke(message: Message?, argsOverride: String): Callback<R> {
-		return Callback<R>(this, argsOverride, message).also { useCallback(it) }	
+	open suspend operator fun invoke(message: Message?, argsOverride: String, replyResult: Boolean = true): Callback<R> {
+		return Callback<R>(this, argsOverride, message).also {
+			it.replyResult = replyResult
+			useCallback(it)
+		}	
 	}
 
 	/** Invokes this command for a message and returns the result of this command (if there's any) */
@@ -106,7 +109,7 @@ open class FlarogusCommand<R>(name: String) {
 			
 			action?.invoke(callback)
 
-			if (!callback.hasResponded && callback.result == null) {
+			if (!callback.hasResponded && callback.result == null && callback.replyResult) {
 				callback.reply("Command executed with no output.")
 			}
 		} catch (t: Throwable) {
@@ -146,7 +149,7 @@ open class FlarogusCommand<R>(name: String) {
 
 		/** Returns a command whose full name matches is equal to the providen argument */
 		fun find(fullName: String, ignoreCase: Boolean = true): FlarogusCommand<*>? {
-			return allCommands.find { it.getFullName().equals(fullName, ignoreCase) }
+			return allCommands.find { it.getFullName().trim().equals(fullName, ignoreCase) }
 		}
 	}
 }

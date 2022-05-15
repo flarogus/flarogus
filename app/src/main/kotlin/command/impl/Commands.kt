@@ -20,7 +20,7 @@ import flarogus.multiverse.*
 import flarogus.multiverse.entity.*
 
 @OptIn(kotlin.time.ExperimentalTime::class)
-fun createRootCommand() = createTree("!flarogus") {
+fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 	subtree("multiverse") {
 		description = "Commands related to the multiverse."
 
@@ -277,13 +277,63 @@ fun createRootCommand() = createTree("!flarogus") {
 		addUserinfoSubcommand()
 
 		subcommand<String>("echo") {
-			description = "replies with the providen argument."
+			description = """
+				Replies with the providen argument, allowing substitutions (see help).
+
+				Anything inside a $( ... ) structure is treated as a command substitution.
+				The command located inside such a structure is immediately executed and it's result takes the place of that structure.
+				Technicially, any command allows this, but this command is the most useful.
+			""".trimIndent()
 
 			arguments { 
-				default<String>("text") { "<no text>" }
+				default<String>("string") { "An arbitrary string." }
 			}
 			action {
-				result(args.arg<String>("text"))
+				result(args.arg<String>("string").trim())
+			}
+		}
+
+		subcommand<String>("username", "fetch the name of the user") {
+			arguments {
+				required<MultiversalUser>("user")
+			}
+			action {
+				args.arg<MultiversalUser>("user").let {
+					it.update()
+					result(it.name)
+				}
+			}
+		}
+
+		subcommand<String>("guildname", "fetch the name of the guild") {
+			arguments {
+				required<MultiversalGuild>("guild")
+			}
+			action {
+				args.arg<MultiversalGuild>("guild").let {
+					it.update()
+					result(it.name)
+				}
+			}
+		}
+
+		presetSubtree("var", "Manage environment variables") {
+			val environment = HashMap<String, String>()
+
+			presetArguments {
+				required<String>("name", "Name of the environment variable")
+			}
+
+			subcommand<Unit>("set", "Set the value of a variable") {
+				arguments { required<String>("value") }
+				action {
+					val name = args.arg<String>("name")
+					environment[name] = args.arg<String>("value")
+				}
+			}
+
+			subaction<String?>("get", "Get the value of a variable") {
+				result(environment.getOrDefault(args.arg<String>("name"), null))
 			}
 		}
 	}

@@ -1,7 +1,10 @@
 package flarogus.command.parser
 
+import flarogus.*
 import flarogus.command.*
 import flarogus.command.parser.AbstractArgumentParser.*
+
+val commandSubstitutionRegex = "\\$\\((.+)\\)".toRegex()
 
 /** Parses qrguments of normal commands. */
 open class CommandArgumentParser(
@@ -11,6 +14,8 @@ open class CommandArgumentParser(
 	lateinit var argcb: Callback<out Any?>.ArgumentCallback
 
 	var positionalArgIndex = 0
+	/** Whether to perform command substitutions */
+	var substitutions = true
 
 	override protected suspend fun parseImpl() {
 		argcb = callback.createArguments()
@@ -20,6 +25,22 @@ open class CommandArgumentParser(
 				error("this command accepts no arguments.", Type.TRAILING_ARGUMENT, index, content.length - index)
 			}
 		} else {
+			if (substitutions) {
+				var match: MatchResult? = commandSubstitutionRegex.find(content)
+
+				val msg = callback.originalMessage?.asMessage()
+
+				while (match != null) {
+					var command = match.groupValues[1]
+					if (command.startsWith("!flarogus")) command = command.substring("!flarogus".length)
+
+					val result: Any? = Vars.rootCommand(msg, command, false).result
+
+					content = content.replaceRange(match.range, result?.toString()?.replace("$(", "$\u0000(") ?: "null")
+					match = commandSubstitutionRegex.find(content)
+				}
+			}
+
 			while (index < content.length) {
 				skipWhitespace()
 
@@ -35,14 +56,14 @@ open class CommandArgumentParser(
 			if (command.requiredArguments > positionalArgIndex) {
 				error("", Type.MISSING_ARGUMENT, content.length - 1, 1)
 			}
-		}	
+		}
 	}
 
 	/** Reads from the current position to the next space and processes it */
 	protected open suspend fun readUnit() {
 		skipWhitespace()
 
-		val arg = when (currentOrNone()) {
+		var arg = when (currentOrNone()) {
 			// for absokutely no reason, the string has ended
 			AbstractArgumentParser.NONE_CHAR -> return
 
@@ -54,9 +75,18 @@ open class CommandArgumentParser(
 				if (lookaheadOrNone() == '<') {
 					skip()
 					skipWhitespace()
-					readWhole()
+					readWhole().trim()
 				} else {
 					readArgument()
+				}
+			}
+
+			// command substitution - we don't want to force users to quote everything
+			'$' -> {
+				if (read() == '(') {
+					"$(" + readPair('(', ')') + ")"
+				} else {
+					'$' + readArgument()
 				}
 			}
 
