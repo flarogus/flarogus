@@ -6,9 +6,8 @@ import flarogus.command.*
 abstract class AbstractArgumentParser<T: FlarogusCommand<out Any?>>(
 	val callback: Callback<out Any?>,
 	val command: T,
-	val originalContent: String = callback.message
+	val content: String = callback.message
 ) {
-	var content = originalContent
 	var index = max(callback.argumentOffset - 1, 0)
 	val tempBuilder = StringBuilder(25)
 	val exception = ParseException()
@@ -164,7 +163,7 @@ abstract class AbstractArgumentParser<T: FlarogusCommand<out Any?>>(
 	}
 
 	inner open class InputError(val message: String, val type: Type, val at: Int, val hintLength: Int) {
-		override fun toString() = buildString {
+		val info = buildString {
 			if (!type.message.isEmpty()) append(type.message)
 			if (!message.isEmpty()) {
 				if (!type.message.isEmpty()) append(": ")
@@ -184,6 +183,8 @@ abstract class AbstractArgumentParser<T: FlarogusCommand<out Any?>>(
 			repeat(min(hintLength, hintEnd - at + 2)) { append('^') }
 			appendLine('`')
 		}
+
+		override fun toString() = info
 	}
 
 	enum class Type(val message: String) {

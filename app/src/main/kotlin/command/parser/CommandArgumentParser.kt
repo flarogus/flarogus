@@ -25,22 +25,6 @@ open class CommandArgumentParser(
 				error("this command accepts no arguments.", Type.TRAILING_ARGUMENT, index, content.length - index)
 			}
 		} else {
-			if (substitutions) {
-				var match: MatchResult? = commandSubstitutionRegex.find(content)
-
-				val msg = callback.originalMessage?.asMessage()
-
-				while (match != null) {
-					var command = match.groupValues[1]
-					if (command.startsWith("!flarogus")) command = command.substring("!flarogus".length)
-
-					val result: Any? = Vars.rootCommand(msg, command, false).result
-
-					content = content.replaceRange(match.range, result?.toString()?.replace("$(", "$\u0000(") ?: "null")
-					match = commandSubstitutionRegex.find(content)
-				}
-			}
-
 			while (index < content.length) {
 				skipWhitespace()
 
@@ -48,6 +32,9 @@ open class CommandArgumentParser(
 
 				try {
 					readUnit()
+				} catch (e: ParseException) {
+					// merge them in case of a failed command substitution
+					exception.errors.addAll(e.errors)
 				} catch (e: Exception) {
 					error(e.message ?: "unknown exception", Type.OTHER, begin, index - begin)
 				}
@@ -74,19 +61,9 @@ open class CommandArgumentParser(
 			'<' -> {
 				if (lookaheadOrNone() == '<') {
 					skip()
-					skipWhitespace()
 					readWhole().trim()
 				} else {
 					readArgument()
-				}
-			}
-
-			// command substitution - we don't want to force users to quote everything
-			'$' -> {
-				if (read() == '(') {
-					"$(" + readPair('(', ')') + ")"
-				} else {
-					'$' + readArgument()
 				}
 			}
 
@@ -115,6 +92,27 @@ open class CommandArgumentParser(
 			else -> readArgument()
 		}
 
+		println("arg read: $arg")
+
+		if (substitutions) {
+			var match: MatchResult? = commandSubstitutionRegex.find(arg)
+
+			val msg = callback.originalMessage?.asMessage()
+
+			while (match != null) {
+				var command = match.groupValues[1]
+				print("substituting command $command [[")
+				if (command.startsWith("!flarogus")) command = command.substring("!flarogus".length)
+
+				val result: Any? = Vars.rootCommand(msg, command, false).result
+				println("]] with $result")
+
+				arg = arg.replaceRange(match.range, result?.toString()?.replace("$(", "$\u0000(") ?: "")
+
+				match = commandSubstitutionRegex.find(arg)
+			}
+		}
+
 		val argIndex = positionalArgIndex++
 		val argument = command.arguments!!.positional.getOrNull(argIndex)
 
@@ -125,5 +123,14 @@ open class CommandArgumentParser(
 		}
 	}
 
-	open fun readArgument() = current() + readWhile { it != ' ' && it != '\n' }
+	open fun readArgument(): String {
+		var depth = 0
+
+		current() + readWhile {
+			if (currentOrNone() == '$' && it == '(') depth++
+			if (it == ')') depth--
+
+			(it != ' ' && it != '\n') || depth > 0
+		}
+	}
 }

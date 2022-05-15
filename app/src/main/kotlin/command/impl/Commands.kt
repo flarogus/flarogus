@@ -286,7 +286,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 			""".trimIndent()
 
 			arguments { 
-				default<String>("string") { "An arbitrary string." }
+				default<String>("string", "An arbitrary string.") { "" }
 			}
 			action {
 				result(args.arg<String>("string").trim())
