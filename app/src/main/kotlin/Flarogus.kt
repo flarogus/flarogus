@@ -18,6 +18,7 @@ import flarogus.util.*;
 import flarogus.command.*;
 import flarogus.command.builder.*
 import flarogus.multiverse.*
+import flarogus.server.*
 
 const val IS_MULTIVERSE_ENABLED = true
 
@@ -114,6 +115,10 @@ suspend fun main(vararg args: String) {
 				Log.error { "FATAL EXCEPTION HAS OCCURRED DURING MULTIVERSE INTIALIZATION: `$e`" }
 			}
 		}
+
+		val port = System.getProperty("PORT")?.toInt() ?: 0
+		Log.info { "launching a flar server at port $port" }
+		FlarServer.launch(port)
 	}
 	
 	Vars.client.login {

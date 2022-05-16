@@ -47,15 +47,15 @@ object Log {
 	inline fun sendLog(logLevel: LogLevel, crossinline message: () -> String) {
 		if (logLevel.level < level.level) return
 		
-		Vars.client.launch {
-			try {
-				val prefix = if (logLevel == LogLevel.ERROR) "! ERROR !" else logLevel.toString()
-				
-				buffer.add("**[$prefix]**: ${message()}".stripEveryone().take(1999))
-			} catch (e: Exception) {
-				e.printStackTrace()
-			}
-		};
+		try {
+			val prefix = if (logLevel == LogLevel.ERROR) "! ERROR !" else logLevel.toString()
+			
+			val msg = message()
+			buffer.add("**[$prefix]**: $msg".stripEveryone().take(1999))
+			println("[$prefix]: $msg")
+		} catch (e: Exception) {
+			e.printStackTrace()
+		}
 	}
 	
 	inline fun lifecycle(crossinline message: () -> String) = sendLog(LogLevel.LIFECYCLE, message);
