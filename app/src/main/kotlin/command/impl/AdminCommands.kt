@@ -39,10 +39,28 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 		}
 	}
 
-	presetSubtree("blacklist") {
-		adminOnly()
+	presetSubtree("banlist", "Manage the ban state of a user") {
+		presetArguments {
+			required<MultiversalUser>("user", "Multiversal user you want to manage")
+		}
+		subaction<Unit>("add", "Ban a user") {
+			args.arg<MultiversalUser>("user").isForceBanned = true
+		}
 
-		description = "Manage the blacklist"
+		subaction<Unit>("remove", "Unban a user") {
+			args.arg<MultiversalUser>("user").isForceBanned = false
+		}
+
+		subaction<Boolean>("check", "Check if a user is banned") {
+			args.arg<MultiversalUser>("user").isForceBanned.let {
+				result(it, false)
+				reply("This user is " + if (it) "banned" else "not banned")
+			}
+		}
+	}
+
+	presetSubtree("blacklist", "Manage the blacklist state of a guild") {
+		adminOnly()
 
 		presetArguments {
 			required<MultiversalGuild>("guild", "Multiversal guild you want to manage")
@@ -65,7 +83,7 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 	}
 
 	presetSubtree("whitelist") {
-		description = "Manage the whitelist"
+		description = "Manage the whitelist state of a guild"
 
 		presetArguments {
 			required<MultiversalGuild>("guild", "Multiversal guild you want to manage")
