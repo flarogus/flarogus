@@ -1,1 +1,1 @@
-worker: java -jar app/build/libs/app.jar $DISCORD_TOKEN
+web: java -jar app/build/libs/app.jar $DISCORD_TOKEN
