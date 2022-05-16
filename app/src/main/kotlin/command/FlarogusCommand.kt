@@ -133,7 +133,7 @@ open class FlarogusCommand<R>(name: String) {
 		var current: FlarogusCommand<*>? = this
 		return buildString {
 			do {
-				insert(0, " ")
+				if (!isEmpty()) insert(0, " ")
 				insert(0, current!!.name)
 				current = current!!.parent
 			} while (current != null)
