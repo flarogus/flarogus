@@ -49,6 +49,7 @@ tasks.jar {
 	from(*configurations.runtimeClasspath.files.map { if (it.isDirectory()) it else zipTree(it) }.toTypedArray())
 }
 
+// todo: useless task
 tasks.register<Copy>("deploy") {
 	dependsOn("jar")
 	
@@ -58,6 +59,11 @@ tasks.register<Copy>("deploy") {
 	doLast {
 		delete("build/libs/app.jar")
 	}
+}
+
+// heroku requires this task.
+tasks.register("stage") {
+	dependsOn("jar")
 }
 
 application.apply {
