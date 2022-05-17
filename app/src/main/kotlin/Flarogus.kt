@@ -127,7 +127,7 @@ suspend fun main(vararg args: String) {
 		presence { competing("execute `!flarogus help` to see the list of available commands.") }
 
 		intents += Intent.GuildMessages
-		//intents += Intent.MessageContent
+		intents += Intent.MessageContent
 		intents += Intent.DirectMessages
 	}
 }
