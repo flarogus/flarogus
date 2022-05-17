@@ -119,7 +119,7 @@ suspend fun main(vararg args: String) {
 
 		val port = System.getProperty("PORT")?.toInt() ?: 0
 		Log.info { "launching a flar server at port $port" }
-		FlarServer.launch(port)
+		//FlarServer.launch(port)
 	}
 	
 	@OptIn(PrivilegedIntent::class)
