@@ -89,7 +89,7 @@ object Settings {
 	}
 	
 	/** Opposite of uploadToCdn(): downloads content from the uploaded file */
-	inline suspend fun <reified T> downloadFromCdn(url: String) = Vars.client.resources.httpClient.get<HttpResponse>(url).receive<T>()
+	inline suspend fun <reified T> downloadFromCdn(url: String) = Vars.client.resources.httpClient.get(url).body<T>()
 
 }
 

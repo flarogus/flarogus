@@ -1,5 +1,5 @@
 plugins {
-	kotlin("jvm") version "1.6.10"
+	kotlin("jvm") version "1.6.20"
 	kotlin("plugin.serialization") version "1.6.10"
 	application
 }
@@ -9,33 +9,28 @@ repositories {
 	maven("https://jitpack.io")
 }
 
-val kotlinVersion = "1.6.10"
-val kordVersion = "0.8.0-M10"
-val ktorVersion = "2.0.1"
+val kotlinVersion = "1.6.20"
+val kordVersion = "0.8.0-M13"
+val ktorVersion = "2.0.0"
 
 dependencies {
-	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
+	// kord includes it
+	// implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
 	implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
 	
-	//implementation("org.jetbrains.kotlin:kotlin-script-runtime:1.6.10")
-	//implementation("org.jetbrains.kotlin:kotlin-script-util:1.6.10")
-	//implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.6.10")
-	//implementation("org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:1.6.10")
-	//implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.6.10")
-	
-	//runtimeOnly("org.jetbrains.kotlin:kotlin-main-kts:$kotlinVersion")
-	//runtimeOnly("org.jetbrains.kotlin:kotlin-scripting-jsr223:$kotlinVersion")
-	//implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223-embeddable:$kotlinVersion")
-	runtimeOnly("org.jetbrains.kotlin:kotlin-main-kts:$kotlinVersion")
-	runtimeOnly("org.jetbrains.kotlin:kotlin-scripting-jsr223:$kotlinVersion")
+	implementation("org.jetbrains.kotlin:kotlin-script-runtime:1.6.10")
+	implementation("org.jetbrains.kotlin:kotlin-script-util:1.6.10")
+	implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.6.10")
+	implementation("org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:1.6.10")
+	implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.6.10")
 
 	implementation("dev.kord:kord-core:$kordVersion")
 	implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
 
-	implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
-	implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
 	implementation("io.ktor:ktor-server-core:$ktorVersion")
 	implementation("io.ktor:ktor-server-netty:$ktorVersion")
+	implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
+	implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
 	
 	// note for myself: DONT REMOVE THIS DEPENDENCY YOU DUMBFUCK!
 	implementation("org.sejda.webp-imageio:webp-imageio-sejda:0.1.0")
