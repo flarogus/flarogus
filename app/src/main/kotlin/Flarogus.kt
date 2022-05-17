@@ -6,6 +6,7 @@ import kotlin.concurrent.*;
 import kotlinx.coroutines.*;
 import kotlinx.coroutines.flow.*;
 import dev.kord.common.entity.*
+import dev.kord.gateway.*
 import dev.kord.rest.request.*
 import dev.kord.rest.ratelimit.*
 import dev.kord.rest.builder.message.create.*
@@ -121,7 +122,10 @@ suspend fun main(vararg args: String) {
 		FlarServer.launch(port)
 	}
 	
+	@OptIn(PrivilegedIntent::class)
 	Vars.client.login {
 		presence { competing("execute `!flarogus help` to see the list of available commands.") }
+
+		intents += Intent.MessageContent
 	}
 }
