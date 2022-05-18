@@ -117,7 +117,7 @@ suspend fun main(vararg args: String) {
 			}
 		}
 
-		val port = System.getProperty("PORT")?.toInt() ?: 0
+		val port = System.getProperty("PORT")?.toInt() ?: 8080
 		Log.info { "launching a flar server at port $port" }
 		//FlarServer.launch(port)
 	}
