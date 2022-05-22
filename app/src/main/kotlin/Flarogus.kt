@@ -74,60 +74,66 @@ suspend fun main(vararg args: String) {
 		}
 	}
 	
-	if (IS_MULTIVERSE_ENABLED) {
-		Vars.client.launch {
-			delay(10000L)
-			try {
-				var errors = 0
+	coroutineScope {
+		if (IS_MULTIVERSE_ENABLED) {
+			launch {
+				delay(10000L)
+				try {
+					var errors = 0
 
-				// we can't allow it to not start up.
-				while (!Multiverse.isRunning && Vars.client.isActive) {
-					try {
-						Multiverse.start()
-					} catch (e: Exception) {
-						errors++
-						delay(3000L)
-					}
-				}
-
-				Log.info { "mutliverse instance ${Vars.ubid} has started with $errors errors." }
-
-				// execute all scripts defined in the autorun channel	
-				val output = buildString {
-					appendLine("executing autorun scripts:")
-					(Vars.supplier.getChannelOrNull(Channels.autorun) as? TextChannel)?.messages?.toList()?.forEachIndexed { index, it ->
-						append(index).append(": ")
-				
-						val script = Vars.codeblockRegex.find(it.content)?.groupValues?.getOrNull(2) ?: it.content
-				
-						val res = try { 
-							Vars.scriptEngine.eval(Vars.defaultImports + "\n" + script, Vars.scriptContext)?.let {
-								if (it is Deferred<*>) it.await() else it
-							}?.toString() ?: "null"
+					// we can't allow it to not start up.
+					while (!Multiverse.isRunning && Vars.client.isActive) {
+						try {
+							Multiverse.start()
 						} catch (e: Exception) {
-							e.toString()
-						}.take(200)
-						appendLine(res)
+							errors++
+							delay(3000L)
+						}
 					}
-				}.take(1900)
-				
-				Log.info { output }
-			} catch (e: Throwable) {
-				Log.error { "FATAL EXCEPTION HAS OCCURRED DURING MULTIVERSE INTIALIZATION: `$e`" }
+
+					Log.info { "mutliverse instance ${Vars.ubid} has started with $errors errors." }
+
+					// execute all scripts defined in the autorun channel	
+					val output = buildString {
+						appendLine("executing autorun scripts:")
+						(Vars.supplier.getChannelOrNull(Channels.autorun) as? TextChannel)?.messages?.toList()?.forEachIndexed { index, it ->
+							append(index).append(": ")
+					
+							val script = Vars.codeblockRegex.find(it.content)?.groupValues?.getOrNull(2) ?: it.content
+					
+							val res = try { 
+								Vars.scriptEngine.eval(Vars.defaultImports + "\n" + script, Vars.scriptContext)?.let {
+									if (it is Deferred<*>) it.await() else it
+								}?.toString() ?: "null"
+							} catch (e: Exception) {
+								e.toString()
+							}.take(200)
+							appendLine(res)
+						}
+					}.take(1900)
+					
+					Log.info { output }
+				} catch (e: Throwable) {
+					Log.error { "FATAL EXCEPTION HAS OCCURRED DURING MULTIVERSE INTIALIZATION: `$e`" }
+				}
 			}
 		}
 
-		val port = System.getProperty("PORT")?.toInt() ?: 8080
-		Log.info { "launching a flar server at port $port" }
-		//FlarServer.launch(port)
-	}
-	
-	@OptIn(PrivilegedIntent::class)
-	Vars.client.login {
-		presence { competing("execute `!flarogus help` to see the list of available commands.") }
+		try {
+			val port = System.getProperty("PORT")?.toInt() ?: 8080
+			Log.info { "launching the flar server at port $port" }
+			FlarServer.launch(port)
+		} catch (e: Exception) {
+			Log.error { "Failed to launch the flar server: $e" }
+		}
+		
+		@OptIn(PrivilegedIntent::class)
+		Vars.client.login {
+			presence { competing("execute `!flarogus help` to see the list of available commands.") }
 
-		intents += Intent.GuildMessages
-		intents += Intent.MessageContent
-		intents += Intent.DirectMessages
+			intents += Intent.GuildMessages
+			intents += Intent.MessageContent
+			intents += Intent.DirectMessages
+		}
 	}
 }

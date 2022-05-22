@@ -6,7 +6,7 @@ Github-hosted discord bot, the core of the Multiverse.
 Written in kotlin, uses Kord.
 
 # Deployment
-The bot is running on github actions 
+The bot is running on GitHub actions 
 
 #
 # Todo: serious-ish description, because, like, we're a serious organisation now.

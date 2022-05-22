@@ -11,8 +11,9 @@ import io.ktor.serialization.kotlinx.json.*
 import flarogus.multiverse.*
 
 object FlarServer {
+	/** Launches a flar server on the providen port and blocks the thread. */
 	fun launch(port: Int) {
-		embeddedServer(CIO, port = port) {
+		val start = embeddedServer(CIO, port = port) {
 			install(ContentNegotiation) {
 				json()
 			}
@@ -21,6 +22,9 @@ object FlarServer {
 				get("/") {
 					Log.info { "Incoming GET request on uri: ${call.request.uri}" }
 					call.respondText("AMOGUS!")
+				}
+				get("/multiverse/history") {
+					call.respondText("TODO")
 				}
 			}
 		}.start(wait = true)
