@@ -45,10 +45,11 @@ fun TreeCommandBuilder.addManagementSubtree() = subtree("manage") {
 		subtree("name", "Manage the name override for this guild. The caller must be an admin of this guild.") {
 			discordOnly()
 			check { m, args ->
-				val channel = m?.channel as? TopGuildMessageChannel
+				val channel = m?.channel?.asChannel() as? TopGuildMessageChannel
 				val permissions = channel?.getEffectivePermissions(m.author!!.id)
 
-				if (permissions != null && Permission.Administrator in permissions) null else "you must have an 'admin' permission in order to use this."
+				if (permissions == null) return@check "could not access your permissions."
+				if (Permission.Administrator in permissions) null else "you must have an 'admin' permission in order to use this."
 			}
 
 			subcommand<Unit>("set", "Set the name override") {
