@@ -48,7 +48,7 @@ fun TreeCommandBuilder.addManagementSubtree() = subtree("manage") {
 				val channel = m?.channel as? TopGuildMessageChannel
 				val permissions = channel?.getEffectivePermissions(m.author!!.id)
 
-				if (permissions != null && Permission.All in permissions) null else "you must have an 'admin' permission in order to use this."
+				if (permissions != null && Permission.Administrator in permissions) null else "you must have an 'admin' permission in order to use this."
 			}
 
 			subcommand<Unit>("set", "Set the name override") {
