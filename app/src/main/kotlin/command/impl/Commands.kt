@@ -222,7 +222,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 							insert(0, char)
 						}
 					}
-					if (length == 0) append("sus")
+					if (isEmpty()) append("sus")
 				})
 			}
 		}
@@ -256,13 +256,13 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 			discordOnly()
 
 			val dailies = arrayOf(
-				"you are brainless", "you have no friends", "you fell off", "1 social credit was deducted from your account",
-				"*a vent opens right below you*", "you were voted off.", "mistakes were made",
-				"you lost", "amogus was sent to your house", "you are an amogus", "go commit suicidе",
-				"what did you expect", "go seek for help", "this was a triumph...", "you were killed by the impostor",
-				"you get nothing", "you are sus", "nothing, try again tomorrow","you have mere seconds", "you ruin everything you touch", 
-				"you will never be happy", "your parents dont love you", "you are so fat, if you were an impostor, you would get stuck in the vent",
-				"you will never finish your tasks"
+				"you have got no mental power", "you have no friends", "you fell off", "1 social credit was deducted from your account",
+				"*a vent opens right below you*", "you were voted out.", "mistakes were made",
+				"you lost", "amogus was sent to your house", "you are an amogus", "go do something more useful",
+				"what did you expect", "sorry, your daily reward has been taken by someone else.", "this was a triumph...", "you were killed by the impostor",
+				"you get nothing", "you are sus", "nothing, try again tomorrow","you have mere seconds.", "you ruined the task!",
+				"your parents don't love you", "you are so fat, if you were an impostor, you would get stuck in the vent",
+				"you will never finish your tasks", "two tasks have been added to your list, crewmate!"
 			)
 			
 			action {
