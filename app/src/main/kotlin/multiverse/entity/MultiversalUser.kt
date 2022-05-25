@@ -1,19 +1,18 @@
 package flarogus.multiverse.entity
 
-import java.net.*
-import java.time.*
-import kotlin.time.*
-import kotlinx.serialization.*
-import kotlinx.coroutines.*
-import dev.kord.common.entity.*
+import dev.kord.common.entity.Snowflake
+import dev.kord.core.entity.User
+import dev.kord.core.entity.channel.TextChannel
+import dev.kord.core.event.message.MessageCreateEvent
 import dev.kord.rest.builder.message.create.*
-import dev.kord.core.entity.*
-import dev.kord.core.entity.channel.*
-import dev.kord.core.event.message.*
-import flarogus.*
-import flarogus.util.*
+import flarogus.Vars
 import flarogus.multiverse.*
-import flarogus.multiverse.state.*
+import flarogus.multiverse.state.Multimessage
+import flarogus.util.*
+import kotlinx.serialization.*
+import java.net.URL
+import java.time.Instant
+import kotlin.time.ExperimentalTime
 
 /** 
  * Represents a user that has ever interacted with the Multiverse 

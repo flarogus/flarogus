@@ -17,7 +17,7 @@ open class FlarogusCommand<R>(name: String) {
 
 	/** The parent command tree. May be null if the command is a root command. */
 	var parent: TreeCommand? = null
-		set(parent: TreeCommand?) {
+		set(parent) {
 			var check = parent
 			do {
 				if (check == this) throw RuntimeException("A command tree cannot be recursive")

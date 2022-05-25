@@ -1,23 +1,23 @@
 package flarogus.command.impl
 
-import java.net.*
-import java.awt.image.*
-import javax.imageio.*
-import javax.script.*
-import kotlin.time.*
-import kotlin.math.*
-import kotlinx.coroutines.*
 import dev.kord.common.entity.*
-import dev.kord.rest.builder.message.create.*
-import dev.kord.core.entity.*
 import dev.kord.core.behavior.*
 import dev.kord.core.behavior.channel.*
+import dev.kord.core.entity.*
+import dev.kord.rest.builder.message.create.*
 import flarogus.*
-import flarogus.util.*
 import flarogus.command.*
 import flarogus.command.builder.*
 import flarogus.multiverse.*
 import flarogus.multiverse.entity.*
+import flarogus.util.*
+import kotlinx.coroutines.*
+import java.awt.image.*
+import java.net.*
+import javax.imageio.*
+import javax.script.*
+import kotlin.math.*
+import kotlin.time.*
 
 @OptIn(kotlin.time.ExperimentalTime::class)
 fun createRootCommand(): TreeCommand = createTree("!flarogus") {
@@ -145,8 +145,10 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 			description = "View info about a message sent in the multiverse by replying to it"
 
 			action {
-				val reply = originalMessage!!.asMessage().referencedMessage ?: fail("You must reply to a multiversal message")
-				val msg = Multiverse.history.find { reply in it } ?: fail("this message wasn't found in the history. perhaps, it was sent too long time ago?")
+				val reply = originalMessage!!.asMessage().referencedMessage
+					?: fail("You must reply to a multiversal message")
+				val msg = Multiverse.history.find { reply in it }
+					?: fail("this message wasn't found in the history. perhaps, it was sent too long time ago?")
 
 				val originMsg = msg.origin?.asMessage() ?: fail("This message doesn't have an origin.")
 				val author = User(originMsg.data.author, Vars.client)
@@ -341,6 +343,25 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 
 			subaction<String?>("get", "Get the value of a variable") {
 				result(environment.getOrDefault(args.arg<String>("name"), null))
+			}
+		}
+
+		presetSubtree("reply", "Fetch info of a message you reply to.") {
+			discordOnly()
+			check { m, _ -> if (m?.referencedMessage != null) null else "you must reply to a message." }
+
+			subaction<String>("username", "Fetch the username of the author of the message.") {
+				result(originalMessage().referencedMessage!!.data.author.let { it.username + "#" + it.discriminator })
+			}
+
+			subaction<String>("pfp", "Fetch the pfp url of the author of the message.") {
+				result(originalMessage().referencedMessage!!.let {
+					it.author?.getAvatarUrl() ?: it.data.author.avatar ?: "null"
+				})
+			}
+
+			subaction<Snowflake>("userid", "Fetch the id of the user that has sent this message.") {
+				result(originalMessage().referencedMessage!!.data.author.id)
 			}
 		}
 	}

@@ -103,6 +103,12 @@ open class Callback<R>(
 		}
 	}
 
+	/** Tries to get the original message as a Message, returns null if it doesn't exist */
+	open suspend fun originalMessageOrNull() = originalMessage?.asMessage()
+
+	/** Tries to get the original message as a Message, throws a [NullPointerExcpetion] if it doesn't exist */
+	open suspend fun originalMessage() = originalMessageOrNull() ?: throw IllegalArgumentException("this message doesn't have an original message")
+
 	/** 
 	 * Assigns a result and, if [replyResult] and [doReply] are true, replies with the result to the original message.
 	 * This function should not be used to reply with strings (unless it's actual output is a string), as other commands may try to read the result.
@@ -151,7 +157,7 @@ open class Callback<R>(
 		/** Calls the function if an argument is present */
 		inline fun <T, R> ifPresent(name: String, action: (T) -> R) = positional.ifPresent(name, action)
 
-		/** Returns whether there's a poitional argument with this name present in the callback */
+		/** Returns whether there's a positional argument with this name present in the callback */
 		operator fun contains(name: String) = positional.getOrDefault(name, null) != null
 
 		/** Returns whether a flag is present */
@@ -160,6 +166,7 @@ open class Callback<R>(
 		/** Calls the function if a flag is present */
 		inline fun <R> ifFlagged(name: String, action: () -> R) = flags.ifPresent(name, action)
 
+		@Suppress("UNCHECKED_CAST")
 		open inner class PositionalArguments : HashMap<String, Any?>() {
 			/** Gets an argument. Throws an exception if it's optional and not present in the map or not present at all */
 			fun <T> arg(name: String) = (super.get(name) as T?) ?: throw IllegalArgumentException("argument $name is not present")
@@ -174,7 +181,7 @@ open class Callback<R>(
 		}
 
 		open inner class NonPositionalArguments : ArrayList<String>() {
-			/** If the argument is present, calos the lambda */
+			/** If the argument is present, calls the lambda */
 			inline fun <R> ifPresent(argument: String, action: () -> R): R? {
 				return if (argument in this) action() else null
 			}

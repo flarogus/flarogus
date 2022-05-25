@@ -43,8 +43,8 @@ open class MultiversalGuild(
 	var isWhitelisted = false
 
 	/** 
-	 * Sends a message into every channels of this guild, optionally invoking a function on every message sent
-	 * @param filter filters channels. should return [true] if the message is to be retranslated into the channel
+	 * Sends a message into every channel of this guild, optionally invoking a function on every message sent
+	 * @param filter filters channels. should return true if the message is to be retranslated into the channel
 	 * @param handler invoked whenever a message is being sent.
 	 * @param builder builds a message. called whenever a message is being created. Receives the id of the channel a message is being sent to.
 	 */
@@ -121,7 +121,7 @@ open class MultiversalGuild(
 
 						try { 
 							it.createMessage("Failed to acquire a webhook for this channel. Next attempt in 10 minutes.") 
-						} catch (e: Exception) {}
+						} catch (_: Exception) {}
 					}
 				}
 			}
