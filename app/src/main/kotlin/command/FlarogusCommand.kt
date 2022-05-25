@@ -1,12 +1,11 @@
 package flarogus.command
 
-import dev.kord.core.entity.*
-import flarogus.*
+import dev.kord.core.entity.Message
+import flarogus.command.parser.CommandArgumentParser
 import flarogus.util.*
-import flarogus.command.parser.*
 
 typealias CommandAction<R> = suspend Callback<R>.() -> Unit
-typealias CommandCheck = (message: Message?, args: String) -> String?
+typealias CommandCheck = suspend (message: Message?, args: String) -> String?
 
 open class FlarogusCommand<R>(name: String) {
 	val name = name.trim().replace(" ", "_")
@@ -96,7 +95,7 @@ open class FlarogusCommand<R>(name: String) {
 	open suspend operator fun invoke(message: Message): Callback<R> = invoke(message, message.content)
 
 	/** 
-	 * Executes this command with the given fallback, inflating it's arguments if they're not present.
+	 * Executes this command with the given callback, inflating it's arguments.
 	 * If the callback has an associated message, reports any errors by replying to it.
 	 * Otherwise, rethrows them. */
 	open suspend fun useCallback(callback: Callback<R>) {
@@ -121,9 +120,9 @@ open class FlarogusCommand<R>(name: String) {
 	}
 
 	/** Performs all checks of this command and throws an exception if any of them fail */
-	open fun performChecks(callback: Callback<*>) {
+	open suspend fun performChecks(callback: Callback<*>) {
 		val errors = checks.mapNotNull { it(callback.originalMessage as? Message, callback.message) }
-		if (!errors.isEmpty()) {
+		if (errors.isNotEmpty()) {
 			throw IllegalArgumentException("Could not execute this command, because: ${errors.joinToString(", ")}")
 		}
 	}

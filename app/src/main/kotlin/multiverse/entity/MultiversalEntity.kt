@@ -3,6 +3,7 @@ package flarogus.multiverse.entity
 import kotlin.time.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.*
+import kotlin.time.Duration.Companion.seconds
 
 @Serializable
 @OptIn(ExperimentalTime::class)

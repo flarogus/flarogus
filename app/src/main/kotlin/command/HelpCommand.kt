@@ -58,8 +58,9 @@ class HelpCommand : FlarogusCommand<Unit>("help") {
 						if (!subcommand.arguments!!.flags.isEmpty()) {
 							field {
 								name = "Flags"
-								value = subcommand.arguments!!.flags.mapIndexed { i, it ->
-									"$i. $it (${it.description})"
+								value = subcommand.arguments!!.flags.mapIndexed { i, it: NonPositionalArgument ->
+									val aliases = it.getAllAliases().joinToString(" ")
+									"$i. $aliases (${it.description})"
 								}.joinToString("\n")
 							}
 						}

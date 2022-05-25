@@ -16,8 +16,7 @@ import flarogus.multiverse.*
 import flarogus.multiverse.state.*
 
 /** 
- * Represents a guild that has a multiversal channel
- * Currently unused.
+ * Represents a multiversal guild.
  */
 @Serializable
 @OptIn(ExperimentalTime::class)
@@ -109,7 +108,7 @@ open class MultiversalGuild(
 			// no need to search for channels if it is not whitelisted
 			if (isWhitelisted) {
 				guild?.channels?.collect {
-					if (it !is TextChannel || it !is TopGuildMessageChannel || !isValidChannel(it)) return@collect
+					if (it !is TextChannel || !isValidChannel(it)) return@collect
 
 					channels.add(it)
 					

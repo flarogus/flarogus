@@ -255,6 +255,13 @@ open class NonPositionalArgument(name: String) : Argument(name, false) {
 		else -> throw RuntimeException("A non-positional argument must begin with - or --.")
 	}
 
+	/** Returns an array containing the name and all aliases of this function */
+	open fun getAllAliases() = buildList<String> {
+		add("--$name")
+		aliases.forEach { add("--$it") }
+		shortAliases.forEach { add("-$it") }
+	}
+
 	/** Checks whether the character is a short alias of this argument. */
 	open fun applicable(char: Char) = shortAliases.any { it == char }
 

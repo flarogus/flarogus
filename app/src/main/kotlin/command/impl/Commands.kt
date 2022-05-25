@@ -91,7 +91,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 
 			arguments {
 				flag("origin", "Delete original message").alias('o')
-
+				flag("silent", "Do not reply, delete the message that invoked this command").alias('s')
 			}
 
 			action {
@@ -105,6 +105,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 				}
 
 				var deleted = 0
+				val silent = args.flag("silent")
 				
 				multimessage.retranslated.forEach { 
 					try { 
@@ -120,7 +121,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 					try {
 						multimessage.origin?.delete()?.also { deleted++ }
 					} catch (e: Exception) {
-						multimessage.origin?.replyWith("""
+						if (!silent) multimessage.origin?.replyWith("""
 							This message was deleted from other multiversal channels but this (original) message could not be deleted.
 							Check whether the bot has the necessary permissions.
 						""".trimIndent())
@@ -128,7 +129,13 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 				}
 				
 				result(deleted, false)
-				reply("Deleted a total of $deleted messages")
+				if (!silent) {
+					reply("Deleted a total of $deleted messages")
+				} else if (originalMessage != null) {
+					try {
+						originalMessage.asMessage().delete()
+					} catch (e: Exception) {}
+				}
 			}
 		}
 
