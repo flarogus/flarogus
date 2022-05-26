@@ -61,13 +61,13 @@ open class Arguments {
 abstract class Argument(val name: String, var mandatory: Boolean) {
 	var description: String? = null
 
-	/** Called upon the creation of an ArgumentCallback but before it's inflation. */
+	/** Called upon the creation of an ArgumentCallback, but before its inflation. */
 	open suspend fun preprocess(callback: Callback<*>) {}
 
 	/** Called after the inflation of an ArgumentCallback (not guaranteed, however). */
 	open suspend fun postprocess(callback: Callback<*>) {}
 
-	override open fun toString() = name;
+	override fun toString() = name;
 }
 
 /** Represents a positional argument of a command. */
@@ -102,7 +102,7 @@ abstract class PositionalArgument<T>(name: String, mandatory: Boolean) : Argumen
 		else -> "string"
 	}
 
-	override open fun toString() = if (mandatory) "<$name>" else "[$name]"
+	override fun toString() = if (mandatory) "<$name>" else "[$name]"
 
 	class IntArg(name: String, mandatory: Boolean) : PositionalArgument<Int>(name, mandatory) {
 		override suspend fun construct(from: String) = from.toIntOrNull()
@@ -166,7 +166,7 @@ abstract class PositionalArgument<T>(name: String, mandatory: Boolean) : Argumen
 		/** 
 		 * Maps possible argument classes to their constructors. 
 		 * If you are declaring a new argument type, yoh should add your class here.
-		 * Every lambda must return a PositionalArgument whose generic type is equal to that of the class the class assigned to.
+		 * Every lambda must return a PositionalArgument whose generic type is equal to that of the class assigned to.
 		 */
 		val mapping = mutableMapOf<KClass<out Any>, (name: String, mandatory: Boolean) -> PositionalArgument<*>>(
 			Int::class to { n, m -> IntArg(n, m) },
@@ -206,17 +206,17 @@ open class DefaultPositionalArgument<T>(
 		argument.mandatory = false
 	}
 
-	override suspend open protected fun construct(from: String) = null
+	override suspend protected fun construct(from: String): Nothing? = null
 
-	override suspend open fun constructFrom(from: String) = argument.constructFrom(from)
+	override suspend fun constructFrom(from: String) = argument.constructFrom(from)
 
-	override suspend open fun postprocess(callback: Callback<*>) {
+	override suspend fun postprocess(callback: Callback<*>) {
 		if (callback.hasArgs && !callback.args.positional.contains(name)) {
 			callback.args.positional[name] = default(callback)
 		}
 	}
 
-	override open fun toString() = argument.toString()
+	override fun toString() = argument.toString()
 
 	companion object {
 		inline fun <reified T> forType(
@@ -265,5 +265,5 @@ open class NonPositionalArgument(name: String) : Argument(name, false) {
 	/** Checks whether the character is a short alias of this argument. */
 	open fun applicable(char: Char) = shortAliases.any { it == char }
 
-	override open fun toString() = "--$name"
+	override fun toString() = "--$name"
 }

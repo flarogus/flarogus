@@ -18,6 +18,7 @@ import flarogus.util.*;
 import flarogus.command.*;
 import flarogus.command.builder.*
 import flarogus.multiverse.*
+import kotlin.time.Duration.Companion.seconds
 
 const val IS_MULTIVERSE_ENABLED = true
 

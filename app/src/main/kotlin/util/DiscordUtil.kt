@@ -21,7 +21,7 @@ val ZERO_SNOWFLAKE = 0UL.toSnowflake()
 val Snowflake.Companion.NONE get() = ZERO_SNOWFLAKE
 
 val mentionRegex = "<[@#](!)?(\\d+)>".toRegex()
-val hypertextRegex = """\((.*)\)\[(https?:\/\/)([a-zA-Z\.\-\_]+\/?)(.*)\]""".toRegex()
+val hypertextRegex = """\((.*)\)\[(https?://)([a-zA-Z.\-_]+/?)(.*)]""".toRegex()
 
 fun ULong.toSnowflake() = Snowflake(this)
 fun String.toSnowflakeOrNull(): Snowflake? = if (!startsWith("<")) {
@@ -172,7 +172,7 @@ suspend fun MessageCreateBuilder.quoteMessage(message: Message?, toChannel: Snow
 		
 		embed {
 			url = if (closest != null) "https://discord.com/channels/${closestChannel?.data?.guildId?.value}/${closest.channelId}/${closest.id}" else null
-			title = "$titleText ${authorName}" + if (closest != null) " (link)" else ""
+			title = "$titleText $authorName" + if (closest != null) " (link)" else ""
 
 			description = buildString {
 				append(message.content.take(100).replace("/", "\\/"))

@@ -1,31 +1,26 @@
 package flarogus.command.impl
 
-import kotlin.random.*;
-import kotlinx.coroutines.*;
-import dev.kord.core.entity.*;
-import dev.kord.core.event.message.*;
-import flarogus.util.*;
-import flarogus.command.*
-import flarogus.command.builder.*
+import flarogus.command.builder.TreeCommandBuilder
+import kotlin.random.Random
 
-private val bombEmoji = "💥"
+private const val bombEmoji = "💥"
 private val numbers = arrayOf("0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣")
 
-private val maxW = 25
-private val maxH = 30
+private const val maxW = 25
+private const val maxH = 30
 
-private val openFlag = 0b10000
+private const val openFlag = 0b10000
 
 fun TreeCommandBuilder.addMinesweeperSubcommand() = subcommand<Unit?>("minesweeper") {
-	discordOnly() // there's no way this command can be ran in an annonymous way.
+	discordOnly() // there's no way this command can be run in an anonymous way.
 
 	description = "Play minesweeper in discord."
 
 	arguments {
-		default<Int>("width", "The width of the field. Defaults to 12. Maximum $maxW.") { 12 }
-		default<Int>("height", "The height of the field. Defaults to 8. Maximum $maxH.") { 18 }
+		default("width", "The width of the field. Defaults to 12. Maximum $maxW.") { 12 }
+		default("height", "The height of the field. Defaults to 8. Maximum $maxH.") { 18 }
 
-		default<Int>("mines", "The number of mines on the field. Defaults to (w * h / 3.3).") {
+		default("mines", "The number of mines on the field. Defaults to (w * h / 3.3).") {
 			(args.arg<Int>("width") * args.arg<Int>("height") / 3.3f).toInt()
 		}
 	}

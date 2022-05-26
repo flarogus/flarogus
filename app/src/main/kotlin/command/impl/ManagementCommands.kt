@@ -42,6 +42,7 @@ fun TreeCommandBuilder.addManagementSubtree() = subtree("manage") {
 			""".trimIndent())
 		}
 
+		// TODO: fix the guild argument not reaching this part
 		subtree("name", "Manage the name override for this guild. The caller must be an admin of this guild.") {
 			discordOnly()
 

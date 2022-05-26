@@ -9,6 +9,7 @@ import flarogus.command.parser.AbstractArgumentParser.*
  * If the string contains flags, they're added to callback's arguments.
  * In order to read the subcommand, read the [resultSubcommand] property of the parser after invoking [parse()].
  */
+@Suppress("UNCHECKED_CAST")
 open class TreeCommandArgumentParser(
 	callback: Callback<Any?>,
 	command: TreeCommand
@@ -16,9 +17,9 @@ open class TreeCommandArgumentParser(
 	lateinit var resultSubcommand: String
 	var hasResult = false
 
-	lateinit var argcb: Callback<Any?>.ArgumentCallback
+	protected lateinit var argcb: Callback<Any?>.ArgumentCallback
 
-	override protected suspend fun parseImpl() {
+	override suspend fun parseImpl() {
 		argcb = callback.createArguments() as Callback<Any?>.ArgumentCallback
 
 		while (!hasResult && index < content.length) {
@@ -40,7 +41,7 @@ open class TreeCommandArgumentParser(
 		val arg = readArgument()
 
 		when {
-			arg.isEmpty() -> return; // whatsoever
+			arg.isEmpty() -> return // whatsoever
 
 			arg.startsWith("--") -> {
 				command.arguments?.flags?.find { it.applicable(arg) }?.let { flag ->

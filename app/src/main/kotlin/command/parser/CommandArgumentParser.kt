@@ -1,8 +1,7 @@
 package flarogus.command.parser
 
-import flarogus.*
+import flarogus.Vars
 import flarogus.command.*
-import flarogus.command.parser.AbstractArgumentParser.*
 
 val commandSubstitutionRegex = "\\$\\((.+)\\)".toRegex()
 
@@ -11,17 +10,17 @@ open class CommandArgumentParser(
 	callback: Callback<out Any?>,
 	command: FlarogusCommand<out Any?>
 ) : AbstractArgumentParser<FlarogusCommand<out Any?>>(callback, command) {
-	lateinit var argcb: Callback<out Any?>.ArgumentCallback
+	protected lateinit var argcb: Callback<out Any?>.ArgumentCallback
 
-	var positionalArgIndex = 0
+	protected var positionalArgIndex = 0
 	/** Whether to perform command substitutions */
-	var substitutions = true
+	var performSubstitutions = true
 
-	override protected suspend fun parseImpl() {
+	override suspend fun parseImpl() {
 		argcb = callback.createArguments()
 
 		if (command.arguments == null) {
-			if (!content.substring(index).trim().isEmpty()) {
+			if (content.substring(index).trim().isNotEmpty()) {
 				error("this command accepts no arguments.", Type.TRAILING_ARGUMENT, index, content.length - index)
 			}
 		} else {
@@ -51,7 +50,7 @@ open class CommandArgumentParser(
 		skipWhitespace()
 
 		var arg = when (currentOrNone()) {
-			// for absokutely no reason, the string has ended
+			// for absolutely no reason, the string has ended
 			AbstractArgumentParser.NONE_CHAR -> return
 
 			// if it's a quotation mark, it's most likely a quoted string. if it's in middle, it can be ignored.
@@ -92,7 +91,7 @@ open class CommandArgumentParser(
 			else -> readArgument()
 		}
 
-		if (substitutions) {
+		if (performSubstitutions) {
 			var match: MatchResult? = commandSubstitutionRegex.find(arg)
 
 			val msg = callback.originalMessage?.asMessage()

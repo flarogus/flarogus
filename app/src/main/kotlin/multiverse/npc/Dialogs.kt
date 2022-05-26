@@ -36,7 +36,7 @@ inline fun Node.run(crossinline executable: (origin: String) -> String?) = runBu
 	builder.append(executable(origin))
 };
 
-/** Creates a node that delegates it's construction to one of it's child */
+/** Creates a node that delegates its construction to one of it's child */
 inline fun Node.random(block: RandomNode.() -> Unit) = RandomNode(ArrayList<Node>(8)).apply {
 	block()
 };
@@ -83,22 +83,22 @@ abstract class TreeNode<T> : Node() {
 }
 
 open class ExecutableNode(val executable: Builder) : Node() {
-	override open fun construct(builder: StringBuilder, origin: String) = executable(builder, origin)
+	override fun construct(builder: StringBuilder, origin: String) = executable(builder, origin)
 }
 
 open class TerminalNode(val string: String) : Node() {
-	override open fun construct(builder: StringBuilder, origin: String) {
+	override fun construct(builder: StringBuilder, origin: String) {
 		builder.append(string)
 	}
 }
 
 open class FollowNode(string: String, var next: Node?) : TerminalNode(string) {
-	override open fun construct(builder: StringBuilder, origin: String) {
+	override fun construct(builder: StringBuilder, origin: String) {
 		builder.append(string)
 		next?.construct(builder, origin)
 	}
 	
-	override open fun count() = if (next != null) next!!.count() else 1;
+	override fun count() = if (next != null) next!!.count() else 1;
 	
 	open operator fun String.unaryMinus() = FollowNode(this, null).also { this@FollowNode.next = it };
 	
@@ -111,17 +111,17 @@ open class RootNode : FollowNode("", null) {
 }
 
 open class DoubleNode(var first: Node?, var second: Node?) : Node() {
-	override open fun construct(builder: StringBuilder, origin: String) {
+	override fun construct(builder: StringBuilder, origin: String) {
 		if (first != null) first!!.construct(builder, origin)
 		if (second != null) second!!.construct(builder, origin)
 	}
 	
-	override open fun count() = (if (first != null) first!!.count() else 1) * (if (second != null) second!!.count() else 1);
+	override fun count() = (if (first != null) first!!.count() else 1) * (if (second != null) second!!.count() else 1);
 	
 }
 
 open class RepeatNode(open val times: Int, open var repeat: Node) : Node() {
-	override open fun construct(builder: StringBuilder, origin: String) {
+	override fun construct(builder: StringBuilder, origin: String) {
 		for (i in 1..times) repeat.construct(builder, origin)
 	}
 	
@@ -129,15 +129,15 @@ open class RepeatNode(open val times: Int, open var repeat: Node) : Node() {
 }
 
 open class RandomRepeatNode(open var minTimes: Int, open var maxTimes: Int, repeat: Node) : RepeatNode(maxTimes, repeat) {
-	override open val times get() = Random.nextInt(minTimes, maxTimes)
+	override val times get() = Random.nextInt(minTimes, maxTimes)
 	
 	override fun count() = (maxTimes - minTimes) * repeat.count()
 }
 
-open class RandomNode(override open val children: MutableList<Node>) : TreeNode<Node>() {
-	override open fun construct(builder: StringBuilder, origin: String) = selectChild().construct(builder, origin);
+open class RandomNode(override val children: MutableList<Node>) : TreeNode<Node>() {
+	override fun construct(builder: StringBuilder, origin: String) = selectChild().construct(builder, origin);
 	
-	override open fun count(): Int {
+	override fun count(): Int {
 		var c = 0;
 		children.forEach { c += it.count() }
 		return c
@@ -152,12 +152,12 @@ open class RandomNode(override open val children: MutableList<Node>) : TreeNode<
 	open operator fun <T : Node> T.unaryMinus() = DoubleNode(this, null).also { this@RandomNode.children.add(it) };
 }
 
-open class ConditionalNode(override open val children: MutableList<Pair<If, Node>>) : TreeNode<Pair<If, Node>>() {
-	override open fun construct(builder: StringBuilder, origin: String) {
+open class ConditionalNode(override val children: MutableList<Pair<If, Node>>) : TreeNode<Pair<If, Node>>() {
+	override fun construct(builder: StringBuilder, origin: String) {
 		children.find { it.first(origin) }?.second?.construct(builder, origin)
 	}
 	
-	override open fun count(): Int {
+	override fun count(): Int {
 		var c = 0;
 		children.forEach { c += it.second.count() }
 		return c

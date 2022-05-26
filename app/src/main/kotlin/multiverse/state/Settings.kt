@@ -93,7 +93,7 @@ object Settings {
 
 }
 
-/** An utility class that stores the most important parts of bot's state. Used for serialization. */
+/** A utility class that stores the most important parts of bot's state. Used for serialization. */
 @kotlinx.serialization.Serializable
 data class State(
 	val ubid: String = Vars.ubid,

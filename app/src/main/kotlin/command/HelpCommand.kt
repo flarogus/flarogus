@@ -94,7 +94,7 @@ class HelpCommand : FlarogusCommand<Unit>("help") {
 							if (subcommand is TreeCommand) {
 								name = "__${name}__"
 							} else {
-								subcommand.summaryArguments()?.let { 
+								subcommand.summaryArguments().let {
 									name += " ${subcommand.summaryArguments()}"
 								}
 							}

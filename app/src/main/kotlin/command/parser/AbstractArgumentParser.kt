@@ -8,7 +8,7 @@ abstract class AbstractArgumentParser<T: FlarogusCommand<out Any?>>(
 	val command: T,
 	val content: String = callback.message
 ) {
-	var index = max(callback.argumentOffset - 1, 0)
+	var index = max(callback.argumentOffset, 0)
 	val tempBuilder = StringBuilder(25)
 	val exception = ParseException()
 
@@ -19,10 +19,11 @@ abstract class AbstractArgumentParser<T: FlarogusCommand<out Any?>>(
 	suspend fun parse() {
 		parseImpl()
 
+		callback.argumentOffset = index + 1
 		if (!exception.isEmpty()) throw exception
 	}
 
-	abstract protected suspend fun parseImpl()
+	protected abstract suspend fun parseImpl()
 
 	open fun currentOrNone(): Char {
 		return if (index < 0 || index >= content.length) {
@@ -66,14 +67,14 @@ abstract class AbstractArgumentParser<T: FlarogusCommand<out Any?>>(
 	open fun readQuoted(char: Char = '"'): String {
 		if (currentOrNone() != char) throw IllegalArgumentException("Current char is not a quote char: ${current()}")
 
-		var begin = index
+		val begin = index
 
 		var escape = false
 		var isClosed = false
 		return readWhile(
 			modifier = { when {
 				escape -> it
-				!escape && it == '\\' -> {
+				it == '\\' -> {
 					escape = true
 					NONE_CHAR
 				}
@@ -94,7 +95,7 @@ abstract class AbstractArgumentParser<T: FlarogusCommand<out Any?>>(
 		require(begin != end) { "The begin char can not be equal to the end char" }
 		require(currentOrNone() == begin) { "The current char is not the begin char" }
 
-		var beginIndex = index
+		val beginIndex = index
 		var depth = 1
 
 		return readWhile {
@@ -146,27 +147,27 @@ abstract class AbstractArgumentParser<T: FlarogusCommand<out Any?>>(
 
 	inline fun Char.throwIfNone(message: () -> String) = ifNone<Nothing> { throw IllegalArgumentException(message()) }
 
-	fun Char.throwIndexIfNone() = throwIfNone { "Character index out of bounds: ${index} !in [0; ${content.length}" }
+	fun Char.throwIndexIfNone() = throwIfNone { "Character index out of bounds: $index !in [0; ${content.length}" }
 
 	companion object {
-		val NONE_CHAR = 0.toChar()
+		const val NONE_CHAR = 0.toChar()
 	}
 
 	open class ParseException(
-		val errors: MutableList<AbstractArgumentParser<*>.InputError> = ArrayList<AbstractArgumentParser<*>.InputError>()
+		val errors: MutableList<AbstractArgumentParser<*>.InputError> = ArrayList()
 	) : Exception() {
-		override val message get() = "Errors have occured while parsing your command:\n" + errors.joinToString("\n")
+		override val message get() = "Errors have occurred while parsing your command:\n" + errors.joinToString("\n")
 
 		fun contains(type: Type) = errors.any { it.type == type }
 
 		fun isEmpty() = errors.isEmpty()
 	}
 
-	inner open class InputError(val message: String, val type: Type, val at: Int, val hintLength: Int) {
+	open inner class InputError(val message: String, val type: Type, val at: Int, val hintLength: Int) {
 		val info = buildString {
-			if (!type.message.isEmpty()) append(type.message)
-			if (!message.isEmpty()) {
-				if (!type.message.isEmpty()) append(": ")
+			if (type.message.isNotEmpty()) append(type.message)
+			if (message.isNotEmpty()) {
+				if (type.message.isNotEmpty()) append(": ")
 				append("'").append(message).append("'")
 			}
 			append(" at char ").append(at + 1).appendLine(":")

@@ -10,6 +10,7 @@ import flarogus.multiverse.*
 import flarogus.multiverse.state.Multimessage
 import flarogus.util.*
 import kotlinx.serialization.*
+import multiverse.ScamDetector
 import java.net.URL
 import java.time.Instant
 import kotlin.time.ExperimentalTime
@@ -137,7 +138,7 @@ open class MultiversalUser(
 	}
 	
 	/** Updates this user */
-	override open suspend fun updateImpl() {
+	override suspend fun updateImpl() {
 		warns.removeAll { !it.isValid() }
 
 		if (user == null || lastUpdate + updateInterval < System.currentTimeMillis()) {

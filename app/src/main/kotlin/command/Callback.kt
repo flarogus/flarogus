@@ -53,7 +53,7 @@ open class Callback<R>(
 			null
 		} else {
 			Vars.client.async {
-				originalMessage!!.reply {
+				originalMessage.reply {
 					builder()
 					content = content?.stripEveryone()?.take(1999)
 				}
@@ -99,14 +99,14 @@ open class Callback<R>(
 				""
 			}
 
-			else -> "output: ${value.toString()}"
+			else -> "output: $value"
 		}
 	}
 
 	/** Tries to get the original message as a Message, returns null if it doesn't exist */
 	open suspend fun originalMessageOrNull() = originalMessage?.asMessage()
 
-	/** Tries to get the original message as a Message, throws a [NullPointerExcpetion] if it doesn't exist */
+	/** Tries to get the original message as a Message, throws a [NullPointerException] if it doesn't exist */
 	open suspend fun originalMessage() = originalMessageOrNull() ?: throw IllegalArgumentException("this message doesn't have an original message")
 
 	/** 
@@ -140,13 +140,9 @@ open class Callback<R>(
 		}
 	}
 
-	open inner class ArgumentCallback() {
+	open inner class ArgumentCallback {
 		val positional: PositionalArguments = PositionalArguments()
 		val flags: NonPositionalArguments = NonPositionalArguments()
-
-		init {
-			// if (command.arguments == null) throw IllegalStateException("an argument-less command cannot have argument callbacks!")	
-		}
 
 		/** Returns a positional argument or throws an exception if it is optional and not present */
 		open fun <T> arg(name: String) = positional.arg<T>(name)

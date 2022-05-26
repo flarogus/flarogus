@@ -7,7 +7,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @Serializable
 @OptIn(ExperimentalTime::class)
-abstract class MultiversalEntity() {
+abstract class MultiversalEntity {
 	/** Whether this entity was forcibly banned */
 	var isForceBanned = false
 

@@ -95,7 +95,7 @@ open class FlarogusCommand<R>(name: String) {
 	open suspend operator fun invoke(message: Message): Callback<R> = invoke(message, message.content)
 
 	/** 
-	 * Executes this command with the given callback, inflating it's arguments.
+	 * Executes this command with the given callback, inflating its arguments.
 	 * If the callback has an associated message, reports any errors by replying to it.
 	 * Otherwise, rethrows them. */
 	open suspend fun useCallback(callback: Callback<R>) {

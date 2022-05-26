@@ -26,7 +26,7 @@ open class TreeCommand(name: String) : FlarogusCommand<Any?>(name) {
 		addChild(HelpCommand())
 	}
 
-	override suspend open fun useCallback(callback: Callback<Any?>): Unit {
+	override suspend fun useCallback(callback: Callback<Any?>): Unit {
 		try {
 			performChecks(callback)
 
@@ -47,7 +47,7 @@ open class TreeCommand(name: String) : FlarogusCommand<Any?>(name) {
 
 					throw IllegalArgumentException(buildString {
 						append("command '").append(commandName).appendLine("' does not exist")
-						if (!possible.isEmpty()) {
+						if (possible.isNotEmpty()) {
 							appendLine("possible matches:")
 							
 							possible.forEach {
@@ -56,10 +56,7 @@ open class TreeCommand(name: String) : FlarogusCommand<Any?>(name) {
 						}
 					})
 				}
-				
-				// todo: can i not use indexOf?
-				val offset = callback.message.indexOf(commandName) + commandName.length + 1
-				callback.argumentOffset = offset
+
 				(candidateCommand as FlarogusCommand<Any?>).useCallback(callback)
 			}
 		} catch (t: Throwable) {
@@ -76,8 +73,8 @@ open class TreeCommand(name: String) : FlarogusCommand<Any?>(name) {
 	/** Finds up to N most simmilar commands */
 	open fun findSimmilar(command: String, count: Int, maxDistance: Double = 0.5): List<FlarogusCommand<*>> {
 		var fitting = 0
-		return subcommands.sortedBy {
-			levenshtein.distance(command, it.name).also {
+		return subcommands.sortedBy { flarogusCommand ->
+			levenshtein.distance(command, flarogusCommand.name).also {
 				if (it < maxDistance) fitting++
 			}
 		}.take(min(count, fitting))

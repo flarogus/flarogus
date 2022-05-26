@@ -22,6 +22,7 @@ import flarogus.util.*
 import flarogus.multiverse.state.*
 import flarogus.multiverse.npc.impl.*
 import flarogus.multiverse.entity.*
+import kotlin.time.Duration.Companion.seconds
 
 // TODO switch to the new model:
 // remove remains of the old model
@@ -66,7 +67,7 @@ object Multiverse {
 		Vars.client.launch {
 			delay(40000L)
 			val channels = guilds.fold(0) { v, it -> if (!it.isForceBanned) v + it.channels.size else v }
-			brodcastSystem { _ ->
+			brodcastSystem {
 				embed { description = """
 					***This channel is a part of the Multiverse. There's ${channels - 1} other channels.***
 					Call `!flarogus multiverse rules` to see the rules
@@ -77,8 +78,7 @@ object Multiverse {
 		}
 		
 		isRunning = true
-		
-		//TODO: after moving to the new model i should merge them
+
 		fixedRateTimer("update state", true, initialDelay = 5 * 1000L, period = 180 * 1000L) { updateState() }
 		fixedRateTimer("update settings", true, initialDelay = 5 * 1000L, period = 20 * 1000L) {
 			//random delay is to ensure that there will never be situations when two instances can't detect each other
@@ -173,7 +173,7 @@ object Multiverse {
 	/** Searches for channels with "multiverse" in their names in all guilds this bot is in */
 	suspend fun findChannels() {
 		Vars.client.rest.user.getCurrentUserGuilds().forEach {
-			guildOf(it.id)?.update() //this will add an entry if it didnt exist
+			guildOf(it.id)?.update() //this will add an entry if it didn't exist
 		}
 	};
 	

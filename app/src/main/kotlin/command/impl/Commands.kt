@@ -1,23 +1,23 @@
 package flarogus.command.impl
 
-import dev.kord.common.entity.*
-import dev.kord.core.behavior.*
-import dev.kord.core.behavior.channel.*
-import dev.kord.core.entity.*
-import dev.kord.rest.builder.message.create.*
-import flarogus.*
-import flarogus.command.*
-import flarogus.command.builder.*
+import dev.kord.common.entity.Snowflake
+import dev.kord.core.behavior.channel.createMessage
+import dev.kord.core.behavior.edit
+import dev.kord.core.entity.User
+import dev.kord.rest.builder.message.create.embed
+import flarogus.Vars
+import flarogus.command.TreeCommand
+import flarogus.command.builder.createTree
 import flarogus.multiverse.*
 import flarogus.multiverse.entity.*
 import flarogus.util.*
 import kotlinx.coroutines.*
-import java.awt.image.*
-import java.net.*
-import javax.imageio.*
-import javax.script.*
-import kotlin.math.*
-import kotlin.time.*
+import java.awt.image.BufferedImage
+import java.net.URL
+import javax.imageio.ImageIO
+import javax.script.ScriptContext
+import kotlin.math.min
+import kotlin.time.DurationUnit
 
 @OptIn(kotlin.time.ExperimentalTime::class)
 fun createRootCommand(): TreeCommand = createTree("!flarogus") {
@@ -134,7 +134,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 				} else if (originalMessage != null) {
 					try {
 						originalMessage.asMessage().delete()
-					} catch (e: Exception) {}
+					} catch (_: Exception) {}
 				}
 			}
 		}
@@ -189,7 +189,9 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 					Vars.supplier.getUserOrNull(args.arg<Snowflake>("user"))?.getAvatarUrl() ?: fail("cannot determine user id")
 				}
 	
-				val origin = ImageIO.read(URL(url))
+				val origin = withContext(Dispatchers.IO) {
+					ImageIO.read(URL(url))
+				}
 				val flaroficated = ImageUtil.multiply(origin, flarsusBase)
 				result(flaroficated)
 			}
@@ -294,7 +296,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 				Technicially, any command allows this, but this command is the most useful.
 			""".trimIndent()
 
-			arguments { 
+			arguments {
 				default<String>("string", "An arbitrary string.") { "" }
 			}
 			action {
@@ -348,6 +350,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 
 		presetSubtree("reply", "Fetch info of a message you reply to.") {
 			discordOnly()
+			// TODO: help can not be called without a reply
 			check { m, _ -> if (m?.referencedMessage != null) null else "you must reply to a message." }
 
 			subaction<String>("username", "Fetch the username of the author of the message.") {
@@ -376,7 +379,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 
 				this@action.result(ping, false)
 				content = """
-					${Vars.ubid} — running for ${formatTime(System.currentTimeMillis() - Vars.startedAt)}, sussification time: ${ping} ms.
+					${Vars.ubid} — running for ${formatTime(System.currentTimeMillis() - Vars.startedAt)}, sussification time: $ping ms.
 					Time since flarogus epoch: ${formatTime(System.currentTimeMillis() - Vars.flarogusEpoch)}
 				""".trimIndent()
 			} ?: result(0L, false)

@@ -7,9 +7,9 @@ import flarogus.*
 
 fun Any?.isNotNull() = this != null
 
-fun Instant.atUTC() = atZone(ZoneId.of("Z"))
-fun TemporalAccessor.format() = Vars.dateFormatter.format(this)
-fun Instant.formatUTC() = atUTC().format()
+fun Instant.atUTC(): ZonedDateTime = atZone(ZoneId.of("Z"))
+fun TemporalAccessor.format(): String = Vars.dateFormatter.format(this)
+fun Instant.formatUTC(): String = atUTC().format()
 
 /** Waits up to [limit] ms for [condition] to become true. Returns true if the condition returned true, false if [limit] was reached. */
 suspend inline fun delayUntil(limit: Long, period: Long = 50L, condition: () -> Boolean): Boolean {

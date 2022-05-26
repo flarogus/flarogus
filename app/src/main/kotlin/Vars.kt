@@ -37,8 +37,8 @@ object Vars {
 	/** Flarogus-central */
 	val flarogusGuild = Snowflake(932524169034358877UL)
 	
-	val threadPool = Executors.newFixedThreadPool(5)
-	val dateFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
+	val threadPool: ExecutorService = Executors.newFixedThreadPool(5)
+	val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
 	
 	/** Superusers that are allowed to do most things */
 	val superusers = mutableSetOf<Snowflake>(
@@ -53,7 +53,7 @@ object Vars {
 	)
 
 	/** Scripting engine */
-	val scriptEngine = ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts");
+	val scriptEngine: ScriptEngine = ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts");
 	/* Global scripting context */
 	val scriptContext = SimpleScriptContext()
 
