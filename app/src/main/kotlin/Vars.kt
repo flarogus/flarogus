@@ -52,8 +52,9 @@ object Vars {
 		649306040604557322.toSnowflake() // bluewolf
 	)
 
+	// the platform-specific type is kept to avoid a sudden NullPointerException if the engine is missing
 	/** Scripting engine */
-	val scriptEngine: ScriptEngine = ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts");
+	val scriptEngine = ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts");
 	/* Global scripting context */
 	val scriptContext = SimpleScriptContext()
 
