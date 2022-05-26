@@ -304,7 +304,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 			}
 		}
 
-		subcommand<String>("username", "fetch the name of the user") {
+		subcommand<String>("username", "fetch the name of a user") {
 			arguments {
 				required<MultiversalUser>("user")
 			}
@@ -316,7 +316,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 			}
 		}
 
-		subcommand<String>("guildname", "fetch the name of the guild") {
+		subcommand<String>("guildname", "fetch the name of a guild") {
 			arguments {
 				required<MultiversalGuild>("guild")
 			}
@@ -350,8 +350,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 
 		presetSubtree("reply", "Fetch info of a message you reply to.") {
 			discordOnly()
-			// TODO: help can not be called without a reply
-			check { m, _ -> if (m?.referencedMessage != null) null else "you must reply to a message." }
+			presetCheck { m, _ -> if (m?.referencedMessage != null) null else "you must reply to a message." }
 
 			subaction<String>("username", "Fetch the username of the author of the message.") {
 				result(originalMessage().referencedMessage!!.data.author.let { it.username + "#" + it.discriminator })
