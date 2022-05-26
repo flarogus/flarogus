@@ -5,6 +5,8 @@ import flarogus.command.*
 
 val commandSubstitutionRegex = "\\$\\((.+)\\)".toRegex()
 
+//TODO: write unit tests
+
 /** Parses qrguments of normal commands. */
 open class CommandArgumentParser(
 	callback: Callback<out Any?>,
@@ -20,7 +22,8 @@ open class CommandArgumentParser(
 		argcb = callback.createArguments()
 
 		if (command.arguments == null) {
-			if (content.substring(index).trim().isNotEmpty()) {
+			skipWhitespace()
+			if (index < content.length) {
 				error("this command accepts no arguments.", Type.TRAILING_ARGUMENT, index, content.length - index)
 			}
 		} else {
