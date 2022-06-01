@@ -28,6 +28,9 @@ object Settings {
 	val settingsChannel by lazy { Vars.client.unsafe.messageChannel(Channels.settings) }
 	var settingsMessage: Message? = null
 	val fileStorageChannel by lazy { Vars.client.unsafe.messageChannel(Channels.fileStorage) }
+
+	/** Last uploaded state */
+	var lastState: State? = null
 	
 	/** Tries to update the state. Retries up to [attempts - 1] times if an exception was thrown. */
 	suspend fun updateState(attempts: Int = 3) {
@@ -69,11 +72,15 @@ object Settings {
 			}
 			
 			val newState = State()
-			val newStateEncoded = Json { encodeDefaults = true }.encodeToString(newState)
-			val uploadedUrl = uploadToCdn(newStateEncoded)
+			if (newState != lastState) {
+				val newStateEncoded = Json { encodeDefaults = true }.encodeToString(newState)
+				val uploadedUrl = uploadToCdn(newStateEncoded)
 			
-			it.edit {
-				content = uploadedUrl
+				it.edit {
+					content = uploadedUrl
+				}
+
+				lastState = newState
 			}
 		}
 	}
