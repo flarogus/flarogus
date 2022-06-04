@@ -150,7 +150,9 @@ abstract class PositionalArgument<T>(name: String, mandatory: Boolean) : Argumen
 		override val type: String get() = "multiversal_guild"
 
 		override suspend fun construct(from: String) = from.toSnowflakeOrNull()?.let {
-			Multiverse.guildOf(it) ?: throw RuntimeException("Multiversal guild with id $it doesn't exist")
+			Multiverse.guildOf(it)?.also {
+				it.update()
+			} ?: throw RuntimeException("Multiversal guild with id $it doesn't exist")
 		}
 	}
 
@@ -158,7 +160,9 @@ abstract class PositionalArgument<T>(name: String, mandatory: Boolean) : Argumen
 		override val type: String get() = "multiversal_user"
 
 		override suspend fun construct(from: String) = from.toSnowflakeOrNull()?.let {
-			Multiverse.userOf(it) ?: throw RuntimeException("Multiversal user with id $it doesn't exist")
+			Multiverse.userOf(it)?.also {
+				it.update()
+			} ?: throw RuntimeException("Multiversal user with id $it doesn't exist")
 		}
 	}
 
