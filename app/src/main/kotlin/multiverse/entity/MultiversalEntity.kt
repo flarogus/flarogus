@@ -1,5 +1,6 @@
 package flarogus.multiverse.entity
 
+import flarogus.multiverse.*
 import kotlin.time.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.*
@@ -14,6 +15,9 @@ abstract class MultiversalEntity {
 	@Transient
 	var isValid = true
 		protected set
+	
+	@Transient
+	var lastUpdate = 0L
 
 	suspend fun update() {
 		try {
@@ -21,9 +25,14 @@ abstract class MultiversalEntity {
 				updateImpl()
 			}
 		} catch (e: Exception) {
-			println(e)
+			Log.error { "Error when updating $this: $e" }
 		}
 	}
+
+	fun invalidate() {
+		lastUpdate = 0L
+	}
+
 	
 	abstract suspend fun updateImpl()
 }

@@ -54,6 +54,7 @@ fun TreeCommandBuilder.addManagementSubtree() = subtree("manage") {
 				require(name.length <= 30) { "The nickname cannot be longer than 30 characters! ${name.length} > 30" }
 
 				args.arg<MultiversalGuild>("guild").nameOverride = name
+				Log.info { "The name of guild ${args.arg<MultiversalGuild>("guild").discordId} was set to $name" }
 			}
 		}
 
@@ -85,6 +86,7 @@ fun TreeCommandBuilder.addManagementSubtree() = subtree("manage") {
 				require(name.length <= 30) { "The nickname must not be longer than 30 symbols." }
 
 				args.arg<MultiversalUser>("user").nameOverride = name
+				Log.info { "The name of user ${args.arg<MultiversalUser>("user").discordId} was set to $name" }
 			}
 		}
 

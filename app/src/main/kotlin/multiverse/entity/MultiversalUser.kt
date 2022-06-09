@@ -43,8 +43,6 @@ open class MultiversalUser(
 	/** The avatar of the user */
 	val avatar get() = user?.getAvatarUrl()
 
-	@Transient
-	var lastUpdate = 0L
 	var lastSent = 0L
 	var totalSent = 0
 

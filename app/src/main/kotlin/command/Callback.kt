@@ -45,7 +45,7 @@ open class Callback<R>(
 	
 	/** Asyncronously replies to a message. Does not assign a result. */
 	inline fun reply(
-		crossinline builder: MessageCreateBuilder.() -> Unit
+		crossinline builder: suspend MessageCreateBuilder.() -> Unit
 	): Deferred<Message>? {
 		hasResponded = true
 
@@ -63,8 +63,8 @@ open class Callback<R>(
 
 	/** Asyncronously replies to a message with an embed. Same as `reply { embed { ... } }`. */
 	inline fun replyEmbed(
-		crossinline builder: EmbedBuilder.() -> Unit
-	) = reply { embed(builder) }
+		crossinline builder: suspend EmbedBuilder.() -> Unit
+	) = reply { embed { builder() } }
 
 	/**
 	 * Asyncronously replies to a message. Does not assign a result.

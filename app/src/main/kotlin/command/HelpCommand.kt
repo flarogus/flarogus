@@ -30,22 +30,26 @@ class HelpCommand : FlarogusCommand<Unit>("help") {
 				color = embedColor
 
 				val cmdname = args.opt<String>("subcommand")
-				val subcommand = if (cmdname != null) parent.subcommands.find { it.name.equals(cmdname, true) } else null
+				val subcommand = if (cmdname != null) {
+					parent.subcommands.find { it.name.equals(cmdname, true) }.also { subcommand ->
+						expect(subcommand != null) {
+							"Subcommand '$subcommand' was not found in '${parent.getFullName()}'!".let {
+								val matches = parent.findSimmilar(args.arg<String>("subcommand"), 3)
+								val matchesStr = matches.map { "`$it`" }.joinToString(", ")
 
-				if (cmdname != null && subcommand !is TreeCommand) {
-					expect(subcommand != null) {
-						"Subcommand '$subcommand' was not found in '${parent.getFullName()}'!".let {
-							val matches = parent.findSimmilar(args.arg<String>("subcommand"), 3)
-							val matchesStr = matches.map { "`$it`" }.joinToString(", ")
-
-							if (!matches.isEmpty()) {
-								"$it\nDid you mean:\n$matchesStr?"
-							} else {
-								it
+								if (!matches.isEmpty()) {
+									"$it\nDid you mean:\n$matchesStr?"
+								} else {
+									it
+								}
 							}
 						}
 					}
+				} else {
+					null
+				}
 
+				if (subcommand != null && subcommand !is TreeCommand) {
 					title = subcommand.getFullName()
 
 					description = subcommand.description + "\n" + splitter
@@ -78,6 +82,8 @@ class HelpCommand : FlarogusCommand<Unit>("help") {
 					} else {
 						field { value = "this command has no arguments nor flags." }
 					}
+				} else if (subcommand != null && subcommand is TreeCommand) {
+					subcommand("help")
 				} else {
 					title = parent.getFullName()
 

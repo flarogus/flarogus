@@ -33,9 +33,7 @@ open class MultiversalGuild(
 	var nameOverride: String? = null
 		get() = if (field == null || field!!.isEmpty()) null else field
 	val name: String get() = nameOverride ?: guild?.name ?: "unknown guild"
-	
-	@Transient
-	var lastUpdate = 0L
+
 	var totalSent = 0
 	var totalUserMessages = 0
 
@@ -73,7 +71,7 @@ open class MultiversalGuild(
 			} catch (e: Exception) {
 				webhooks.remove(webhook)
 				channels.removeAll { it.id == webhook.channelId }
-				lastUpdate = 0L // force next uldate
+				invalidate()
 				Log.error { "An exception has occurred while transmitting a message to '$name': '$e'. Webhook and channel invalidated." }
 			}
 		}

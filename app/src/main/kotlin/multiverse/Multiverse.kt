@@ -239,7 +239,7 @@ object Multiverse {
 					multimessage
 				}
 			} catch (e: TimeoutCancellationException) {
-				println(e)
+				println(e) // we don't need to log it
 				throw e
 			}
 		}.also {
