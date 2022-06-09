@@ -1,16 +1,8 @@
-@file:Suppress("SpellCheckingInspection", "SpellCheckingInspection", "SpellCheckingInspection",
-	"SpellCheckingInspection", "SpellCheckingInspection", "SpellCheckingInspection", "SpellCheckingInspection",
-	"SpellCheckingInspection", "SpellCheckingInspection", "SpellCheckingInspection"
-)
-
 package flarogus.command.builder
 
 import flarogus.command.*
 
-@Suppress("SpellCheckingInspection", "SpellCheckingInspection", "SpellCheckingInspection", "SpellCheckingInspection",
-	"SpellCheckingInspection", "SpellCheckingInspection", "SpellCheckingInspection", "SpellCheckingInspection",
-	"SpellCheckingInspection", "SpellCheckingInspection"
-)
+@Suppress("SpellCheckingInspection")
 abstract class AbstractTreeCommandBuilder<T: TreeCommand>(
 	command: T
 ) : AbstractCommandBuilder<Any?, TreeCommand>(command) {
