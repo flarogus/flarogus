@@ -23,6 +23,10 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '11'
+
+      - name: Set experimental to true
+        run: |
+          sed -i "s/var experimental = false/var experimental = true/" app/src/main/kotlin/Vars.kt
       
       - name: Compile
         run: |
