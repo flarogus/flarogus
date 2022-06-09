@@ -35,9 +35,11 @@ open class MultiversalUser(
 
 	/** NOT the name of the user! */
 	var usertag: String? = null
+	var nameOverride: String? = null
+		get() = if (field == null || field!!.isEmpty()) null else field
 
 	/** The name of the user */
-	val name get() = if (usertag != null) "[$usertag] ${user?.tag}" else user?.tag ?: "null"
+	val name get() = (if (usertag != null) "[$usertag] " else "") + (nameOverride ?: user?.username ?: "null") + "#" + user?.discriminator
 	/** The avatar of the user */
 	val avatar get() = user?.getAvatarUrl()
 

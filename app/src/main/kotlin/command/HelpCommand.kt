@@ -29,9 +29,10 @@ class HelpCommand : FlarogusCommand<Unit>("help") {
 			replyEmbed {
 				color = embedColor
 
-				if ("subcommand" in args) {
-					val subcommand = parent.subcommands.find { it.name.equals(args.arg<String>("subcommand"), true) }
+				val cmdname = args.opt<String>("subcommand")
+				val subcommand = if (cmdname != null) parent.subcommands.find { it.name.equals(cmdname, true) } else null
 
+				if (cmdname != null && subcommand !is TreeCommand) {
 					expect(subcommand != null) {
 						"Subcommand '$subcommand' was not found in '${parent.getFullName()}'!".let {
 							val matches = parent.findSimmilar(args.arg<String>("subcommand"), 3)
@@ -60,7 +61,7 @@ class HelpCommand : FlarogusCommand<Unit>("help") {
 								name = "Flags"
 								value = subcommand.arguments!!.flags.mapIndexed { i, it: NonPositionalArgument ->
 									val aliases = it.getAllAliases().joinToString(" ")
-									"$i. $aliases (${it.description})"
+									"${i + 1}. $aliases (${it.description})"
 								}.joinToString("\n")
 							}
 						}
@@ -68,7 +69,9 @@ class HelpCommand : FlarogusCommand<Unit>("help") {
 							field {
 								name = "Positional arguments"
 								value = subcommand.arguments!!.positional.mapIndexed { i, it ->
-									"$i. ${it.name}: ${it.type} — ${it.description}"
+									val isOptional = if (it.mandatory) "" else "[optional] "
+
+									"${i + 1}. ${it.name}: ${it.type} $isOptional— ${it.description}"
 								}.joinToString("\n")
 							}
 						}

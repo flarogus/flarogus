@@ -9,6 +9,7 @@ import flarogus.command.*
 import flarogus.command.builder.*
 import flarogus.multiverse.*
 import flarogus.multiverse.entity.*
+import flarogus.util.*
 
 fun TreeCommandBuilder.addManagementSubtree() = subtree("manage") {
 	description = "Manage multiversal entities"
@@ -42,46 +43,72 @@ fun TreeCommandBuilder.addManagementSubtree() = subtree("manage") {
 			""".trimIndent())
 		}
 
-		subtree("name", "Manage the name override for this guild. The caller must be an admin of this guild.") {
-			discordOnly()
-
-			subcommand<Unit>("set", "Set the name override") {
-				arguments {
-					required<String>("name", "The new name you want to assign to this guild. Up to 25 characters long.")
-				}
-				action {
-					requireAdmin()
-
-					val name = args.arg<String>("name")
-					require(name.length <= 25) { "The name cannot be longer than 25 characters! ${name.length} > 25" }
-
-					args.arg<MultiversalGuild>("guild").nameOverride = name
-				}
+		subcommand<Unit>("nickname", "Set the nickname for this guild. Requires the user to be an admin of this guild.") {
+			arguments {
+				default<String>("name", "The new name you want to assign to this guild. Up to 25 characters long.") { "" }
 			}
-
-			subaction<Unit>("reset", "Reset the name override.") {
+			action {
 				requireAdmin()
-				args.arg<MultiversalGuild>("guild").nameOverride = null
+
+				val name = args.arg<String>("name")
+				require(name.length <= 30) { "The nickname cannot be longer than 30 characters! ${name.length} > 30" }
+
+				args.arg<MultiversalGuild>("guild").nameOverride = name
 			}
+		}
+
+		subaction<Unit>("reset-nickname", "Reset the name override.") {
+			requireAdmin()
+			args.arg<MultiversalGuild>("guild").nameOverride = null
 		}
 	}
 
-	//presetSubtree("user") {
-	//	description = "Manage a multiversal user."
+	presetSubtree("user") {
+		description = "Manage a multiversal user."
 
-	//	presetArguments {
-	//		default<MultiversalGuild>("guild", "The guild you want to manage. Defaults to current guild.") {
-	//			val id = originalMessage?.asMessage()?.data?.guildId?.value ?: fail("Anonymous caller must specify a guild")
-	//			Multiverse.guildOf(id) ?: fail("This guild is not valid.")
-	//		}
-	//	}
-	//}
+		presetArguments {
+			default<MultiversalUser>("user", "The user you want to manage. Defaults to the caller.") {
+				val id = originalMessage?.asMessage()?.author?.id ?: fail("anonymous caller must specify a user")
+				Multiverse.userOf(id) ?: fail("This user is not valid.")
+			}
+		}
+		
+		subcommand<Unit>("nickname", "Set the nickname of a user. Users without moderator (or higher) permissions can only set their own nick name.") {
+			arguments {
+				default<String>("name", "The name to set this user's nickname to.") { "" }
+			}
+
+			action {
+				requireModOrSelf()
+				val name = args.arg<String>("name")
+
+				require(name.length <= 30) { "The nickname must not be longer than 30 symbols." }
+
+				args.arg<MultiversalUser>("user").nameOverride = name
+			}
+		}
+
+		subaction<Unit>("reset-nickname", "Resst the nickname of a user.") {
+			requireModOrSelf()
+			args.arg<MultiversalUser>("user").nameOverride = null
+		}
+	}
+}
+
+private suspend fun Callback<*>.requireModOrSelf() {
+	expect(originalMessage != null) { "anonymous caller cannot use this command" }
+	expect(originalMessage().author!!.let {
+		it.isModerator() || it.id == args.arg<MultiversalUser>("user").discordId
+	}) {
+		"You must either manage yourself or be a multiversal moderator."
+	}
 }
 
 private suspend fun Callback<*>.requireAdmin() {
-	require(originalMessage != null) { "anonymous caller cannot use this command" }
-	require(args.arg<MultiversalGuild>("guild").isAdmin(originalMessage().author!!.id)) {
-		"you must be an admin of this guild in order to execute this"
+	expect(originalMessage != null) { "anonymous caller cannot use this command" }
+	val author = originalMessage().author!!
+	expect(author.isModerator() || args.arg<MultiversalGuild>("guild").isAdmin(author.id)) {
+		"You must be an admin of either this guild or the whole multiverse in order to execute this command."
 	}
 }
 
