@@ -132,7 +132,7 @@ open class MultiversalUser(
 
 		if (informMultiverse) {
 			Multiverse.brodcastSystemAsync {
-				content = "User $name was warned for rule ${rule.category}.${rule.index}: «$rule»"
+				content = "User $name was warned for rule ${rule.category}.${rule.index + 1}: «$rule»"
 			}
 		}
 	}
