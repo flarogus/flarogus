@@ -1,6 +1,7 @@
 package flarogus.multiverse.entity
 
 import flarogus.multiverse.*
+import dev.kord.rest.request.KtorRequestException
 import kotlin.time.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.*
@@ -25,7 +26,13 @@ abstract class MultiversalEntity {
 				updateImpl()
 			}
 		} catch (e: Exception) {
-			Log.error { "Error when updating $this: $e" }
+			if (e !is KtorRequestException || e.status.code != 403) {
+				Log.error { "Error when updating $this: $e" }
+			} else {
+				// multiversal entities are updated once per 8 minute
+				// so we put it 1 minute away from next update.
+				lastUpdate = System.currentTimeMillis() - 1000 * 60 * 7
+			}
 		}
 	}
 
