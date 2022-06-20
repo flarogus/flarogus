@@ -65,7 +65,8 @@ open class MultiversalGuild(
 					builder(webhook.channelId)
 					content = content?.take(1999)?.stripEveryone()
 					allowedMentions() //forbid all mentions
-					this.username = username
+
+					this.username = username?.truncate(75) // discord only allows 80.
 					avatarUrl = avatar
 				}.also { handler(it, webhook) }
 			} catch (e: Exception) {
