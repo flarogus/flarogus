@@ -40,7 +40,7 @@ object Multiverse {
 	
 	val webhookName = "MultiverseWebhook"
 	val systemName = "Multiverse"
-	val systemAvatar = "https://drive.google.com/uc?export=download&id=197qxkXH2_b0nZyO6XzMC8VeYTuYwcai9"
+	val systemAvatar = "https://drive.google.com/uc?export=download&id=1Iab4m-a6VsyEnRhniT7nI4EMk_Wzjc-1"
 	
 	/** If false, new messages will be ignored */
 	var isRunning = false
