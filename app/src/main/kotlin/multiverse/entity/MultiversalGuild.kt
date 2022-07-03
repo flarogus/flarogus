@@ -34,6 +34,7 @@ open class MultiversalGuild(
 		get() = if (field == null || field!!.isEmpty()) null else field
 	val name: String get() = nameOverride ?: guild?.name ?: "unknown guild"
 
+	var lastSent = 0L
 	var totalSent = 0
 	var totalUserMessages = 0
 
@@ -61,6 +62,8 @@ open class MultiversalGuild(
 				val channel = channels.find { it.id == webhook.channelId } 
 				if (channel == null || !filter(channel)) return@forEach
 
+				lastSent = System.currentTimeMillis()
+			
 				webhook.execute(webhook.token!!) {
 					builder(webhook.channelId)
 					content = content?.take(1999)?.stripEveryone()
