@@ -106,6 +106,13 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 
 				var deleted = 0
 				val silent = args.flag("silent")
+
+				if (silent && originalMessage != null) {
+					try {
+						originalMessage.asMessage().delete()
+					} catch (_: Exception) {}
+				}
+
 				
 				multimessage.retranslated.forEach { 
 					try { 
@@ -131,10 +138,6 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 				result(deleted, false)
 				if (!silent) {
 					reply("Deleted a total of $deleted messages")
-				} else if (originalMessage != null) {
-					try {
-						originalMessage.asMessage().delete()
-					} catch (_: Exception) {}
 				}
 			}
 		}
