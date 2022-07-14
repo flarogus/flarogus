@@ -90,7 +90,12 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 		}
 
 		subaction<Unit>("add", "Whitelist a guild.") {
-			args.arg<MultiversalGuild>("guild").isWhitelisted = true
+			args.arg<MultiversalGuild>("guild").let {
+				it.isWhitelisted = true
+				// forcibly update it
+				it.lastUpdate = 0L
+				it.update()
+			}
 		}
 
 		subaction<Unit>("remove", "Unwhitelist a guild.") {
