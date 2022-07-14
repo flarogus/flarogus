@@ -55,6 +55,7 @@ object Multiverse {
 	val guilds = ArrayList<MultiversalGuild>(30)
 
 	var lastJob: Job? = null
+	var jobCount = 0
 	
 	/** Sets up the multiverse */
 	suspend fun start() {
@@ -209,6 +210,7 @@ object Multiverse {
 			val messages = ArrayList<WebhookMessageBehavior>(guilds.size * 2)
 			val deferreds = ArrayList<Job>(guilds.size * 2)
 
+			jobCount++
 			prevJob?.join() //wait for the completeion of that coroutine
 			
 			try {
@@ -227,6 +229,8 @@ object Multiverse {
 						} catch (e: Exception) {
 							Log.error { "Exception while retranslating a message into ${it.name}: $e" }
 						}
+
+						yield()
 					}
 					
 					deferreds.forEach { def ->
@@ -241,6 +245,8 @@ object Multiverse {
 			} catch (e: TimeoutCancellationException) {
 				println(e) // we don't need to log it
 				throw e
+			} finally {
+				jobCount--
 			}
 		}.also {
 			lastJob = it

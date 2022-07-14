@@ -78,6 +78,8 @@ open class MultiversalGuild(
 				invalidate()
 				Log.error { "An exception has occurred while transmitting a message to '$name': '$e'. Webhook and channel invalidated." }
 			}
+
+			yield()
 		}
 		totalSent++
 	}
@@ -125,6 +127,8 @@ open class MultiversalGuild(
 							it.createMessage("Failed to acquire a webhook for this channel. Next attempt in 10 minutes.") 
 						} catch (_: Exception) {}
 					}
+
+					yield()
 				}
 			}
 

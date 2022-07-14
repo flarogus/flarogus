@@ -14,6 +14,7 @@ import dev.kord.core.event.*
 import dev.kord.core.event.message.*
 import dev.kord.core.entity.*;
 import dev.kord.core.entity.channel.*
+import dev.kord.core.behavior.*
 import flarogus.util.*;
 import flarogus.command.*;
 import flarogus.command.builder.*
@@ -53,11 +54,19 @@ suspend fun main(vararg args: String) {
 				if (isCommand) {
 					val cropped = it.message.content.substring(Vars.rootCommand.name.length).trimStart()
 					Vars.rootCommand(it.message, cropped)
+
+					Log.debug { "User ${it.message.data.author.username} has executed a command: '$cropped'" }
 				} else if (IS_MULTIVERSE_ENABLED) {
 					Vars.client.async {
 						withTimeout(45.seconds) {
 							Multiverse.messageReceived(it)
 						}
+					}
+				}
+			} catch (e: TimeoutCancellationException) {
+				runCatching {
+					it.message.reply {
+						content = "Your message could not be processed within 45 seconds. This can indicate an overload. You can try again."
 					}
 				}
 			} catch (e: Throwable) {

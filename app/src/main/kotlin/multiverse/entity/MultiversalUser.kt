@@ -77,6 +77,11 @@ open class MultiversalUser(
 			} else if (!guild.isWhitelisted) {
 				event.message.replyWith("This guild is not whitelisted. Contact the admins for more info")
 			} else {
+				val links = linkRegex.findAll(event.message.content).map { it.value }.filter { url ->
+					workaroundUrls.any { url.startsWith(it) } && !unsupportedExtensions.any { url.endsWith(it) }
+				}.toList()
+
+				val timeBegin = System.currentTimeMillis()
 				val message = send(
 					guild = guild,
 					filter = { it.id != event.message.channelId }
@@ -100,10 +105,17 @@ open class MultiversalUser(
 						}
 					}
 
+					links.forEach {
+						embed { image = it }
+					}
+
 					if (content!!.isEmpty() && event.message.data.attachments.isEmpty()) content = "<no content>"
 				}
 
 				message.origin = event.message
+
+				val totalTime = (System.currentTimeMillis() - timeBegin) / 1000f
+				Log.lifecycle { "Message sent by $name was retranslated in $totalTime sec." }
 			}
 		}
 	}
@@ -162,6 +174,10 @@ open class MultiversalUser(
 		val criticalWarns = 5
 		var updateInterval = 1000L * 60 * 8
 		val messageRateLimit = 3000L
+
+		val linkRegex = """https?://([a-zA-Z0-9_\-]+?\.?)+/[a-zA-Z0-9_\-%\./]+""".toRegex()
+		val workaroundUrls = arrayOf("https://tenor.com/", "https://cdn.discordapp.com/", "https://media.discordapp.net/")
+		val unsupportedExtensions = arrayOf(".mov", ".mp4", ".mp3", ".wav", ".ogg")
 	}
 
 	/** Represents the fact that a user has violated a rule */
