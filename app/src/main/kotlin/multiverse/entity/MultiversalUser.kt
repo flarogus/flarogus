@@ -105,8 +105,10 @@ open class MultiversalUser(
 						}
 					}
 
-					links.forEach {
-						embed { image = it }
+					if (false) {
+						links.forEach {
+							embed { image = it }
+						}
 					}
 
 					if (content!!.isEmpty() && event.message.data.attachments.isEmpty()) content = "<no content>"
