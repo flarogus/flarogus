@@ -192,8 +192,8 @@ open class MultiversalUser(
 		fun isValid() = received + expiration > System.currentTimeMillis()
 
 		companion object {
-			/** Time in ms required for a warn to expire. 20 days. */
-			val expiration = 1000L * 60 * 60 * 24 * 20
+			/** Time in ms required for a warn to expire. 60 days. */
+			val expiration = 1000L * 60 * 60 * 24 * 60
 		}
 	}
 }
