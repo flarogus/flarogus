@@ -97,6 +97,8 @@ open class MultiversalGuild(
 		if (!isWhitelisted) throw IllegalAccessException("this guild is not whitelisted")
 		totalUserMessages++
 
+		lastSent = System.currentTimeMillis()
+
 		return Multiverse.brodcast("${user.name} — $name", user.avatar, filter) {
 			builder(it)
 			content = content?.stripEveryone()?.revealHypertext()
