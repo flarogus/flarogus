@@ -62,8 +62,6 @@ open class MultiversalGuild(
 				val channel = channels.find { it.id == webhook.channelId } 
 				if (channel == null || !filter(channel)) return@forEach
 
-				lastSent = System.currentTimeMillis()
-			
 				webhook.execute(webhook.token!!) {
 					builder(webhook.channelId)
 					content = content?.take(1999)?.stripEveryone()

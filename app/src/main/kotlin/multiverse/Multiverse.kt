@@ -216,6 +216,8 @@ object Multiverse {
 			try {
 				withTimeout(45.seconds) {
 					guilds.forEach {
+						if (!it.isValid) return@forEach
+
 						try {
 							deferreds.add(Vars.client.launch {
 								it.send(
