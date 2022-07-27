@@ -7,7 +7,7 @@ import flarogus.multiverse.npc.*
 class AmogusNPC : NPC(1000L * 30 * 1) {
 	override val name = "local amogus"
 	override val location = "oblivion settlement"
-	override val avatar = "https://drive.google.com/uc?export=download&id=19jMVrZwOuWpe7vJ1Gb3Uj0tzi27kXeEY"
+	override val avatar = "https://drive.google.com/uc?export=download&id=1K6z_hf7xaNHcXkYiv3JtMZJCwBNU_ZRe"
 	
 	override val dialog = buildDialog {
 		- condition {
