@@ -84,7 +84,7 @@ suspend fun main(vararg args: String) {
 	
 	if (IS_MULTIVERSE_ENABLED) {
 		Vars.client.launch {
-			delay(10000L)
+			delay(10_000L)
 			try {
 				var errors = 0
 
@@ -93,6 +93,7 @@ suspend fun main(vararg args: String) {
 					try {
 						Multiverse.start()
 					} catch (e: Exception) {
+						Log.error { e.toString() }
 						errors++
 						delay(3000L)
 					}
@@ -120,6 +121,19 @@ suspend fun main(vararg args: String) {
 				}.take(1900)
 				
 				Log.info { output }
+				delay(10_000L)
+				
+				if (Multiverse.isRunning) {
+					// something is wrong, this happens sometimes
+					if (Multiverse.guilds.filter { it.isValid }.size < 3) {
+						Log.error { "No valid guilds found! Forcibly updating all guilss!" }
+
+						Multiverse.guilds.forEach {
+							it.lastUpdate = 0L
+							it.update()
+						}
+					}
+				}
 			} catch (e: Throwable) {
 				Log.error { "FATAL EXCEPTION HAS OCCURRED DURING MULTIVERSE INTIALIZATION: `$e`" }
 			}

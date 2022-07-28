@@ -80,7 +80,9 @@ object Multiverse {
 		
 		isRunning = true
 
-		fixedRateTimer("update state", true, initialDelay = 5 * 1000L, period = 180 * 1000L) { updateState() }
+		fixedRateTimer("update state", true, initialDelay = 5 * 1000L, period = 180 * 1000L) {
+			runBlocking { findChannels() }
+		}
 		fixedRateTimer("update settings", true, initialDelay = 5 * 1000L, period = 20 * 1000L) {
 			//random delay is to ensure that there will never be situations when two instances can't detect each other
 			Vars.client.launch {
@@ -179,6 +181,7 @@ object Multiverse {
 	};
 	
 	/** Updates everything */
+	@Deprecated("use findChannels()")
 	fun updateState() = Vars.client.launch {
 		findChannels()
 	}

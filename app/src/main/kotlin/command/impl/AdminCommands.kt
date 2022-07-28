@@ -244,4 +244,46 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 			reply("$deleted messages were deleted successfully, $errors messages could not be deleted.")
 		}
 	}
+	
+	subcommand<Unit>("update", "Invalidate all guilds and forcibly update them.") {
+		action {
+			Multiverse.guilds.forEach {
+				it.lastUpdate = 0L
+				it.update()
+			}
+		}
+	}
+
+	subcommand<String>("sanity-check", "Print the state of the multiverse to ensure everything is ok.") {
+		action {
+			var validGuilds = 0
+			var connectedGuilds = 0
+			var channels = 0
+			var webhooks = 0
+			Multiverse.guilds.forEach {
+				if (it.isValid) validGuilds++
+				if (it.webhooks.isNotEmpty()) connectedGuilds++
+				channels += it.channels.size
+				webhooks += it.webhooks.size
+			}
+
+			result("""
+				```
+				Is running:   ${Multiverse.isRunning}
+				History size: ${Multiverse.guilds.size}
+				-----
+				Guilds:           ${Multiverse.guilds.size}
+				Valid guilds:     $validGuilds
+				Invalid guilds:   ${Multiverse.guilds.size - validGuilds}
+				Connected guilds: $connectedGuilds
+				-----
+				Webhooks: $webhooks
+				Channels: $channels
+				-----
+				Users:       ${Multiverse.users.size}
+				Valid users: ${Multiverse.users.filter { it.isValid }.size}
+				```
+			""".trimIndent())
+		}
+	}
 }
