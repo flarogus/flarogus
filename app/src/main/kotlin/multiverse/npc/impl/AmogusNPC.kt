@@ -37,7 +37,7 @@ class AmogusNPC : NPC(1000L * 30 * 1) {
 				}
 			}
 			
-			If { it.contains("what") && it.contains("is") && it.contains("flarogus") } then random {
+			If { it.contains("what", true) && it.contains("is", true) && it.contains("flarogus", true) } then random {
 				- "flar"
 				- "flarogus"
 			} and " is my " and random {
@@ -113,15 +113,19 @@ class AmogusNPC : NPC(1000L * 30 * 1) {
 					- "POSTING"
 					- "TALKING"
 					- "SPEAKING"
+					- "REMINDING ME"
 				} and " ABOUT " and random {
 					- "AMONG US"
 					- "AMONGUS"
 					- "AMOGUS"
 					- "SUS"
+					- "THIS FUCKING EMOJI"
 				} and "! I" and random {
 					- "'M TIRED OF SEEING IT"
 					- " HATE IT"
 					- " SEE IT EVERYWHERE"
+					- " HAVE TOLD YOU HUNDRES OF TIMES ALREADY"
+					- " WILL MURDER YOU"
 				} and "!!!"
 				
 				- "no"
@@ -130,22 +134,22 @@ class AmogusNPC : NPC(1000L * 30 * 1) {
 
 				- "will you ever " and random {
 					- "stop"
-					- "shut"
+					- "shut up"
 					- "get banned"
 				} and repeat(0, 3, "?")
 				
 				- "shut up" and random {
 					- ""
-					- "!"
 					- " amogus poster"
 					- " crewmate"
 					- " impostor"
 					- " mortal"
+					- " before i ban you"
 				} and repeat(1, 2, "!")
 				
 				- "s" and repeat(1, 7, "us")
 				- "sussy"
-				- "SHUT BEFORE I BAN U"
+				- "arkine moment"
 				- run { phrasegen(6, 's', 's', 'u', 'u', 'a', 'm', 'o', 'g') } and repeat(1, 4, "!")
 				- run { phrasegen(7, 'u', 's', 'o', 'm', 'g') } and run { phrasegen(3, '!', '?') }
 			}
