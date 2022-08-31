@@ -1,8 +1,5 @@
 package flarogus.multiverse
 
-import java.io.*
-import java.net.*
-import kotlin.math.*
 import kotlin.time.*
 import kotlin.random.*
 import kotlin.concurrent.*
@@ -10,13 +7,9 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import dev.kord.common.entity.*
 import dev.kord.rest.builder.message.create.*
-import dev.kord.core.*
 import dev.kord.core.event.message.*
-import dev.kord.core.supplier.*
 import dev.kord.core.entity.*
 import dev.kord.core.entity.channel.*
-import dev.kord.core.behavior.*
-import dev.kord.core.behavior.channel.*
 import flarogus.*
 import flarogus.util.*
 import flarogus.multiverse.state.*
@@ -68,7 +61,7 @@ object Multiverse {
 		Vars.client.launch {
 			delay(40000L)
 			val channels = guilds.fold(0) { v, it -> if (!it.isForceBanned) v + it.channels.size else v }
-			brodcastSystem {
+			broadcastSystem {
 				embed { description = """
 					***This channel is a part of the Multiverse. There's ${channels - 1} other channels.***
 					Call `!flarogus multiverse rules` to see the rules
@@ -186,13 +179,13 @@ object Multiverse {
 		findChannels()
 	}
 
-	/** {@link #brodcastAsync()} except that it awaits for the result. */
-	inline suspend fun brodcast(
+	/** {@link #broadcastAsync()} except that it awaits for the result. */
+	inline suspend fun broadcast(
 		user: String? = null,
 		avatar: String? = null,
 		crossinline filter: (TextChannel) -> Boolean = { true },
 		crossinline messageBuilder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
-	): Multimessage = brodcastAsync(user, avatar, filter, messageBuilder).await()
+	): Multimessage = broadcastAsync(user, avatar, filter, messageBuilder).await()
 	
 	/**
 	 * Sends a message into every multiversal channel.
@@ -201,7 +194,7 @@ object Multiverse {
 	 *
 	 * @return The multimessage containing all created messages but no origin.
 	 */
-	inline fun brodcastAsync(
+	inline fun broadcastAsync(
 		user: String? = null,
 		avatar: String? = null,
 		crossinline filter: (TextChannel) -> Boolean = { true },
@@ -258,15 +251,15 @@ object Multiverse {
 		}
 	}
 
-	/** @see #brodcastSystemAsync() */
-	inline suspend fun brodcastSystem(
+	/** See [broadcastSystemAsync]. */
+	inline suspend fun broadcastSystem(
 		crossinline message: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
-	) = brodcastSystemAsync(message).await()
+	) = broadcastSystemAsync(message).await()
 
-	/** {@link #brodcastAsync()} but uses system pfp & name */
-	inline fun brodcastSystemAsync(
+	/** [broadcastAsync] but uses the system pfp & name */
+	inline fun broadcastSystemAsync(
 		crossinline message: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
-	) = brodcastAsync(systemName, systemAvatar, { true }, message)
+	) = broadcastAsync(systemName, systemAvatar, { true }, message)
 	
 	/** Returns a MultiversalUser with the given id, or null if it does not exist */
 	suspend fun userOf(id: Snowflake): MultiversalUser? = users.find { it.discordId == id } ?: let {

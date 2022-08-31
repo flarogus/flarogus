@@ -410,7 +410,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 
 				result(true)
 				
-				Multiverse.brodcastSystem {
+				Multiverse.broadcastSystem {
 					content = "A multiverse instance is shutting down... (This is not neccesarily a problem)"
 				}
 

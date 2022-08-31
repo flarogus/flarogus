@@ -84,7 +84,7 @@ open class MultiversalGuild(
 	
 	/** 
 	 * Retranslates a message sent by the specified MultiversalUser into every multiversal guild. This method delegates to the Multiverse object.
-	 * @see Multiverse#brodcast
+	 * @see Multiverse#broadcast
 	 * @see MultiversalGuild#send
 	 */
 	suspend inline fun retranslateUserMessage(
@@ -97,7 +97,7 @@ open class MultiversalGuild(
 
 		lastSent = System.currentTimeMillis()
 
-		return Multiverse.brodcast("${user.name} — $name", user.avatar, filter) {
+		return Multiverse.broadcast("${user.name} — $name", user.avatar, filter) {
 			builder(it)
 			content = content?.stripEveryone()?.revealHypertext()
 		}

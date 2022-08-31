@@ -145,7 +145,7 @@ open class MultiversalUser(
 		warns.add(WarnEntry(rule, System.currentTimeMillis()))
 
 		if (informMultiverse) {
-			Multiverse.brodcastSystemAsync {
+			Multiverse.broadcastSystemAsync {
 				content = "User $name was warned for rule ${rule.category}.${rule.index + 1}: «$rule»"
 			}
 		}

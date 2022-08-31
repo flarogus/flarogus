@@ -177,7 +177,7 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 			val user = args.arg<MultiversalUser>("user")
 			user.warns.clear()
 
-			Multiverse.brodcastSystem { content = "User ${user.name} just had their warns cleared." }
+			Multiverse.broadcastSystem { content = "User ${user.name} just had their warns cleared." }
 		}
 	}
 
@@ -189,7 +189,7 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 		}
 
 		action {
-			Multiverse.brodcastSystem {
+			Multiverse.broadcastSystem {
 				content = args.arg<String>("message").trim()
 			}
 			result(true)

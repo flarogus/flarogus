@@ -18,7 +18,7 @@ enum class RuleCategory(val index: Int, val description: String, val rules: List
 		Rule(2, "Do not advertise discord servers without consent."),
 		Rule(1, "Avoid speaking foreign languages that other users can't understand (if they can understand it, it's fine) and do not encode text messages."),
 		Rule(10, "Spam raids are forbidden, any raider is to be banned immediately."),
-		Rule(2, "Addiction to r1: racism, fascism, nazism, homophobia, transphobia and other forms of discrimination are forbidden")
+		Rule(2, "Addition to r1: racism, fascism, nazism, homophobia, transphobia and other forms of discrimination are forbidden")
 	)),
 	
 	ADDITIONAL(2, "notes", listOf(
