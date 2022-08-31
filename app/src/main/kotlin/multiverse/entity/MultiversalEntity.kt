@@ -29,7 +29,7 @@ abstract class MultiversalEntity {
 			if (e !is KtorRequestException || e.status.code != 403) {
 				Log.error { "Error when updating $this: $e" }
 			} else {
-				// multiversal entities are updated once per 8 minute
+				// multiversal entities are updated once per 8 minute,
 				// so we put it 1 minute away from next update.
 				lastUpdate = System.currentTimeMillis() - 1000 * 60 * 7
 			}

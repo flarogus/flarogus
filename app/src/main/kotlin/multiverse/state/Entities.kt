@@ -24,7 +24,7 @@ inline fun <T: Any> serializer(clazz: KClass<T>): KSerializer<T> = clazz.seriali
 
 data class UniverseEntry(var webhook: Webhook?, val channel: TextChannel, var hasReported: Boolean = false)
 
-@kotlinx.serialization.Serializable(with = HistoryEntrySerializer::class)
+@Serializable(with = HistoryEntrySerializer::class)
 data class WebhookMessageBehavior(
 	val webhookId: Snowflake,
 	override val channelId: Snowflake,
@@ -45,9 +45,13 @@ data class WebhookMessageBehavior(
 		val webhook = getWebhook()
 		delete(webhook.id, webhook.token!!, null)
 	}
+
+	override fun toString(): String {
+		return "WebhookMessageBehavior(webhookId=$webhookId, channelId=$channelId, id=$id)"
+	}
 }
 
-@kotlinx.serialization.Serializable(with = HistorySerializer::class)
+@Serializable(with = HistorySerializer::class)
 data class Multimessage(
 	var origin: MessageBehavior? = null,
 	val retranslated: List<WebhookMessageBehavior>

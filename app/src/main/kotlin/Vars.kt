@@ -41,7 +41,7 @@ object Vars {
 	val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
 	
 	/** Superusers that are allowed to do most things */
-	val superusers = mutableSetOf<Snowflake>(
+	val superusers = mutableSetOf(
 		ownerId,
 		691650272166019164UL.toSnowflake(), // smolkeys
 		794686191467233280UL.toSnowflake(), // real sushi
@@ -62,11 +62,17 @@ object Vars {
 	val codeblockRegex = "```([a-z]*)?((?s).*)```".toRegex()
 	/** Default imports. Used for the script engine. */
 	val defaultImports = arrayOf(
-		"flarogus.*", "flarogus.util.*", "flarogus.multiverse.*", "ktsinterface.*", "dev.kord.core.entity.*", "dev.kord.core.entity.channel.*",
-		"dev.kord.common.entity.*", "dev.kord.rest.builder.*", "dev.kord.rest.builder.message.*", "dev.kord.rest.builder.message.create.*",
-		"dev.kord.core.behavior.*", "dev.kord.core.behavior.channel.*", "kotlinx.coroutines.*", "kotlinx.coroutines.flow.*", "kotlin.system.*",
-		"kotlinx.serialization.*", "kotlinx.serialization.json.*", "flarogus.multiverse.state.*", "flarogus.multiverse.entity.*"
-	).map { "import $it;" }.joinToString("")
+		"flarogus.*", "flarogus.util.*",
+		"flarogus.multiverse.*", "flarogus.multiverse.state.*", "flarogus.multiverse.entity.*",
+		"ktsinterface.*",
+		"dev.kord.core.entity.*", "dev.kord.core.entity.channel.*",
+		"dev.kord.common.entity.*",
+		"dev.kord.rest.builder.*", "dev.kord.rest.builder.message.*", "dev.kord.rest.builder.message.create.*",
+		"dev.kord.core.behavior.*", "dev.kord.core.behavior.channel.*",
+		"kotlin.system.*",
+		"kotlinx.coroutines.*", "kotlinx.coroutines.flow.*",
+		"kotlinx.serialization.*", "kotlinx.serialization.json.*"
+	).joinToString("") { "import $it;" }
 
 	/** Whether to enable experimental stuff. Should be enabled only using the run command */
 	var experimental = false

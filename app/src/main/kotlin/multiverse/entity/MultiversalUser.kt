@@ -105,12 +105,6 @@ open class MultiversalUser(
 						}
 					}
 
-					if (false) {
-						links.forEach {
-							embed { image = it }
-						}
-					}
-
 					if (content!!.isEmpty() && event.message.data.attachments.isEmpty()) content = "<no content>"
 				}
 
@@ -127,7 +121,7 @@ open class MultiversalUser(
 	 * @param guild Guild to send from
 	 * @param filter Should return true if the message is to be retranslated into the providen channel
 	 */
-	inline suspend fun send(
+	suspend inline fun send(
 		guild: MultiversalGuild,
 		crossinline filter: (TextChannel) -> Boolean = { true },
 		crossinline builder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
@@ -193,7 +187,7 @@ open class MultiversalUser(
 
 		companion object {
 			/** Time in ms required for a warn to expire. 60 days. */
-			val expiration = 1000L * 60 * 60 * 24 * 60
+			const val expiration = 1000L * 60 * 60 * 24 * 60
 		}
 	}
 }

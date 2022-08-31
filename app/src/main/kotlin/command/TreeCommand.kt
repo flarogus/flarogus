@@ -70,7 +70,7 @@ open class TreeCommand(name: String) : FlarogusCommand<Any?>(name) {
 		throw IllegalArgumentException("you must provide the name of a subcommand of ${this.getFullName()}")
 	}
 
-	/** Finds up to N most simmilar commands */
+	/** Finds up to [count] most similar commands */
 	open fun findSimmilar(command: String, count: Int, maxDistance: Double = 0.5): List<FlarogusCommand<*>> {
 		var fitting = 0
 		return subcommands.sortedBy { flarogusCommand ->
