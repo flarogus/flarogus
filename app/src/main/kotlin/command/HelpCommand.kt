@@ -92,7 +92,7 @@ class HelpCommand : FlarogusCommand<Unit>("help") {
 						To invoke a subcommand, type the full name of the parent command and the name of the subcommand, delimited by a space.
 						$splitter
 						Only summary info is providen here.
-						Type `${parent.getFullName()} subcommand_name_here` to full view help of induvidual subcommands.
+						Type `${parent.getFullName()} help subcommand_name_here` to full view help of induvidual subcommands.
 						$splitter
 					""".trimIndent()
 
