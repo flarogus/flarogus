@@ -267,7 +267,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 				"what did you expect", "sorry, your daily reward has been taken by someone else.", "this was a triumph...", "you were killed by the impostor",
 				"you get nothing", "you are sus", "nothing, try again tomorrow","you have mere seconds.", "you ruined the task!",
 				"your parents don't love you", "you are so fat, if you were an impostor, you would get stuck in the vent",
-				"you will never finish your tasks", "two tasks have been added to your list, crewmate!"
+				"you will never finish your tasks","34 FlarCoin", "two tasks have been added to your list, crewmate!"
 			)
 			
 			action {
