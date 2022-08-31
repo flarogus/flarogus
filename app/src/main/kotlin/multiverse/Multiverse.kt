@@ -179,7 +179,7 @@ object Multiverse {
 		findChannels()
 	}
 
-	/** {@link #broadcastAsync()} except that it awaits for the result. */
+	/** Samw as [broadcastAsync], except that it awaits for the result. */
 	inline suspend fun broadcast(
 		user: String? = null,
 		avatar: String? = null,
@@ -256,7 +256,7 @@ object Multiverse {
 		crossinline message: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
 	) = broadcastSystemAsync(message).await()
 
-	/** [broadcastAsync] but uses the system pfp & name */
+	/** Same as [broadcastAsync] but uses the system pfp & name */
 	inline fun broadcastSystemAsync(
 		crossinline message: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
 	) = broadcastAsync(systemName, systemAvatar, { true }, message)
