@@ -17,11 +17,9 @@ import flarogus.multiverse.npc.impl.*
 import flarogus.multiverse.entity.*
 import kotlin.time.Duration.Companion.seconds
 
-// TODO switch to the new model:
-// remove remains of the old model
-
 /**
- * Retranslates messages sent in any channel of guild network, aka Multiverse, into other multiverse channels
+ * Manages the retraslantion of actions performed in one channel of the multiverse, aka a guild network,
+ * into other channels.
  */
 @OptIn(ExperimentalTime::class)
 object Multiverse {
@@ -37,18 +35,15 @@ object Multiverse {
 	
 	/** If false, new messages will be ignored */
 	var isRunning = false
-	val internalShutdownChannel = Snowflake(949196179386814515UL)
-	var shutdownWebhook: Webhook? = null
-	
+
 	val npcs = mutableListOf(AmogusNPC())
 
-	/** Currently unused. */
 	val users = ArrayList<MultiversalUser>(90)
-	/** Currently unused. */
 	val guilds = ArrayList<MultiversalGuild>(30)
 
-	var lastJob: Job? = null
-	var jobCount = 0
+	val rootJob = SupervisorJob()
+	val scope = CoroutineScope(rootJob)
+	val pendingActions = ArrayList<PendingAction<*>>(50)
 	
 	/** Sets up the multiverse */
 	suspend fun start() {
@@ -58,15 +53,16 @@ object Multiverse {
 		setupEvents()
 		findChannels()
 		
-		Vars.client.launch {
+		scope.launch {
 			delay(40000L)
 			val channels = guilds.fold(0) { v, it -> if (!it.isForceBanned) v + it.channels.size else v }
 			broadcastSystem {
 				embed { description = """
 					***This channel is a part of the Multiverse. There's ${channels - 1} other channels.***
-					Call `!flarogus multiverse rules` to see the rules
-					Use `!flarogus report` to report an issue
-					Refer to `!flarogus multiverse help` for useful commands
+					Some of the available commands: 
+					    - `!flarogus multiverse rules` - see the rules
+					    - `!flarogus report` - report an issue or contact the admins
+					    - `!flarogus multiverse help` - various commands
 				""".trimIndent() }
 			}
 		}
@@ -78,16 +74,27 @@ object Multiverse {
 		}
 		fixedRateTimer("update settings", true, initialDelay = 5 * 1000L, period = 20 * 1000L) {
 			//random delay is to ensure that there will never be situations when two instances can't detect each other
-			Vars.client.launch {
+			scope.launch {
 				delay(Random.nextLong(0L, 5000L))
 				Settings.updateState()
 			}
 		}
+
+		scope.launch {
+			while (isActive) {
+				if (pendingActions.isNotEmpty()) {
+					val action = synchronized(pendingActions) { pendingActions.removeFirst() }
+					action()
+				}
+				delay(50L) // a little delay to allow to send other messages outside the multiverse
+			}
+		}
 	}
 	
-	/** Shuts the multiverse down */
+	/** Shuts the multiverse down, but allows to restart it later. */
 	fun shutdown() {
 		isRunning = false
+		rootJob.children.forEach { it.cancel() }
 	}
 	
 	suspend fun messageReceived(event: MessageCreateEvent) {
@@ -172,93 +179,45 @@ object Multiverse {
 			guildOf(it.id)?.update() //this will add an entry if it didn't exist
 		}
 	};
-	
-	/** Updates everything */
-	@Deprecated("use findChannels()")
-	fun updateState() = Vars.client.launch {
-		findChannels()
-	}
 
-	/** Samw as [broadcastAsync], except that it awaits for the result. */
-	inline suspend fun broadcast(
-		user: String? = null,
-		avatar: String? = null,
-		crossinline filter: (TextChannel) -> Boolean = { true },
-		crossinline messageBuilder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
-	): Multimessage = broadcastAsync(user, avatar, filter, messageBuilder).await()
-	
-	/**
-	 * Sends a message into every multiversal channel.
-	 * Accepts username and pfp url parameters.
-	 * Automatically adds the multimessage into the history.
-	 *
-	 * @return The multimessage containing all created messages but no origin.
-	 */
-	inline fun broadcastAsync(
-		user: String? = null,
-		avatar: String? = null,
-		crossinline filter: (TextChannel) -> Boolean = { true },
-		crossinline messageBuilder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
-	): Deferred<Multimessage> {
-		val prevJob = lastJob
-
-		return Vars.client.async {
-			val messages = ArrayList<WebhookMessageBehavior>(guilds.size * 2)
-			val deferreds = ArrayList<Job>(guilds.size * 2)
-
-			jobCount++
-			prevJob?.join() //wait for the completeion of that coroutine
-			
-			try {
-				withTimeout(45.seconds) {
-					guilds.forEach {
-						if (!it.isValid) return@forEach
-
-						try {
-							deferreds.add(Vars.client.launch {
-								it.send(
-									username = user,
-									avatar = avatar,
-									filter = filter,
-									handler = { m, w -> messages.add(WebhookMessageBehavior(w, m)) },
-									builder = messageBuilder
-								)
-							})
-						} catch (e: Exception) {
-							Log.error { "Exception while retranslating a message into ${it.name}: $e" }
-						}
-
-						yield()
-					}
-					
-					deferreds.forEach { def ->
-						def.join()
-					}
-
-					val multimessage = Multimessage(null, messages)
-					Multiverse.history.add(multimessage)
-					
-					multimessage
-				}
-			} catch (e: TimeoutCancellationException) {
-				println(e) // we don't need to log it
-				throw e
-			} finally {
-				jobCount--
-			}
-		}.also {
-			lastJob = it
+	fun addAction(action: PendingAction<*>) {
+		synchronized(pendingActions) {
+			pendingActions.add(action)
 		}
 	}
 
+	/**
+	 * Sends a message into every multiversal channel.
+	 * Accepts username and pfp url parameters.
+	 * Automatically adds the multimessage to the history.
+	 *
+	 * @return The multimessage containing all created messages but no origin.
+	 */
+	fun broadcastAsync(
+		user: String? = null,
+		avatar: String? = null,
+		filter: (TextChannel) -> Boolean = { true },
+		messageBuilder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
+	) = SendMessageAction(user, avatar, filter, messageBuilder).also {
+		addAction(it)
+	}
+
+	/** Samw as [broadcastAsync], except that it awaits for the result. */
+	suspend fun broadcast(
+		user: String? = null,
+		avatar: String? = null,
+		filter: (TextChannel) -> Boolean = { true },
+		messageBuilder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
+	) = broadcastAsync(user, avatar, filter, messageBuilder).await()
+
 	/** See [broadcastSystemAsync]. */
-	inline suspend fun broadcastSystem(
-		crossinline message: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
+	suspend fun broadcastSystem(
+		message: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
 	) = broadcastSystemAsync(message).await()
 
 	/** Same as [broadcastAsync] but uses the system pfp & name */
-	inline fun broadcastSystemAsync(
-		crossinline message: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
+	fun broadcastSystemAsync(
+		message: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
 	) = broadcastAsync(systemName, systemAvatar, { true }, message)
 	
 	/** Returns a MultiversalUser with the given id, or null if it does not exist */
@@ -277,8 +236,7 @@ object Multiverse {
 
 	/** Returns whether this message was sent by flarogus */
 	fun isOwnMessage(message: Message): Boolean {
-		return (message.author?.id == Vars.botId)
-		|| (message.webhookId != null && isMultiversalWebhook(message.webhookId!!))
+		return (message.author?.id == Vars.botId) || (message.webhookId != null && isMultiversalWebhook(message.webhookId!!))
 	}
 
 	/** Returns whether this channel belongs to the multiverse. Does not guarantee that it is not banned. */
@@ -289,5 +247,66 @@ object Multiverse {
 
 	/** Returns whether a message with this id is a retranslated message */
 	fun isRetranslatedMessage(id: Snowflake) = history.any { it.retranslated.any { it.id == id } }
+
+	abstract class PendingAction<T>(timeLimitSeconds: Int) {
+		protected val job = Job(rootJob)
+		val timeLimit = timeLimitSeconds * 1000L
+		var cachedResult: Deferred<T?>? = null
+			protected set
+
+		operator fun invoke(): Deferred<T?>  {
+			if (cachedResult != null) return cachedResult!!
+			return scope.async {
+				try {
+					return@async withTimeout(timeLimit) {
+						execute()
+					}
+				} catch (e: TimeoutCancellationException) {
+					Log.error { "Timed out while executing $this: $e" }
+				} catch (e: Exception) {
+					Log.error { "Uncaught exception while executing $this: $e" }
+				} finally {
+					job.complete()
+				}
+				null
+			}.also { cachedResult = it }
+		}
+
+		@OptIn(ExperimentalCoroutinesApi::class)
+		suspend fun await(): T? {
+			job.join()
+			return cachedResult?.getCompleted()
+		}
+
+		protected abstract suspend fun execute(): T
+	}
+
+	open class SendMessageAction(
+		val user: String? = null,
+		val avatar: String? = null,
+		val filter: (TextChannel) -> Boolean = { true },
+		val messageBuilder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
+	) : PendingAction<Multimessage>(45) {
+		override suspend fun execute(): Multimessage {
+			val messages = ArrayList<WebhookMessageBehavior>(guilds.size)
+
+			guilds.forEach {
+				it.send(
+					username = user,
+					avatar = avatar,
+					filter = filter,
+					handler = { m, w -> messages.add(WebhookMessageBehavior(w, m)) },
+					builder = messageBuilder
+				)
+				job.ensureActive()
+				yield()
+			}
+
+			val multimessage = Multimessage(null, messages)
+			history.add(multimessage)
+
+			return multimessage
+		}
+	}
 }
 
