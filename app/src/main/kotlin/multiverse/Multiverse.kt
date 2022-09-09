@@ -1,37 +1,36 @@
 package flarogus.multiverse
 
-import kotlin.time.*
-import kotlin.random.*
-import kotlin.concurrent.*
+import dev.kord.common.entity.*
+import dev.kord.core.entity.Message
+import dev.kord.core.entity.channel.TextChannel
+import dev.kord.core.event.message.*
+import dev.kord.rest.builder.message.create.MessageCreateBuilder
+import dev.kord.rest.builder.message.create.embed
+import flarogus.Vars
+import flarogus.multiverse.entity.MultiversalGuild
+import flarogus.multiverse.entity.MultiversalUser
+import flarogus.multiverse.npc.impl.AmogusNPC
+import flarogus.multiverse.state.*
+import flarogus.util.replyWith
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import dev.kord.common.entity.*
-import dev.kord.rest.builder.message.create.*
-import dev.kord.core.event.message.*
-import dev.kord.core.entity.*
-import dev.kord.core.entity.channel.*
-import flarogus.*
-import flarogus.util.*
-import flarogus.multiverse.state.*
-import flarogus.multiverse.npc.impl.*
-import flarogus.multiverse.entity.*
-import kotlin.time.Duration.Companion.seconds
+import kotlin.concurrent.fixedRateTimer
+import kotlin.random.Random
 
 /**
  * Manages the retraslantion of actions performed in one channel of the multiverse, aka a guild network,
  * into other channels.
  */
-@OptIn(ExperimentalTime::class)
 object Multiverse {
 	/** Array containing all messages sent in this instance */
 	val history = ArrayList<Multimessage>(1000)
 	
 	/** Files with size exceeding this limit will be sent in the form of links */
-	val maxFileSize = 1024 * 1024 * 1
+	const val maxFileSize = 1024 * 1024 * 1
 	
-	val webhookName = "MultiverseWebhook"
-	val systemName = "Multiverse"
-	val systemAvatar = "https://drive.google.com/uc?export=download&id=1JxmvN2hp4F7pFIOwYj17AO5lXAh7HReo"
+	const val webhookName = "MultiverseWebhook"
+	const val systemName = "Multiverse"
+	const val systemAvatar = "https://drive.google.com/uc?export=download&id=1JxmvN2hp4F7pFIOwYj17AO5lXAh7HReo"
 	
 	/** If false, new messages will be ignored */
 	var isRunning = false
@@ -84,7 +83,7 @@ object Multiverse {
 			while (isActive) {
 				if (pendingActions.isNotEmpty()) {
 					val action = synchronized(pendingActions) { pendingActions.removeFirst() }
-					action()
+					action().await()
 				}
 				delay(50L) // a little delay to allow to send other messages outside the multiverse
 			}
@@ -123,18 +122,7 @@ object Multiverse {
 			.filter { event -> isMultiversalChannel(event.channelId) }
 			.filter { event -> event.guildId != null && guildOf(event.guildId!!).let { it != null && !it.isForceBanned } }
 			.onEach { event ->
-				var multimessage: Multimessage? = null
-				delayUntil(20000L, 500L) { history.find { it.origin?.id == event.messageId }.also { multimessage = it } != null }
-
-				try {
-					if (multimessage != null) {
-						multimessage!!.delete(false) //well...
-						Log.info { "Message ${event.messageId} was deleted by deleting the original message" }
-						history.remove(multimessage!!)
-					}
-				} catch (e: Exception) {
-					Log.error { "An exception has occurred while trying to delete a multiversal message ${event.messageId}: $e" }
-				}
+				addAction(DeleteMultimessageAction(event.messageId))
 			}
 			.launchIn(Vars.client)
 		
@@ -145,30 +133,7 @@ object Multiverse {
 			.filter { event -> !isRetranslatedMessage(event.messageId) }
 			.filter { event -> isMultiversalChannel(event.message.channel.id) }
 			.onEach { event ->
-				var multimessage: Multimessage? = null
-				delayUntil(20000L, 500L) { history.find { it.origin?.id == event.messageId }.also { multimessage = it } != null }
-
-				try {
-					if (multimessage != null) {
-						val origin = multimessage!!.origin?.asMessage()
-						val newContent = buildString {
-							appendLine(event.new.content.value ?: multimessage!!.origin!!.asMessage().content)
-							origin?.attachments?.forEach { attachment ->
-								if (attachment.size >= maxFileSize) {
-									appendLine(attachment.url)
-								}
-							}
-						}
-
-						multimessage!!.edit(false) {
-							content = newContent
-						}
-
-						Log.info { "Message ${multimessage!!.origin?.id} was edited by it's author" }
-					}
-				} catch (e: Exception) {
-					Log.error { "An exception has occurred while trying to edit a multiversal message ${event.messageId}: $e" }
-				}
+				addAction(ModifyMultimessageAction(event.messageId, event.new))
 			}
 			.launchIn(Vars.client)
 	}
@@ -202,7 +167,7 @@ object Multiverse {
 		addAction(it)
 	}
 
-	/** Samw as [broadcastAsync], except that it awaits for the result. */
+	/** Same as [broadcastAsync], except that it awaits for the result. */
 	suspend fun broadcast(
 		user: String? = null,
 		avatar: String? = null,
@@ -211,14 +176,10 @@ object Multiverse {
 	) = broadcastAsync(user, avatar, filter, messageBuilder).await()
 
 	/** See [broadcastSystemAsync]. */
-	suspend fun broadcastSystem(
-		message: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
-	) = broadcastSystemAsync(message).await()
+	suspend fun broadcastSystem(message: suspend MessageCreateBuilder.(id: Snowflake) -> Unit) = broadcastSystemAsync(message).await()
 
 	/** Same as [broadcastAsync] but uses the system pfp & name */
-	fun broadcastSystemAsync(
-		message: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
-	) = broadcastAsync(systemName, systemAvatar, { true }, message)
+	fun broadcastSystemAsync(message: suspend MessageCreateBuilder.(id: Snowflake) -> Unit) = broadcastAsync(systemName, systemAvatar, { true }, message)
 	
 	/** Returns a MultiversalUser with the given id, or null if it does not exist */
 	suspend fun userOf(id: Snowflake): MultiversalUser? = users.find { it.discordId == id } ?: let {
@@ -253,7 +214,9 @@ object Multiverse {
 		val timeLimit = timeLimitSeconds * 1000L
 		var cachedResult: Deferred<T?>? = null
 			protected set
+		protected var lastException: Throwable? = null
 
+		/** Immediately begins executing this action in a separate coroutine. Caches the result. */
 		operator fun invoke(): Deferred<T?>  {
 			if (cachedResult != null) return cachedResult!!
 			return scope.async {
@@ -262,8 +225,10 @@ object Multiverse {
 						execute()
 					}
 				} catch (e: TimeoutCancellationException) {
+					lastException = e
 					Log.error { "Timed out while executing $this: $e" }
 				} catch (e: Exception) {
+					lastException = e
 					Log.error { "Uncaught exception while executing $this: $e" }
 				} finally {
 					job.complete()
@@ -272,11 +237,16 @@ object Multiverse {
 			}.also { cachedResult = it }
 		}
 
+		/** Await the result of executing this action and returns the result or null if an exception has occurred. */
 		@OptIn(ExperimentalCoroutinesApi::class)
 		suspend fun await(): T? {
 			job.join()
 			return cachedResult?.getCompleted()
 		}
+
+		/** Awaits the result of executing this action and returns it, throws an exception if there's no result or the result is null. */
+		suspend fun awaitOrThrow(): T
+			= await() ?: throw (lastException ?: RuntimeException("The action had result and no exception."))
 
 		protected abstract suspend fun execute(): T
 	}
@@ -291,21 +261,60 @@ object Multiverse {
 			val messages = ArrayList<WebhookMessageBehavior>(guilds.size)
 
 			guilds.forEach {
-				it.send(
-					username = user,
-					avatar = avatar,
-					filter = filter,
-					handler = { m, w -> messages.add(WebhookMessageBehavior(w, m)) },
-					builder = messageBuilder
-				)
+				try {
+					it.send(
+						username = user,
+						avatar = avatar,
+						filter = filter,
+						handler = { m, w -> messages.add(WebhookMessageBehavior(w, m)) },
+						builder = messageBuilder
+					)
+				} catch (e: Exception) {
+					Log.error { "Exception thrown while retranslating a message to ${it.name}: `$e`" }
+				}
 				job.ensureActive()
 				yield()
 			}
 
 			val multimessage = Multimessage(null, messages)
-			history.add(multimessage)
+			synchronized(history) {
+				history.add(multimessage)
+			}
 
 			return multimessage
+		}
+	}
+
+	open class DeleteMultimessageAction(val messageId: Snowflake) : PendingAction<Unit>(45) {
+		override suspend fun execute() {
+			val multimessage = history.find { it.origin?.id == messageId } ?: return
+
+			multimessage.delete(false)
+			Log.info { "Message ${messageId} was deleted by deleting the original message" }
+
+			synchronized(history) { history.remove(multimessage) }
+		}
+	}
+
+	open class ModifyMultimessageAction(val messageId: Snowflake, val newMessage: DiscordPartialMessage) : PendingAction<Unit>(30) {
+		override suspend fun execute() {
+			val multimessage = history.find { it.origin?.id == messageId } ?: return
+
+			val origin = multimessage.origin?.asMessage()
+			val newContent = buildString {
+				appendLine(newMessage.content.value ?: origin?.content.orEmpty())
+				origin?.attachments?.forEach { attachment ->
+					if (attachment.size >= maxFileSize) {
+						appendLine(attachment.url)
+					}
+				}
+			}
+
+			multimessage.edit(false) {
+				content = newContent
+			}
+
+			Log.info { "Message ${multimessage.origin?.id} was edited by it's author" }
 		}
 	}
 }

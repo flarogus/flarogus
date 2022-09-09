@@ -1,28 +1,25 @@
 package flarogus.multiverse.state
 
-import kotlin.reflect.*
+import dev.kord.common.entity.Snowflake
+import dev.kord.core.Kord
+import dev.kord.core.behavior.MessageBehavior
+import dev.kord.core.behavior.edit
+import dev.kord.core.entity.Message
+import dev.kord.core.entity.Webhook
+import dev.kord.core.supplier.EntitySupplier
+import dev.kord.rest.builder.message.modify.MessageModifyBuilder
+import dev.kord.rest.builder.message.modify.WebhookMessageModifyBuilder
+import flarogus.Vars
+import kotlinx.coroutines.yield
 import kotlinx.serialization.*
-import kotlinx.serialization.json.*
-import kotlinx.serialization.descriptors.*
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encoding.*
-import kotlinx.serialization.builtins.*
-import dev.kord.common.entity.*
-import dev.kord.rest.builder.message.create.*
-import dev.kord.rest.builder.message.modify.*
-import dev.kord.core.*
-import dev.kord.core.supplier.*
-import dev.kord.core.event.message.*
-import dev.kord.core.entity.*
-import dev.kord.core.entity.channel.*
-import dev.kord.core.behavior.*
-import dev.kord.core.behavior.channel.*
-import flarogus.*
-import flarogus.multiverse.*
+import kotlin.reflect.KClass
 
-@OptIn(kotlinx.serialization.InternalSerializationApi::class)
+@OptIn(InternalSerializationApi::class)
 inline fun <T: Any> serializer(clazz: KClass<T>): KSerializer<T> = clazz.serializer()
-
-data class UniverseEntry(var webhook: Webhook?, val channel: TextChannel, var hasReported: Boolean = false)
 
 @Serializable(with = HistoryEntrySerializer::class)
 data class WebhookMessageBehavior(
@@ -59,6 +56,7 @@ data class Multimessage(
 	suspend fun delete(deleteOrigin: Boolean) {
 		retranslated.forEach { 
 			try { it.delete() } catch (ignored: Exception) { }
+			yield()
 		}
 		if (deleteOrigin) {
 			try { origin?.delete() } catch (ignored: Exception) { }
@@ -68,6 +66,7 @@ data class Multimessage(
 	suspend inline fun edit(modifyOrigin: Boolean = false, crossinline builder: suspend MessageModifyBuilder.() -> Unit) {
 		retranslated.forEach {
 			try { it.edit { builder() } } catch (ignored: Exception) { }
+			yield()
 		}
 		if (modifyOrigin) {
 			try { origin?.edit { builder() } } catch (ignored: Exception) { }

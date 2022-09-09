@@ -89,7 +89,7 @@ open class MultiversalGuild(
 	 */
 	suspend inline fun retranslateUserMessage(
 		user: MultiversalUser,
-		crossinline filter: (TextChannel) -> Boolean = { true },
+		noinline filter: (TextChannel) -> Boolean = { true },
 		crossinline builder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
 	): Multimessage {
 		if (!isWhitelisted) throw IllegalAccessException("this guild is not whitelisted")
@@ -97,10 +97,10 @@ open class MultiversalGuild(
 
 		lastSent = System.currentTimeMillis()
 
-		return Multiverse.broadcast("${user.name} — $name", user.avatar, filter) {
+		return Multiverse.broadcastAsync("${user.name} — $name", user.avatar, filter) {
 			builder(it)
 			content = content?.stripEveryone()?.revealHypertext()
-		}
+		}.awaitOrThrow()
 	}
 
 	override suspend fun updateImpl() {

@@ -123,7 +123,7 @@ open class MultiversalUser(
 	 */
 	suspend inline fun send(
 		guild: MultiversalGuild,
-		crossinline filter: (TextChannel) -> Boolean = { true },
+		noinline filter: (TextChannel) -> Boolean = { true },
 		crossinline builder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
 	): Multimessage {
 		update()

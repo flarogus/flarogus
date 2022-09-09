@@ -28,6 +28,10 @@ object Settings {
 	val settingsChannel by lazy { Vars.client.unsafe.messageChannel(Channels.settings) }
 	var settingsMessage: Message? = null
 	val fileStorageChannel by lazy { Vars.client.unsafe.messageChannel(Channels.fileStorage) }
+	val json = Json {
+		ignoreUnknownKeys = true
+		encodeDefaults = true
+	}
 
 	/** Last uploaded state */
 	var lastState: State? = null
@@ -56,7 +60,7 @@ object Settings {
 		Vars.restSupplier.getMessage(channelId = settingsMessage!!.channelId, messageId = settingsMessage!!.id).let {
 			if (it.content.startsWith("http")) {
 				val stateContent = downloadFromCdn<String>(it.content)
-				val state = Json { ignoreUnknownKeys = true }.decodeFromString<State>(stateContent)
+				val state = json.decodeFromString<State>(stateContent)
 				
 				if (state.ubid != Vars.ubid) {
 					//load if the save is from older instance, shut down this instance if it's from newer, ignore otherwise
@@ -73,7 +77,7 @@ object Settings {
 			
 			val newState = State()
 			if (newState != lastState) {
-				val newStateEncoded = Json { encodeDefaults = true }.encodeToString(newState)
+				val newStateEncoded = json.encodeToString(newState)
 				val uploadedUrl = uploadToCdn(newStateEncoded)
 			
 				it.edit {

@@ -46,7 +46,7 @@ abstract class NPC(open val cooldown: Long = 20000L, open val replyDelay: Long =
 		Multiverse.broadcast(obtainUsertag(), avatar) {
 			content = message
 			if (reference != null) quoteMessage(reference, it)
-		}.also { history.add(it) }
+		}?.also { history.add(it) }
 	}
 	
 	/** If this method returns null, there is no message */
