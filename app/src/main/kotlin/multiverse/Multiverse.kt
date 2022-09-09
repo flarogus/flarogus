@@ -93,7 +93,7 @@ object Multiverse {
 	/** Shuts the multiverse down, but allows to restart it later. */
 	fun shutdown() {
 		isRunning = false
-		rootJob.children.forEach { it.cancel() }
+		// rootJob.children.forEach { it.cancel() }
 	}
 	
 	suspend fun messageReceived(event: MessageCreateEvent) {
