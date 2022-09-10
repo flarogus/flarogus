@@ -83,7 +83,7 @@ class HelpCommand : FlarogusCommand<Unit>("help") {
 						field { value = "this command has no arguments nor flags." }
 					}
 				} else if (subcommand != null && subcommand is TreeCommand) {
-					subcommand("help")
+					subcommand(originalMessage(), "help")
 				} else {
 					title = parent.getFullName()
 
@@ -96,19 +96,24 @@ class HelpCommand : FlarogusCommand<Unit>("help") {
 						$splitter
 					""".trimIndent()
 
-					parent.subcommands.forEach { subcommand ->
-						field {
-							name = subcommand.name
+					parent.subcommands.forEach { commandEntry ->
+						if (commandEntry.hidden) return@forEach
 
-							if (subcommand is TreeCommand) {
+						val origin = originalMessageOrNull()
+						if (origin != null && commandEntry.checks.any { it(origin, "") != null }) return@forEach
+
+						field {
+							name = commandEntry.name
+
+							if (commandEntry is TreeCommand) {
 								name = "__${name}__"
 							} else {
-								subcommand.summaryArguments().let {
-									name += " ${subcommand.summaryArguments()}"
+								commandEntry.summaryArguments().let {
+									name += " ${commandEntry.summaryArguments()}"
 								}
 							}
 
-							value = subcommand.description.substringBefore('.')
+							value = commandEntry.description.substringBefore('.')
 						}
 					}
 				}

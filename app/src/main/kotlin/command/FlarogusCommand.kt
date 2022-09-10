@@ -27,6 +27,7 @@ open class FlarogusCommand<R>(name: String) {
 			field = parent
 		}
 	var description: String = "No description"
+	var hidden = false
 
 	/** Internal field, do not modify. */
 	var requiredArguments = 0
