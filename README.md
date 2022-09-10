@@ -9,7 +9,7 @@ The main feature flarogus provides is the ability to connect to the Multiverse, 
 Messages sent in one of the multiversal channels are retranslated to every other channel,
 and so are the changes made to these messages.
 
-There are many different subfeatures the multiverse has, like npcs, moderators, admins, name overrides, etc, but that is not covered in this document.
+There are many subfeatures the multiverse has, like NPCs, moderators, admins, name overrides, etc., but that is not covered in this document.
 
 In order for a channel to connect to the multiverse, the following conditions have to be met:
 * The channel must have `multiverse` in its name
@@ -20,11 +20,11 @@ Users of the multiverse must follow the rules, which can be seen by executing `!
 Violating a rule can get you warned. Violating different rules gives a different number of warning points.
 Gathering 5 warning points will get you temporarily banned for until your warns expire and your warning score drops below 5.
 
-If a multiversal admin or moderator considers your message inapropriate, they can delete it or apply another kind of punishment.
+If a multiversal admin or moderator considers your message inappropriate, they can delete it or apply another kind of punishment.
 A severe violation can get you or even your whole guild banned on-spot, so try to not go nuts there.
 
 Deleting or editing the original message also deletes or edits it in other channels.
-This action can be performed by guild-specitic authorities too if they consider that the message sent in their specific channel is inapropriate.
+This action can be performed by guild-specific authorities too if they consider that the message sent in their specific channel is inappropriate.
 If you can't access the original message, you still can delete it from all channels by replying to it with
 `!flarogus multiverse deletereply`. Normal users can only delete their own messages this way.
 
@@ -32,7 +32,7 @@ If you can't access the original message, you still can delete it from all chann
 Flarogus has a very complex tree-like command system, which as of now has only been mastered by no more than 5 people.
 Commands are nested one inside another, with "!flarogus" being the root command (and bot's prefix at the same time).
 
-In order to invoke a command, you have to type it's full name, which consists of it's own name,
+In order to invoke a command, you have to type its full name, which consists of its own name,
 preceded by the full name of it'd parent (which too can have a parent, whose full name has to come before)
 and pass the required and optional arguments to it, e.g. `!flarogus multiverse rules`.
 Sometimes command names can get ridiculously long, but that should be ok.
@@ -41,7 +41,7 @@ There are tree commands, which only hold children, and terminal commands, which 
 
 Every tree command has a `help` command.
 Invoking this command without any arguments shows the list of subcommands the tree command has and their argument signatures.
-Passing the name of a termunal subcommand to the help command shows a full help,
+Passing the name of a terminal subcommand to the help command shows a full help,
 which includes the arguments/flags the command accepts, their signatures, etc.
 E.g. typing "!flarogus help` shows the list of subcommands of the root command,
 and typing `!flarogus util help userinfo` shows the full help for the `!flarogus util userinfo` command.
@@ -52,7 +52,7 @@ Arguments are separated by spaces, but you can pass an argument containing space
 E.g. `!flarogus help "multiword argument"` passes `multiword argument` as a single argument to the `!flarogus help` command
 (this command will fail, but that doesn't matter).
 
-There're also raw arguments — everything passed after a `<<` (double less-than sign) is considered a single string argument,
+There are also raw arguments — everything passed after a `<<` (double less-than sign) is considered a single string argument,
 which ends with the end of the message.
 
 In addiction to normal arguments, there are flags. A flag begins with a double minus sign, e.g. `--force`.
@@ -66,7 +66,7 @@ e.g. `!flarogus help -bar` is the same as `!flarogus help -b -a -r` (note that t
 ## Argument types
 The full help message also shows argument types.
 In general, most arguments passed to commands are either strings, numbers, or user ids,
-however, depending, on the argument type, addictinal checks may be performed.
+however, depending, on the argument type, additional checks may be performed.
 
 For example, if a command accepts a "guild" or "multiversal-guild" as an argument type,
 you must pass the ID of a valid guild, if it accepts a "user" or "multiversal-user", you must pass the id of a valid user or mention them.
