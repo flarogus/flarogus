@@ -72,5 +72,9 @@ For example, if a command accepts a "guild" or "multiversal-guild" as an argumen
 you must pass the ID of a valid guild, if it accepts a "user" or "multiversal-user", you must pass the id of a valid user or mention them.
 If you pass an argument of a wrong type (this includes invalid IDs), the command won't get invoked at all.
 
-## Parse errors
-If you attempt to invoke a command with invalid syntax, invoke a non-existent command, 
+## Command errors
+If you attempt to invoke a command with invalid syntax, invoke a non-existent command, pass an invalid argument/flag, etc.,
+an error message telling you what's wrong ane highlighting the error place will appear.
+
+If there's a runtime error during the execution of a command, a command-specific message may appear,
+its format may vary from command to command.
