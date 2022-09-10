@@ -119,6 +119,8 @@ data class State(
 	var users: List<MultiversalUser> = Multiverse.users,
 	var guilds: List<MultiversalGuild> = Multiverse.guilds
 ) {
+	val multiverseNeedsInfoMessage = Multiverse.needsInfoMessage
+
 	/** Updates the current bot state in accordance with this state */
 	fun loadFromState() {
 		Vars.superusers.addAll(runWhitelist)
@@ -135,5 +137,7 @@ data class State(
 			Multiverse.guilds.removeAll { it.discordId == g.discordId }
 			Multiverse.guilds.add(g)
 		}
+
+		Multiverse.needsInfoMessage = multiverseNeedsInfoMessage
 	}
 }

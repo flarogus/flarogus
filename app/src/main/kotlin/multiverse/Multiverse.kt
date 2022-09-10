@@ -34,6 +34,7 @@ object Multiverse {
 	
 	/** If false, new messages will be ignored */
 	var isRunning = false
+	var needsInfoMessage = true
 
 	val npcs = mutableListOf(AmogusNPC())
 
@@ -52,7 +53,7 @@ object Multiverse {
 		setupEvents()
 		findChannels()
 		
-		scope.launch {
+		if (needsInfoMessage) scope.launch {
 			delay(40000L)
 			val channels = guilds.fold(0) { v, it -> if (!it.isForceBanned) v + it.channels.size else v }
 			broadcastSystem {
@@ -110,6 +111,8 @@ object Multiverse {
 		
 		val user = userOf(event.message.data.author.id)
 		user?.onMultiversalMessage(event) ?: event.message.replyWith("No user associated with your user id was found!")
+
+		needsInfoMessage = true
 
 		npcs.forEach { it.multiversalMessageReceived(event.message) }
 	};
