@@ -5,9 +5,8 @@ import flarogus.command.*
 abstract class AbstractCommandBuilder<R, T: FlarogusCommand<R>>(
 	val command: T
 ) {
-	var description: String
-		get() = command.description
-		set(value: String) { command.description = value }
+	var description by command::description
+	var hidden by command::hidden
 	
 	abstract fun build(): T
 

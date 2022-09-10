@@ -10,8 +10,8 @@ on:
     - cron: '11 1,5,9,13,17,21 * * *'
 
 jobs:
-  emergencyMetting:
-    name: 'Get rid of the impostor'
+  deployment:
+    name: 'Deployment'
     runs-on: ubuntu-latest
     
     steps:

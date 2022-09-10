@@ -3,6 +3,8 @@ package flarogus.command
 import dev.kord.core.entity.Message
 import flarogus.command.parser.CommandArgumentParser
 import flarogus.util.*
+import kotlinx.coroutines.delay
+import ktsinterface.launch
 
 typealias CommandAction<R> = suspend Callback<R>.() -> Unit
 typealias CommandCheck = suspend (message: Message?, args: String) -> String?
@@ -14,6 +16,8 @@ open class FlarogusCommand<R>(name: String) {
 
 	/** If any of the checks returns a string, it is considered that this command cannot be executed. The returned string is the reason. */
 	val checks = ArrayList<CommandCheck>()
+	/** Time in milliseconds after which an invalid invocation of this command gets deleted. Values less than 0 prevent the deletion. */
+	var errorDeleteDelay = 15000L
 
 	/** The parent command tree. May be null if the command is a root command. */
 	var parent: TreeCommand? = null
@@ -96,9 +100,10 @@ open class FlarogusCommand<R>(name: String) {
 	open suspend operator fun invoke(message: Message): Callback<R> = invoke(message, message.content)
 
 	/** 
-	 * Executes this command with the given callback, inflating its arguments.
+	 * Executes this command with the given callback, inflating its argument list.
 	 * If the callback has an associated message, reports any errors by replying to it.
-	 * Otherwise, rethrows them. */
+	 * Otherwise, any errors are rethrown.
+	 */
 	open suspend fun useCallback(callback: Callback<R>) {
 		try {
 			performChecks(callback)
@@ -116,7 +121,18 @@ open class FlarogusCommand<R>(name: String) {
 			if (t is CommandException && t.commandName == null) t.commandName = name
 
 			if (callback.originalMessage == null) throw t
-			callback.reply(t)
+			replyWithError(callback, t)
+		}
+	}
+
+	/** Replies to an invalid callback with the exception and schedules its removal. */
+	protected open fun replyWithError(callback: Callback<*>, t: Throwable) {
+		val reply = callback.reply(t)
+
+		if (errorDeleteDelay >= 0) launch {
+			delay(errorDeleteDelay)
+			reply?.await()?.delete()
+			callback.originalMessage?.delete()
 		}
 	}
 

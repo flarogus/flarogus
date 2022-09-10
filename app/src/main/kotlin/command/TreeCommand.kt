@@ -61,7 +61,7 @@ open class TreeCommand(name: String) : FlarogusCommand<Any?>(name) {
 			}
 		} catch (t: Throwable) {
 			if (callback.originalMessage == null) throw t
-			callback.reply(t)
+			replyWithError(callback, t)
 		}
 	}
 
