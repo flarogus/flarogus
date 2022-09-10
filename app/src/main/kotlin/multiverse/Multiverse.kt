@@ -9,6 +9,7 @@ import dev.kord.rest.builder.message.create.embed
 import flarogus.Vars
 import flarogus.multiverse.entity.MultiversalGuild
 import flarogus.multiverse.entity.MultiversalUser
+import flarogus.multiverse.npc.NPC
 import flarogus.multiverse.npc.impl.AmogusNPC
 import flarogus.multiverse.state.*
 import flarogus.util.replyWith
@@ -36,7 +37,7 @@ object Multiverse {
 	var isRunning = false
 	var needsInfoMessage = true
 
-	val npcs = mutableListOf(AmogusNPC())
+	val npcs: MutableList<NPC> = mutableListOf(AmogusNPC())
 
 	val users = ArrayList<MultiversalUser>(90)
 	val guilds = ArrayList<MultiversalGuild>(30)

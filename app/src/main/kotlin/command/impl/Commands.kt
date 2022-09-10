@@ -494,6 +494,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 			flag("su", "Run as a superuser. Mandatory.").alias('s')
 			flag("imports", "Add default imports").alias('i')
 			flag("trace", "Display stack trace upon an exception").alias('t')
+			flag("delete", "Delete the messages in 30 seconds").alias("d")
 		}
 
 		action {
@@ -508,6 +509,8 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 			Vars.scriptEngine.put("message", msg)
 			Vars.scriptContext.setAttribute("message", msg, ScriptContext.ENGINE_SCOPE)
 
+			var toDelete = args.flag("delete")
+
 			val result = try {
 				Vars.scriptEngine.eval(script, Vars.scriptContext).let {
 					when (it) {
@@ -521,11 +524,19 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 				}
 			} catch (e: Throwable) {
 				result(e, false)
+				toDelete = true
 				(e.cause ?: e).let {
 					if (args.flag("trace")) it.stackTraceToString() else it.toString()
 				}
 			}
-			reply("```\n${result.toString().take(1950)}\n```")
+			val reply = reply("```\n${result.toString().take(1950)}\n```")
+
+			// schedule the removal
+			if (toDelete) Vars.client.launch {
+				delay(15000L)
+				reply?.await()?.delete()
+				originalMessageOrNull()?.delete()
+			}
 		}
 	}
 }

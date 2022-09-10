@@ -1,10 +1,14 @@
 package flarogus.command.impl
 
+import dev.kord.common.entity.Snowflake
+import dev.kord.core.entity.Message
 import kotlin.math.*
 import flarogus.command.*
 import flarogus.command.builder.*
 import flarogus.multiverse.*
 import flarogus.multiverse.entity.*
+import flarogus.multiverse.npc.impl.AmogusNPC
+import flarogus.util.*
 
 fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 	modOnly()
@@ -181,9 +185,7 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 		}
 	}
 
-	subcommand<Boolean>("echo", "Send a system message in the multiverse") {
-		adminOnly()
-
+	subcommand<Unit>("echo", "Send a system message in the multiverse") {
 		arguments {
 			required<String>("message", "Content of the system message. Trimmed.")
 		}
@@ -192,13 +194,38 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 			Multiverse.broadcastSystem {
 				content = args.arg<String>("message").trim()
 			}
-			result(true)
+		}
+	}
+
+	subcommand<Unit>("echo-as", "Send a message in the multiverse as one of the special users.") {
+		val users = mapOf<String, suspend (String, Message?) -> Unit>(
+			"local-amogus" to { msg, ref -> Multiverse.npcs.find { it is AmogusNPC }?.sendMessage(msg, ref) },
+			"femboy-crawler" to { msg, ref ->
+				Multiverse.broadcast("femboy crawler#3846 — oblivion settlement", "https://cdn.discordapp.com/attachments/732665247302942730/1011998607047663636/Miserable_situation_20220813_182228.png") {
+					content = msg
+					if (ref != null) quoteMessage(ref, it)
+				}
+			}
+		)
+
+		arguments {
+			required<String>("alias", "Name alias of the special user.")
+			required<String>("message", "Message to send.")
+			optional<Snowflake>("reply", "Message to reference as if it was being replied to.")
+		}
+
+		action {
+			val func = users.getOrDefault(args.arg<String>("alias").lowercase(), null)
+			expect(func != null) { "Invalid alias. Available: ${users.keys.joinToString { "`$it`" }}" }
+
+			val refId = args.opt<Snowflake>("reply")
+			val ref = refId?.let { id -> Multiverse.history.find { id in it } ?: throw RuntimeException("message with id $refId could not be found in the history.") }
+
+			func(args.arg("message"), (ref?.origin ?: ref?.retranslated?.firstOrNull())?.asMessage())
 		}
 	}
 
 	subcommand<Boolean>("setloglevel", "Set the level of logging.") {
-		adminOnly()
-
 		arguments {
 			required<String>("level", "New log level")
 		}
