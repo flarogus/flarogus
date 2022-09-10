@@ -66,6 +66,7 @@ object Multiverse {
 					    - `!flarogus multiverse help` - various commands
 				""".trimIndent() }
 			}
+			needsInfoMessage = false
 		}
 		
 		isRunning = true
