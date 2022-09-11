@@ -1,6 +1,6 @@
 plugins {
-	kotlin("jvm") version "1.6.10"
-	kotlin("plugin.serialization") version "1.6.10"
+	kotlin("jvm") version "1.7.20-Beta"
+	kotlin("plugin.serialization") version "1.7.20-Beta"
 	application
 }
 
@@ -11,16 +11,21 @@ repositories {
 
 dependencies {
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
-	implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.10")
+	implementation(kotlin("reflect"))
 	
-	implementation("org.jetbrains.kotlin:kotlin-script-runtime:1.6.10")
+	/*implementation("org.jetbrains.kotlin:kotlin-script-runtime:1.6.10")
 	implementation("org.jetbrains.kotlin:kotlin-script-util:1.6.10")
 	implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.6.10")
 	implementation("org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:1.6.10")
-	implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.6.10")
+	implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.6.10")*/
+
 	//runtimeOnly("org.jetbrains.kotlin:kotlin-main-kts:1.6.10")
 	//runtimeOnly("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.6.10")
 	//implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223-embeddable:1.3.72")
+	
+	implementation(kotlin("scripting-common"))
+	implementation(kotlin("scripting-jvm"))
+	implementation(kotlin("scripting-jvm-host"))
 
 	implementation("dev.kord:kord-core:0.8.0-M10")
 	implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
@@ -33,9 +38,12 @@ dependencies {
 }
 
 tasks.compileKotlin {
-	kotlinOptions.apply {
-		sourceCompatibility = "11"
+	kotlinOptions {
 		jvmTarget = "11"
+
+		freeCompilerArgs += arrayOf(
+			"-Xcontext-receivers"
+		)
 	}
 }
 

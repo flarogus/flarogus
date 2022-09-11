@@ -10,6 +10,8 @@ import dev.kord.core.*
 import dev.kord.core.supplier.*
 import flarogus.util.*
 import flarogus.command.impl.*
+import kotlin.math.*
+import kotlin.script.experimental.jvmhost.BasicJvmScriptingHost
 
 /** An object declaration that stores variables/constants that are shared across the whole application */
 object Vars {	
@@ -52,33 +54,22 @@ object Vars {
 		649306040604557322.toSnowflake() // bluewolf
 	)
 
-	// the platform-specific type is kept to avoid a sudden NullPointerException if the engine is missing
-	/** Scripting engine */
-	val scriptEngine = ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts");
-	/* Global scripting context */
-	val scriptContext = SimpleScriptContext()
+//	// the platform-specific type is kept to avoid a sudden NullPointerException if the engine is missing
+//	/** Scripting engine */
+//	val scriptEngine = ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts");
+//	/* Global scripting context */
+//	val scriptContext = SimpleScriptContext()
+
+	val scriptHost by lazy { BasicJvmScriptingHost() }
 
 	/** ```language *some script* ``` */
 	val codeblockRegex = "```([a-z]*)?((?s).*)```".toRegex()
-	/** Default imports. Used for the script engine. */
-	val defaultImports = arrayOf(
-		"flarogus.*", "flarogus.util.*",
-		"flarogus.multiverse.*", "flarogus.multiverse.state.*", "flarogus.multiverse.entity.*",
-		"ktsinterface.*",
-		"dev.kord.core.entity.*", "dev.kord.core.entity.channel.*",
-		"dev.kord.common.entity.*",
-		"dev.kord.rest.builder.*", "dev.kord.rest.builder.message.*", "dev.kord.rest.builder.message.create.*",
-		"dev.kord.core.behavior.*", "dev.kord.core.behavior.channel.*",
-		"kotlin.system.*",
-		"kotlinx.coroutines.*", "kotlinx.coroutines.flow.*",
-		"kotlinx.serialization.*", "kotlinx.serialization.json.*"
-	).joinToString("") { "import $it;" }
 
 	/** Whether to enable experimental stuff. Should be enabled only using the run command */
 	var experimental = false
 	
 	fun loadState() {
-		ubid = Random.nextInt(0, 1000000000).toString(10 + 26)
+		ubid = Random.nextInt(0, (10 + 26f).pow(5).toInt()).toString(10 + 26)
 		startedAt = System.currentTimeMillis()
 		flarogusEpoch = startedAt
 	}

@@ -3,6 +3,7 @@ package flarogus.command.impl
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.channel.createMessage
 import dev.kord.core.behavior.edit
+import dev.kord.core.entity.Message
 import dev.kord.core.entity.User
 import dev.kord.rest.builder.message.create.embed
 import flarogus.Vars
@@ -17,6 +18,9 @@ import java.net.URL
 import javax.imageio.ImageIO
 import javax.script.ScriptContext
 import kotlin.math.min
+import kotlin.script.experimental.api.valueOrThrow
+import kotlin.script.experimental.host.toScriptSource
+import kotlin.script.experimental.util.PropertiesCollection
 import kotlin.time.DurationUnit
 
 @OptIn(kotlin.time.ExperimentalTime::class)
@@ -300,14 +304,14 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 			""".trimIndent()
 
 			arguments {
-				default<String>("string", "An arbitrary string.") { "" }
+				default("string", "An arbitrary string.") { "" }
 			}
 			action {
 				result(args.arg<String>("string").trim())
 			}
 		}
 
-		subcommand<String>("username", "fetch the name of a user") {
+		subcommand("username", "fetch the name of a user") {
 			arguments {
 				required<MultiversalUser>("user")
 			}
@@ -355,23 +359,23 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 			discordOnly()
 			presetCheck { m, _ -> if (m?.referencedMessage != null) null else "you must reply to a message." }
 
-			subaction<String>("username", "Fetch the username of the author of the message.") {
+			subaction("username", "Fetch the username of the author of the message.") {
 				result(originalMessage().referencedMessage!!.data.author.let { it.username + "#" + it.discriminator })
 			}
 
-			subaction<String>("pfp", "Fetch the pfp url of the author of the message.") {
+			subaction("pfp", "Fetch the pfp url of the author of the message.") {
 				result(originalMessage().referencedMessage!!.let {
 					it.author?.getAvatarUrl() ?: it.data.author.avatar ?: "null"
 				})
 			}
 
-			subaction<Snowflake>("userid", "Fetch the id of the user that has sent this message.") {
+			subaction("userid", "Fetch the id of the user that has sent this message.") {
 				result(originalMessage().referencedMessage!!.data.author.id)
 			}
 		}
 	}
 
-	subcommand<Long>("sus") {
+	subcommand("sus") {
 		description = "Shows info of the current instance"
 
 		action {
@@ -388,7 +392,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 		}
 	}
 
-	subcommand<Boolean>("shutdown") {
+	subcommand("shutdown") {
 		adminOnly()
 
 		description = "Shuts down an instance by it's ubid (acquired using 'flarogus sus') and optionally purge the multiverse."
@@ -409,10 +413,6 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 				}
 
 				result(true)
-				
-				Multiverse.broadcastSystem {
-					content = "A multiverse instance is shutting down... (This is not neccesarily a problem)"
-				}
 
 				Vars.client.shutdown()
 				System.exit(0) // stop the workflow
@@ -422,7 +422,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 		}
 	}
 
-	subcommand<Boolean>("report") {
+	subcommand("report") {
 		val reportsChannel = Snowflake(944718226649124874UL)
 		val linkRegex = """discord.com/channels/\d+/(\d+)/(\d+)""".toRegex()
 
@@ -492,7 +492,6 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 			required<String>("script", "A kotlin script. Can contain a code block.")
 
 			flag("su", "Run as a superuser. Mandatory.").alias('s')
-			flag("imports", "Add default imports").alias('i')
 			flag("trace", "Display stack trace upon an exception").alias('t')
 			flag("delete", "Delete the messages in 30 seconds").alias("d")
 		}
@@ -500,19 +499,20 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 		action {
 			require(args.flag("su")) { "This command requires the --su flag to be present." }
 
-			var script = args.arg<String>("script").let {
+			val script = args.arg<String>("script").let {
 				Vars.codeblockRegex.find(it)?.groupValues?.getOrNull(2) ?: it
 			}
-			if (args.flag("imports")) script = "${Vars.defaultImports}\n$script"
 
 			val msg = originalMessage?.asMessage()
-			Vars.scriptEngine.put("message", msg)
-			Vars.scriptContext.setAttribute("message", msg, ScriptContext.ENGINE_SCOPE)
-
 			var toDelete = args.flag("delete")
 
 			val result = try {
-				Vars.scriptEngine.eval(script, Vars.scriptContext).let {
+				val msgProperty = PropertiesCollection.Key<Message>("message")
+
+				Vars.scriptHost.evalWithTemplate<KScript>(script.toScriptSource(),
+					{ if (msg != null) this[msgProperty] = msg },
+					{ if (msg != null) this[msgProperty] = msg }
+				).valueOrThrow().returnValue.let {
 					when (it) {
 						is Deferred<*> -> it.await()
 						is Job -> it.join()
@@ -520,7 +520,9 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 					}
 				}.also { 
 					result(it, false)
-					Log.info { "${msg?.author?.tag} has successfully executed a kotlin script (${msg?.id} in ${msg?.channelId})" }
+					if (msg?.author?.id != Vars.ownerId) {
+						Log.info { "${msg?.author?.tag} has successfully executed a kotlin script (${msg?.id} in ${msg?.channelId})" }
+					}
 				}
 			} catch (e: Throwable) {
 				result(e, false)
