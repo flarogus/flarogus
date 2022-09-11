@@ -20,6 +20,8 @@ import flarogus.command.*;
 import flarogus.command.builder.*
 import flarogus.multiverse.*
 import kotlin.time.Duration.Companion.seconds
+import kotlin.script.experimental.api.valueOrThrow
+import kotlin.script.experimental.host.toScriptSource
 
 const val IS_MULTIVERSE_ENABLED = true
 
@@ -110,7 +112,7 @@ suspend fun main(vararg args: String) {
 						val script = Vars.codeblockRegex.find(it.content)?.groupValues?.getOrNull(2) ?: it.content
 				
 						val res = try { 
-							Vars.scriptEngine.eval(Vars.defaultImports + "\n" + script, Vars.scriptContext)?.let {
+							Vars.scriptHost.evalWithTemplate<KScript>(script.toScriptSource())?.valueOrThrow()?.returnValue?.let {
 								if (it is Deferred<*>) it.await() else it
 							}?.toString() ?: "null"
 						} catch (e: Exception) {
