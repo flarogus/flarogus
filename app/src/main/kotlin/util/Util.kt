@@ -7,6 +7,7 @@ import kotlinx.coroutines.*
 import flarogus.*
 
 fun Any?.isNotNull() = this != null
+inline fun <reified T> Any?.cast() = this as T
 
 fun Instant.atUTC(): ZonedDateTime = atZone(ZoneId.of("Z"))
 fun TemporalAccessor.format(): String = Vars.dateFormatter.format(this)
