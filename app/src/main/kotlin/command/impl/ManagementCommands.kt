@@ -98,20 +98,24 @@ fun TreeCommandBuilder.addManagementSubtree() = subtree("manage") {
 			args.arg<MultiversalUser>("user").nameOverride = null
 		}
 
-		subtree("command-blacklist", "Manage the command blacklist.") {
+		subcommand<Boolean>("command-blacklist", "Blacklist a user from a command or clear the command blacklist of a user..") {
 			adminOnly()
 
 			arguments {
 				default<String>("command") { "" }
 			}
 
-			subaction<Unit>("add", "Blacklist a user from a command") {
-				expect(args.arg<String>("command").startsWith("!flarogus")) { "command name must start with the prefix." }
-				args.arg<MultiversalUser>("user").commandBlacklist.add(args.arg<String>("command"))
-			}
+			action {
+				val command = args.arg<String>("command")
 
-			subaction<Boolean>("remove", "Unblacklist a user from a command") {
-				args.arg<MultiversalUser>("user").commandBlacklist.remove(args.arg<String>("command")).let(::result)
+				if (command.isEmpty()) {
+					args.arg<MultiversalUser>("user").commandBlacklist.clear()
+					result(true)
+					return@action
+				}
+
+				expect(command.startsWith("!flarogus")) { "command name must start with the prefix." }
+				args.arg<MultiversalUser>("user").commandBlacklist.add(command)
 			}
 		}
 	}
