@@ -1,6 +1,7 @@
 package flarogus.multiverse
 
 import dev.kord.common.entity.*
+import dev.kord.core.behavior.*
 import dev.kord.core.entity.Message
 import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.event.message.*
@@ -311,7 +312,7 @@ object Multiverse {
 
 	open class ModifyMultimessageAction(
 		val messageId: Snowflake,
-		val newMessage: DiscordPartialMessage
+		val newMessage: DiscordPartialMessage,
 		val editOrigin: Boolean = false
 	) : PendingAction<Unit>(30) {
 		override suspend fun execute() {
