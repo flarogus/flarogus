@@ -98,7 +98,7 @@ fun TreeCommandBuilder.addManagementSubtree() = subtree("manage") {
 			args.arg<MultiversalUser>("user").nameOverride = null
 		}
 
-		subcommand<Unit>("command-blacklist", "Manage the command blacklist.") {
+		subtree("command-blacklist", "Manage the command blacklist.") {
 			adminOnly()
 
 			arguments {
