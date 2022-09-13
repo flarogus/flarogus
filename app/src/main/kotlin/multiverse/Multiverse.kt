@@ -265,20 +265,20 @@ object Multiverse {
 		override suspend fun execute(): Multimessage {
 			val messages = ArrayList<WebhookMessageBehavior>(guilds.size)
 
-			guilds.forEach {
-				try {
-					it.send(
-						username = user,
-						avatar = avatar,
-						filter = filter,
-						handler = { m, w -> messages.add(WebhookMessageBehavior(w, m)) },
-						builder = messageBuilder
-					)
-				} catch (e: Exception) {
-					Log.error { "Exception thrown while retranslating a message to ${it.name}: `$e`" }
+			coroutineScope {
+				for (guild in guilds) launch {
+					try {
+						guild.send(
+							username = user,
+							avatar = avatar,
+							filter = filter,
+							handler = { m, w -> messages.add(WebhookMessageBehavior(w, m)) },
+							builder = messageBuilder
+						)
+					} catch (e: Exception) {
+						Log.error { "Exception thrown while retranslating a message to ${guild.name}: `$e`" }
+					}
 				}
-				job.ensureActive()
-				yield()
 			}
 
 			val multimessage = Multimessage(null, messages)
@@ -290,18 +290,30 @@ object Multiverse {
 		}
 	}
 
-	open class DeleteMultimessageAction(val messageId: Snowflake) : PendingAction<Unit>(45) {
+	open class DeleteMultimessageAction(
+		val messageId: Snowflake,
+		val deleteOrigin: Boolean = false
+	) : PendingAction<Unit>(45) {
 		override suspend fun execute() {
 			val multimessage = history.find { it.origin?.id == messageId } ?: return
 
-			multimessage.delete(false)
+			coroutineScope {
+				for (message in multimessage.retranslated) launch {
+					message.delete()
+				}
+				if (deleteOrigin) multimessage.origin?.delete()
+			}
 			Log.info { "Message ${messageId} was deleted by deleting the original message" }
 
 			synchronized(history) { history.remove(multimessage) }
 		}
 	}
 
-	open class ModifyMultimessageAction(val messageId: Snowflake, val newMessage: DiscordPartialMessage) : PendingAction<Unit>(30) {
+	open class ModifyMultimessageAction(
+		val messageId: Snowflake,
+		val newMessage: DiscordPartialMessage
+		val editOrigin: Boolean = false
+	) : PendingAction<Unit>(30) {
 		override suspend fun execute() {
 			val multimessage = history.find { it.origin?.id == messageId } ?: return
 
@@ -314,9 +326,12 @@ object Multiverse {
 					}
 				}
 			}
-
-			multimessage.edit(false) {
-				content = newContent
+			
+			coroutineScope {
+				for (message in multimessage.retranslated) launch {
+					message.edit { content = newContent }
+				}
+				if (editOrigin) multimessage.origin?.edit { content = newContent }
 			}
 
 			Log.info { "Message ${multimessage.origin?.id} was edited by it's author" }
