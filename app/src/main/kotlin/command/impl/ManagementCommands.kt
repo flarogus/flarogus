@@ -69,12 +69,17 @@ fun TreeCommandBuilder.addManagementSubtree() = subtree("manage") {
 
 		presetArguments {
 			default<MultiversalUser>("user", "The user you want to manage. Defaults to the caller.") {
-				val id = originalMessage?.asMessage()?.author?.id ?: fail("anonymous caller must specify a user")
+				val id =
+					originalMessage?.asMessage()?.author?.id
+						?: fail("anonymous caller must specify a user")
 				Multiverse.userOf(id) ?: fail("This user is not valid.")
 			}
 		}
-		
-		subcommand<Unit>("nickname", "Set the nickname of a user. Users without moderator (or higher) permissions can only set their own nick name.") {
+
+		subcommand<Unit>(
+			"nickname",
+			"Set the nickname of a user. Users without moderator (or higher) permissions can only set their own nick name."
+		) {
 			arguments {
 				default<String>("name", "The name to set this user's nickname to.") { "" }
 			}
@@ -93,6 +98,23 @@ fun TreeCommandBuilder.addManagementSubtree() = subtree("manage") {
 		subaction<Unit>("reset-nickname", "Resst the nickname of a user.") {
 			requireModOrSelf()
 			args.arg<MultiversalUser>("user").nameOverride = null
+		}
+
+		subcommand<Unit>("command-blacklist", "Manage the command blacklist.") {
+			adminOnly()
+
+			arguments {
+				required<String>("command")
+			}
+
+			subaction<Unit>("add", "Blacklist a user from a command") {
+				expect(args.arg<String>("command").startsWith("!flarogus")) { "command name must start with the prefix." }
+				args.arg<MultiversalUser>("user").commandBlacklist.add(args.arg<String>("command"))
+			}
+
+			subaction("remove", "Unblacklist a user from a command") {
+				args.arg<MultiversalUser>("user").commandBlacklist.remove(args.arg<String>("command")).let(::result)
+			}
 		}
 	}
 }

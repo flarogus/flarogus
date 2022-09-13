@@ -32,6 +32,8 @@ open class MultiversalUser(
 
 	val warns = ArrayList<WarnEntry>()
 	val warningPoints get() = warns.fold(0) { total: Int, warn -> total + warn.rule.points }
+	/** Commands this user is not allowed to execute. */
+	val commandBlacklist = ArrayList<String>()
 
 	/** NOT the name of the user! */
 	var usertag: String? = null

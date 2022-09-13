@@ -2,6 +2,7 @@ package flarogus.command
 
 import dev.kord.core.entity.Message
 import flarogus.command.parser.CommandArgumentParser
+import flarogus.multiverse.Multiverse
 import flarogus.util.*
 import kotlinx.coroutines.delay
 import ktsinterface.launch
@@ -138,7 +139,16 @@ open class FlarogusCommand<R>(name: String) {
 
 	/** Performs all checks of this command and throws an exception if any of them fail */
 	open suspend fun performChecks(callback: Callback<*>) {
-		val errors = checks.mapNotNull { it(callback.originalMessage as? Message, callback.message) }
+		var errors = checks.mapNotNull { it(callback.originalMessage as? Message, callback.message) }
+
+		// check if the user is blacklisted from this command. not using userOf as can create a new unneccesary entry
+		(callback.originalMessage as Message?)?.author?.id?.let { id ->
+			val name = getFullName()
+			if (Multiverse.users.find { it.discordId == id }?.commandBlacklist?.contains(name) == true) {
+				errors += "you're personally blacklisted from this command"
+			}
+		}
+
 		if (errors.isNotEmpty()) {
 			throw IllegalArgumentException("Could not execute this command, because: ${errors.joinToString(", ")}")
 		}
