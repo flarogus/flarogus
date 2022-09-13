@@ -102,7 +102,7 @@ fun TreeCommandBuilder.addManagementSubtree() = subtree("manage") {
 			adminOnly()
 
 			arguments {
-				required<String>("command")
+				default<String>("command") { "" }
 			}
 
 			subaction<Unit>("add", "Blacklist a user from a command") {
