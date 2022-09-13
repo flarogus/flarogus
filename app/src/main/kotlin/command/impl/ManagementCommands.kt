@@ -69,15 +69,13 @@ fun TreeCommandBuilder.addManagementSubtree() = subtree("manage") {
 
 		presetArguments {
 			default<MultiversalUser>("user", "The user you want to manage. Defaults to the caller.") {
-				val id =
-					originalMessage?.asMessage()?.author?.id
-						?: fail("anonymous caller must specify a user")
+				val id = originalMessage?.asMessage()?.author?.id
+					?: fail("anonymous caller must specify a user")
 				Multiverse.userOf(id) ?: fail("This user is not valid.")
 			}
 		}
 
-		subcommand<Unit>(
-			"nickname",
+		subcommand<Unit>("nickname",
 			"Set the nickname of a user. Users without moderator (or higher) permissions can only set their own nick name."
 		) {
 			arguments {
@@ -112,7 +110,7 @@ fun TreeCommandBuilder.addManagementSubtree() = subtree("manage") {
 				args.arg<MultiversalUser>("user").commandBlacklist.add(args.arg<String>("command"))
 			}
 
-			subaction("remove", "Unblacklist a user from a command") {
+			subaction<Boolean>("remove", "Unblacklist a user from a command") {
 				args.arg<MultiversalUser>("user").commandBlacklist.remove(args.arg<String>("command")).let(::result)
 			}
 		}
