@@ -255,6 +255,8 @@ object Multiverse {
 			= await() ?: throw (lastException ?: RuntimeException("The action had result and no exception."))
 
 		protected abstract suspend fun execute(): T
+
+		override fun toString() = this::class.java.name.substringAfterLast(".")
 	}
 
 	open class SendMessageAction(
