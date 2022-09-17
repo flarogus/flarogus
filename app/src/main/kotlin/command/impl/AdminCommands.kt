@@ -116,7 +116,9 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 
 				if (!wasWhitelisted) {
 					reply("$it has been whitelisted.")
-					Multiverse.broadcastSystemAsync { content = "A new guild has connected: $it." }
+					Multiverse.broadcastSystemAsync { _ ->
+						content = "A new guild has connected: $it."
+					}
 				}
 			}
 		}

@@ -118,6 +118,7 @@ fun formatTime(millis: Long): String {
 	return buildString {
 		fun part(div: Long, mod: Long, name: String) {
 			val c = (time % mod) / div
+			if (c <= 0L) return
 			append(c).append(" ").append(name)
 			if (c != 1L) append('s')
 			append(", ")
