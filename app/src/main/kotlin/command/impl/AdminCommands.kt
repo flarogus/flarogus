@@ -191,7 +191,7 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 
 				args.arg<MultiversalUser>("user").let {
 					it.warnFor(rule, true)
-					reply("$it has succeffuly been warned for $rule")
+					reply("$it has successffuly been warned for $rule")
 				}
 			}
 		}
@@ -212,7 +212,7 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 			val user = args.arg<MultiversalUser>("user")
 			user.warns.clear()
 
-			Multiverse.broadcastSystem { content = "User has ${user.name} just had their warnings cleared." }
+			Multiverse.broadcastSystem { content = "User $user has just had their warnings cleared." }
 		}
 	}
 

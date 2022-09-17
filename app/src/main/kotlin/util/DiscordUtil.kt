@@ -55,7 +55,7 @@ suspend fun String.explicitMentions(): String {
 	// ...and all channel mentions
 	match = channelMentionRegex.find(string)
 	while (match != null && replaced++ < 5) {
-		val replacement = Vars.supplier.getChannelOrNull(match.value.toSnowflake())?.name?.replace(mentionRegex, "[]") ?: ("<invalid channel mention>")
+		val replacement = Vars.supplier.getChannelOrNull(match.value.toSnowflake())?.data?.name?.value?.replace(mentionRegex, "[]") ?: ("<invalid channel mention>")
 		string = string.replaceRange(match.range, "#$replacement")
 		match = channelMentionRegex.find(string)
 	}
