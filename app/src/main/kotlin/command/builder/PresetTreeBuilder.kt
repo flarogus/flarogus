@@ -33,4 +33,9 @@ class PresetTreeBuilder(
 			subcommand.subcommands.forEach(::onEachSubcommand)
 		}
 	}
+
+	override fun addChild(command: FlarogusCommand<*>) {
+		if (command is TreeCommand) error("PresetTreeBuilder doesn't support subtrees!")
+		super.addChild(command)
+	}
 }

@@ -45,7 +45,7 @@ fun TreeCommandBuilder.addUserinfoSubcommand() = subcommand<BufferedImage?>("use
 		}
 		val cropped = ImageUtil.multiply(avatarFrame, userpfp)
 
-		val lines = ArrayList<String>(10).apply {
+		val lines = ArrayList<String>(20).apply {
 			add((if (user.isBot) "Bot" else "User") + " info")
 			add(user.tag)
 			add("Impostor: " + if (user.discriminator.toInt() % 7 == 0) "yes" else "no")
@@ -54,12 +54,15 @@ fun TreeCommandBuilder.addUserinfoSubcommand() = subcommand<BufferedImage?>("use
 			add("Age: ${formatTime(user.id.timeMark.elapsedNow().toLong(DurationUnit.MILLISECONDS))}")
 			add("Registered at ${Vars.dateFormatter.format(user.id.timestamp.toJavaInstant().atZone(timezone))} UTC")
 
-			add("---------")
+			add("-".repeat(maxOf { it.length }))
 
 			if (multiversalUser != null) {
+				add("Multiversal name: ${multiversalUser.name}")
 				add("Messages in the multiverse: ${multiversalUser.totalSent}")
 				add("Warning points: ${multiversalUser.warningPoints}")
 				add("Is banned: ${if (multiversalUser.canSend()) "no" else "yes"}")
+
+				if (multiversalUser.isModerator) add("Is a privileged user")
 			} else {
 				add("This user hasn't been in the multiverse yet.")
 			}

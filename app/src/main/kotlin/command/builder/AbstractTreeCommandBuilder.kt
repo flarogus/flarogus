@@ -19,7 +19,7 @@ abstract class AbstractTreeCommandBuilder<T: TreeCommand>(
 		}
 	}
 
-	fun addChild(command: FlarogusCommand<*>) = this.command.addChild(command)
+	open fun addChild(command: FlarogusCommand<*>) = this.command.addChild(command)
 
 	inline fun <reified T> subcommand(
 		name: String,

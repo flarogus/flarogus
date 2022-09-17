@@ -65,7 +65,8 @@ open class MultiversalUser(
 			lastSent = System.currentTimeMillis()
 
 			if (delay > 0) {
-				event.message.replyWith("This message was not retranslated because you were rate limited. Please, wait $messageRateLimit ms.")
+				val reply = event.message.replyWith("This message was not retranslated because you were rate limited. Please, wait $messageRateLimit ms.")
+				scheduleMessageRemoval(10000L, reply, event.message)
 				return
 			} else if (ScamDetector.hasScam(event.message.content)) {
 				event.message.replyWith("[!] your message contains a potential scam. if you're not a bot, remove any links and try again")
@@ -77,7 +78,7 @@ open class MultiversalUser(
 			if (guild == null) {
 				Log.info { "A user with a non-existent guild has attempted to send a message in the multiverse: `${event.message.content}`" }
 			} else if (!guild.isWhitelisted) {
-				event.message.replyWith("This guild is not whitelisted. Contact the admins for more info")
+				event.message.replyWith("This guild is not whitelisted. Contact the admins (`!flarogus report` or `!flarogus server`) to get whitelisted.")
 			} else {
 				val links = linkRegex.findAll(event.message.content).map { it.value }.filter { url ->
 					workaroundUrls.any { url.startsWith(it) } && !unsupportedExtensions.any { url.endsWith(it) }

@@ -9,6 +9,7 @@ import flarogus.multiverse.*
 import flarogus.multiverse.entity.*
 import flarogus.multiverse.npc.impl.AmogusNPC
 import flarogus.util.*
+import kotlinx.serialization.json.JsonNull.content
 
 fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 	modOnly()
@@ -22,7 +23,7 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 		
 		fun Callback<String>.list(predicate: (MultiversalGuild) -> Boolean) {
 			result(Multiverse.guilds.filter(predicate).sortedByDescending { it.discordId.value }.map {
-				"${it.discordId} — ${it.name}"
+				"${it.discordId} — $it"
 			}.joinToString("\n"))
 		}
 
@@ -48,17 +49,23 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 			required<MultiversalUser>("user", "Multiversal user you want to manage")
 		}
 		subaction<Unit>("add", "Ban a user") {
-			args.arg<MultiversalUser>("user").isForceBanned = true
+			args.arg<MultiversalUser>("user").let {
+				it.isForceBanned = true
+				reply("$it has been banned.")
+			}
 		}
 
 		subaction<Unit>("remove", "Unban a user") {
-			args.arg<MultiversalUser>("user").isForceBanned = false
+			args.arg<MultiversalUser>("user").let {
+				it.isForceBanned = false
+				reply("$it has been unbanned.")
+			}
 		}
 
 		subaction<Boolean>("check", "Check if a user is banned") {
 			args.arg<MultiversalUser>("user").isForceBanned.let {
 				result(it, false)
-				reply("This user is " + if (it) "banned" else "not banned")
+				reply("This user is " + if (it) "banned" else "not banned.")
 			}
 		}
 	}
@@ -71,11 +78,17 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 		}
 
 		subaction<Unit>("add", "Blacklist a guild") {
-			args.arg<MultiversalGuild>("guild").isForceBanned = true
+			args.arg<MultiversalGuild>("guild").let {
+				it.isForceBanned = true
+				reply("$it has been blacklisted.")
+			}
 		}
 
 		subaction<Unit>("remove", "Unblacklist a guild") {
-			args.arg<MultiversalGuild>("guild").isForceBanned = false
+			args.arg<MultiversalGuild>("guild").let {
+				it.isForceBanned = false
+				reply("$it has been unblacklisted.")
+			}
 		}
 
 		subaction<Boolean>("check", "Check if a guild is banned") {
@@ -95,15 +108,24 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 
 		subaction<Unit>("add", "Whitelist a guild.") {
 			args.arg<MultiversalGuild>("guild").let {
+				val wasWhitelisted = it.isWhitelisted
 				it.isWhitelisted = true
 				// forcibly update it
 				it.lastUpdate = 0L
 				it.update()
+
+				if (!wasWhitelisted) {
+					reply("$it has been whitelisted.")
+					Multiverse.broadcastSystemAsync { content = "A new guild has connected: $it." }
+				}
 			}
 		}
 
 		subaction<Unit>("remove", "Unwhitelist a guild.") {
-			args.arg<MultiversalGuild>("guild").isWhitelisted = false
+			args.arg<MultiversalGuild>("guild").let {
+				it.isWhitelisted = false
+				reply("$it has been unwhitelisted.")
+			}
 		}
 
 		subaction<Boolean>("check", "Check if a guild is whitelisted.") {
@@ -129,12 +151,18 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 			}
 
 			action {
-				args.arg<MultiversalUser>("user").usertag = args.arg<String>("tag")
+				args.arg<MultiversalUser>("user").let {
+					it.usertag = args.arg<String>("tag")
+					reply("Their name is now \"$it\".")
+				}
 			}
 		}
 
 		subaction<Unit>("clear", "Clear the usertag of the user.") {
-			args.arg<MultiversalUser>("user").usertag = null
+			args.arg<MultiversalUser>("user").let {
+				it.usertag = null
+				reply("$it's usertag has been cleared.")
+			}
 		}
 
 		subaction<String>("check", "Fetch the usertag of the user.") {
@@ -158,10 +186,13 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 			}
 
 			action {
-				val rule = RuleCategory.of(args.arg<Int>("category"), args.arg<Int>("number") - 1)
+				val rule = RuleCategory.of(args.arg("category"), args.arg<Int>("number") - 1)
 				require(rule != null) { "Rule ${args.arg<Int>("category")}.${args.arg<Int>("number")} does not exist." }
 
-				args.arg<MultiversalUser>("user").warnFor(rule, true)
+				args.arg<MultiversalUser>("user").let {
+					it.warnFor(rule, true)
+					reply("$it has succeffuly been warned for $rule")
+				}
 			}
 		}
 
@@ -181,7 +212,7 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 			val user = args.arg<MultiversalUser>("user")
 			user.warns.clear()
 
-			Multiverse.broadcastSystem { content = "User ${user.name} just had their warns cleared." }
+			Multiverse.broadcastSystem { content = "User has ${user.name} just had their warnings cleared." }
 		}
 	}
 

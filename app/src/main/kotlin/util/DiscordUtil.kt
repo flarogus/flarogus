@@ -14,6 +14,7 @@ import dev.kord.core.event.message.*
 import dev.kord.core.behavior.*
 import dev.kord.core.behavior.channel.*
 import dev.kord.common.entity.*
+import dev.kord.rest.request.KtorRequestException
 import flarogus.*
 import flarogus.multiverse.*
 
@@ -21,7 +22,11 @@ val ZERO_SNOWFLAKE = 0UL.toSnowflake()
 val Snowflake.Companion.NONE get() = ZERO_SNOWFLAKE
 
 val mentionRegex = "<[@#](!)?(\\d+)>".toRegex()
+val userMentionRegex = "<[@](!)?(\\d+)>".toRegex()
+val channelMentionRegex = "<[#](!)?(\\d+)>".toRegex()
 val hypertextRegex = """\((.*)\)\[(https?://)([a-zA-Z.\-_]+/?)(.*)]""".toRegex()
+
+val nameRegex = """^([.*])?(.*#\d\d\d\d) — .*""".toRegex()
 
 fun ULong.toSnowflake() = Snowflake(this)
 fun String.toSnowflakeOrNull(): Snowflake? = if (!startsWith("<")) {
@@ -38,12 +43,21 @@ fun String.revealHypertext() = this.replace(hypertextRegex, "(\$1)[\$2\$3\$4] (\
 
 suspend fun String.explicitMentions(): String {
 	var string = this
-	var match: MatchResult? = mentionRegex.find(string)
+	var replaced = 0
+	var match: MatchResult? = userMentionRegex.find(string)
 
-	while (match != null) {
-		val replacement = Vars.supplier.getUserOrNull(match.value.toSnowflake())?.tag?.replace(mentionRegex, "[MENTION]") ?: ("[${match.groupValues[1]}]")
-		string = string.replaceRange(match.range, "@" + replacement)
-		match = mentionRegex.find(string)
+	// replace all user mentions
+	while (match != null && replaced++ < 3) {
+		val replacement = Vars.supplier.getUserOrNull(match.value.toSnowflake())?.tag?.replace(mentionRegex, "[]") ?: ("<invalid user mention>")
+		string = string.replaceRange(match.range, "@$replacement")
+		match = userMentionRegex.find(string)
+	}
+	// ...and all channel mentions
+	match = channelMentionRegex.find(string)
+	while (match != null && replaced++ < 5) {
+		val replacement = Vars.supplier.getChannelOrNull(match.value.toSnowflake())?.name?.replace(mentionRegex, "[]") ?: ("<invalid channel mention>")
+		string = string.replaceRange(match.range, "#$replacement")
+		match = channelMentionRegex.find(string)
 	}
 
 	return string
@@ -84,7 +98,7 @@ fun sendImage(origin: MessageBehavior, text: String = "", image: BufferedImage) 
 				origin.channel.createMessage {
 					content = text.take(1999).stripEveryone()
 					messageReference = origin.id
-					addFile("SUSSUSUSUSUSUSUSUSU.png", it)
+					addFile("image.png", it)
 				}
 			}
 		}
@@ -102,50 +116,22 @@ const val year = 12L * month
 fun formatTime(millis: Long): String {
 	val time: Long = millis / 1000L;
 	return buildString {
-		if (time >= year) {
-			val c = time / year
-			append(c)
-			append(" year")
+		fun part(div: Long, mod: Long, name: String) {
+			val c = (time % mod) / div
+			append(c).append(" ").append(name)
 			if (c != 1L) append('s')
 			append(", ")
 		}
-		if (time >= month) {
-			val c = (time % year) / month
-			append(c)
-			append(" month")
-			if (c != 1L) append('s')
-			append(", ")
-		}
-		if (time >= day) {
-			val c = (time % month) / day
-			append(c)
-			append(" day")
-			if (c != 1L) append('s')
-			append(", ")
-		}
-		if (time >= hour) {
-			val c = (time % day) / hour
-			append(c)
-			append(" hour")
-			if (c != 1L) append('s')
-			append(", ")
-		}
-		if (time >= minute) {
-			val c = (time % hour) / minute
-			append(c)
-			append(" minute")
-			if (c != 1L) append('s')
-			append(", ")
-		}
-		
-		val c = time % 60
-		append(c)
-		append(" second")
-		if (c != 1L) append('s')
+		part(year, Long.MAX_VALUE, "year")
+		part(month, year, "month")
+		part(day, month, "day")
+		part(hour, day, "hour")
+		part(minute, hour, "minute")
+
+		append(time % 60).append(" second")
+		if (time % 60 != 1L) append('s')
 	}
 }
-
-val nameRegex = """^([.*])?(.*#\d\d\d\d) — .*""".toRegex()
 
 /** 
  * Adds an embed referencing the original message
@@ -188,15 +174,12 @@ suspend fun MessageCreateBuilder.quoteMessage(message: Message?, toChannel: Snow
 	}
 }
 
-/** Creates a message with different content */
-fun fakeMessage(message: Message, newContent: String) = with(message.data) {
-	Message(MessageData(
-		id, channelId, guildId, author, 
-		newContent, timestamp, editedTimestamp, tts,
-		mentionEveryone, mentions, mentionRoles, mentionedChannels,
-		attachments, embeds, reactions, nonce,
-		pinned, webhookId, type, activity,
-		application, applicationId, messageReference, flags,
-		stickers, referencedMessage, interaction
-	), message.kord)
-};
+/** Deletes all of the [messages] after [delay] milliseconds. [messages] can contain [Deferred]s. */
+fun scheduleMessageRemoval(delay: Long, vararg messages: Any) = Vars.client.launch {
+	delay(delay)
+	messages.forEach {
+		try {
+			((if (it is Deferred<*>) it.await() else it) as? MessageBehavior)?.delete()
+		} catch (_: KtorRequestException) {}
+	}
+}
