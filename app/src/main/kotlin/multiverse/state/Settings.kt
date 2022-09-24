@@ -1,28 +1,24 @@
 package flarogus.multiverse.state
 
-import java.io.*
-import java.net.*
-import kotlin.math.*
-import kotlin.concurrent.*
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
-import kotlinx.serialization.*
-import kotlinx.serialization.json.*
+import dev.kord.common.entity.Snowflake
+import dev.kord.core.behavior.channel.createMessage
+import dev.kord.core.behavior.edit
+import dev.kord.core.entity.Message
+import flarogus.Vars
+import flarogus.multiverse.*
+import flarogus.multiverse.entity.MultiversalGuild
+import flarogus.multiverse.entity.MultiversalUser
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
-import dev.kord.common.entity.*
-import dev.kord.rest.builder.message.create.*
-import dev.kord.core.event.message.*
-import dev.kord.core.entity.*
-import dev.kord.core.entity.channel.*
-import dev.kord.core.behavior.*
-import dev.kord.core.behavior.channel.*
-import flarogus.*
-import flarogus.util.*
-import flarogus.multiverse.*
-import flarogus.multiverse.state.*
-import flarogus.multiverse.entity.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import java.io.ByteArrayInputStream
+import java.io.InputStream
+import kotlin.system.exitProcess
 
 object Settings {
 	val settingsChannel by lazy { Vars.client.unsafe.messageChannel(Channels.settings) }
@@ -69,7 +65,7 @@ object Settings {
 						Log.info { "multiverse instance ${Vars.ubid} is shutting down (newer state was detected)" }
 						delay(5000L)
 						Vars.client.shutdown()
-						System.exit(0) // brutal
+						exitProcess(0) // brutal
 					} else {
 						state.loadFromState()
 					}
@@ -91,8 +87,8 @@ object Settings {
 	}
 	
 	/** Uploads the providen string to cdn. Returns url of the uploaded file */
-	suspend fun uploadToCdn(data: String) = uploadToCdn(ByteArrayInputStream(data.toByteArray()));
-	
+	suspend fun uploadToCdn(data: String) = uploadToCdn(ByteArrayInputStream(data.toByteArray()))
+
 	/** Upload the contents of the input stream to cdn. returns url of the uploaded file */
 	suspend fun uploadToCdn(data: InputStream): String {
 		fileStorageChannel.createMessage {
@@ -101,7 +97,7 @@ object Settings {
 	}
 	
 	/** Opposite of uploadToCdn(): downloads content from the uploaded file */
-	inline suspend fun <reified T> downloadFromCdn(url: String) = Vars.client.resources.httpClient.get<HttpResponse>(url).receive<T>()
+	suspend inline fun <reified T> downloadFromCdn(url: String) = Vars.client.resources.httpClient.get<HttpResponse>(url).receive<T>()
 
 }
 
@@ -119,7 +115,7 @@ data class State(
 	var users: List<MultiversalUser> = Multiverse.users,
 	var guilds: List<MultiversalGuild> = Multiverse.guilds
 ) {
-	val multiverseNeedsInfoMessage = Multiverse.needsInfoMessage
+	val multiverseLastInfoMessage = Multiverse.lastInfoMessage
 
 	/** Updates the current bot state in accordance with this state */
 	fun loadFromState() {
@@ -138,6 +134,6 @@ data class State(
 			Multiverse.guilds.add(g)
 		}
 
-		Multiverse.needsInfoMessage = multiverseNeedsInfoMessage
+		Multiverse.lastInfoMessage = multiverseLastInfoMessage
 	}
 }
