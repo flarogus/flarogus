@@ -68,7 +68,7 @@ fun User.getAvatarUrl() = avatar?.url ?: "https://cdn.discordapp.com/embed/avata
 fun User?.isSuperuser() = this != null && this.id in Vars.superusers
 fun User?.isModerator() = this != null && (this.id in Vars.moderators || isSuperuser())
 
-/** Asynchronously eplies to a message */
+/** Asynchronously replies to a message */
 fun MessageBehavior.replyWith(message: String) = Vars.client.async {
 	try {
 		channel.createMessage {

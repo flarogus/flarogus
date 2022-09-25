@@ -10,6 +10,7 @@ import dev.kord.core.*
 import dev.kord.core.supplier.*
 import flarogus.util.*
 import flarogus.command.impl.*
+import java.util.Vector
 
 /** An object declaration that stores variables/constants that are shared across the whole application */
 object Vars {	
@@ -18,8 +19,10 @@ object Vars {
 	val supplier get() = client.defaultSupplier
 	val restSupplier by lazy { RestEntitySupplier(client) }
 
-	/** If true, the multiverse works in the test mode. */
+	/** If true, the multiverse works in the test mode. Must be set before compiling. */
 	val testMode = false
+	/** Whether to enable experimental stuff. May or may not be meaningless at the current moment, */
+	var experimental = false
 
 	val rootCommand = createRootCommand()
 	
@@ -36,8 +39,7 @@ object Vars {
 	val ownerId = Snowflake(502871063223336990UL)
 	/** Flarogus-central */
 	val flarogusGuild = Snowflake(932524169034358877UL)
-	
-	val threadPool: ExecutorService = Executors.newFixedThreadPool(5)
+
 	val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
 	
 	/** Superusers that are allowed to do most things */
@@ -48,34 +50,31 @@ object Vars {
 		797257966973091862UL.toSnowflake()  // pineapple
 	)
 
-	val moderators = mutableSetOf<Snowflake>(
+	val moderators = mutableSetOf(
 		649306040604557322.toSnowflake() // bluewolf
 	)
 
-	// the platform-specific type is kept to avoid a sudden NullPointerException if the engine is missing
 	/** Scripting engine */
-	val scriptEngine = ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts");
+	val scriptEngine by lazy {
+		ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts")!!
+	}
 	/* Global scripting context */
 	val scriptContext = SimpleScriptContext()
 
-	/** ```language *some script* ``` */
+	/** Markdown codeblock.  */
 	val codeblockRegex = "```([a-z]*)?((?s).*)```".toRegex()
-	/** Default imports. Used for the script engine. */
-	val defaultImports = arrayOf(
-		"flarogus.*", "flarogus.util.*",
-		"flarogus.multiverse.*", "flarogus.multiverse.state.*", "flarogus.multiverse.entity.*",
-		"ktsinterface.*",
-		"dev.kord.core.entity.*", "dev.kord.core.entity.channel.*",
-		"dev.kord.common.entity.*",
-		"dev.kord.rest.builder.*", "dev.kord.rest.builder.message.*", "dev.kord.rest.builder.message.create.*",
-		"dev.kord.core.behavior.*", "dev.kord.core.behavior.channel.*",
-		"kotlin.system.*",
-		"kotlinx.coroutines.*", "kotlinx.coroutines.flow.*",
-		"kotlinx.serialization.*", "kotlinx.serialization.json.*"
-	).joinToString("") { "import $it;" }
-
-	/** Whether to enable experimental stuff. Should be enabled only using the run command */
-	var experimental = false
+	/** Default imports. Used with the script engine. */
+	val defaultImports by lazy {
+		ClassLoader::class.java.getDeclaredField("classes")
+			.let {
+				it.isAccessible = true
+				it.get(Vars::class.java.classLoader) as Vector<Class<*>>
+			}
+			.filter { "internal" !in it.name && "$" !in it.name }
+			.map { it.name.substringBeforeLast('.') + ".*" }
+			.distinct()
+			.joinToString(";") { "import $it" }
+	}
 	
 	fun loadState() {
 		ubid = Random.nextInt(0, 1000000000).toString(10 + 26)
