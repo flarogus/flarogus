@@ -7,7 +7,7 @@ import flarogus.multiverse.Log
 import java.util.Vector
 import kotlin.script.experimental.annotations.KotlinScript
 import kotlin.script.experimental.api.*
-import kotlin.script.experimental.host.ScriptingHostConfiguration
+import kotlin.script.experimental.host.*
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.dependenciesFromCurrentContext
 import kotlin.script.experimental.jvm.jvm
@@ -18,7 +18,12 @@ import kotlin.script.experimental.util.PropertiesCollection
 	compilationConfiguration = KScriptConfiguration::class
 )
 abstract class KScript {
-	val test = ""
+	val message = triggeredByMessage
+
+	companion object {
+		/** Temporary variable to pass an argument to evalWithTemplate. */
+		var triggeredByMessage: Message? = null
+	}
 }
 
 object KScriptConfiguration: ScriptCompilationConfiguration({
@@ -31,8 +36,9 @@ object KScriptConfiguration: ScriptCompilationConfiguration({
 				.cast<Vector<Class<*>>>()
 				.filter { 
 					it.name.startsWith("flarogus") 
-					|| it.name.startsWith("dev.kord")
-					&& !it.name.contains("$")
+						|| it.name.startsWith("dev.kord")
+						|| (it.name.startsWith("kotlin") || "internal" !in it.name)
+						&& !it.name.contains("$")
 				}
 				.map { it.kotlin }
 				.toTypedArray()

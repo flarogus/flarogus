@@ -16,7 +16,6 @@ import kotlinx.coroutines.*
 import java.awt.image.BufferedImage
 import java.net.URL
 import javax.imageio.ImageIO
-import javax.script.ScriptContext
 import kotlin.math.min
 import kotlin.script.experimental.api.valueOrThrow
 import kotlin.script.experimental.host.toScriptSource
@@ -507,12 +506,9 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 			var toDelete = args.flag("delete")
 
 			val result = try {
-				val msgProperty = PropertiesCollection.Key<Message>("message")
+				KScript.triggeredByMessage = msg
 
-				Vars.scriptHost.evalWithTemplate<KScript>(script.toScriptSource(),
-					{ if (msg != null) this[msgProperty] = msg },
-					{ if (msg != null) this[msgProperty] = msg }
-				).valueOrThrow().returnValue.let {
+				Vars.scriptHost.evalWithTemplate<KScript>(script.toScriptSource()).valueOrThrow().returnValue.let {
 					when (it) {
 						is Deferred<*> -> it.await()
 						is Job -> it.join()
@@ -535,7 +531,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 
 			// schedule the removal
 			if (toDelete) Vars.client.launch {
-				delay(15000L)
+				delay(25000L)
 				reply?.await()?.delete()
 				originalMessageOrNull()?.delete()
 			}

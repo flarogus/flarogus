@@ -54,15 +54,9 @@ object Vars {
 		649306040604557322.toSnowflake() // bluewolf
 	)
 
-//	// the platform-specific type is kept to avoid a sudden NullPointerException if the engine is missing
-//	/** Scripting engine */
-//	val scriptEngine = ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts");
-//	/* Global scripting context */
-//	val scriptContext = SimpleScriptContext()
-
 	val scriptHost by lazy { BasicJvmScriptingHost() }
 
-	/** ```language *some script* ``` */
+	/** Markdown codeblock. */
 	val codeblockRegex = "```([a-z]*)?((?s).*)```".toRegex()
 
 	/** Whether to enable experimental stuff. Should be enabled only using the run command */
