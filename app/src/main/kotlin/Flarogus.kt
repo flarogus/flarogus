@@ -126,7 +126,7 @@ suspend fun main(vararg args: String) {
 				if (Multiverse.isRunning) {
 					// something is wrong, this happens sometimes
 					if (Multiverse.guilds.filter { it.isValid }.size < 3) {
-						Log.error { "No valid guilds found! Forcibly updating all guilss!" }
+						Log.error { "No valid guilds found! Forcibly updating all guilds!" }
 
 						Multiverse.guilds.forEach {
 							it.lastUpdate = 0L
