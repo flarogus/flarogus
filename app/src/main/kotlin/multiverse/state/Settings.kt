@@ -110,7 +110,7 @@ data class State(
 	var epoch: Long = Vars.flarogusEpoch,
 	var logLevel: Int = Log.level.level,
 
-	var history: List<Multimessage> = Multiverse.history.takeLast(100),
+	var history: List<Multimessage> = Multiverse.history.takeLast(150),
 
 	var users: List<MultiversalUser> = Multiverse.users,
 	var guilds: List<MultiversalGuild> = Multiverse.guilds

@@ -96,9 +96,10 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 
 			action {
 				val msg = originalMessage!!.asMessage()
-				val reply = msg.referencedMessage ?: fail("you must reply to a multiversal message")
-				
-				val multimessage = Multiverse.history.find { reply.id in it } ?: fail("This message wasn't found in the history. Perhaps, it was sent too long time ago or is not a multiversal message?")
+				val reply = msg.referencedMessage
+					?: fail("you must reply to a multiversal message")
+				val multimessage = Multiverse.history.find { reply.id in it }
+					?: fail("This message wasn't found in the history. Perhaps, it was sent too long time ago or is not a multiversal message?")
 				
 				if (!msg.author.isModerator() && multimessage.origin?.asMessage()?.data?.author?.id != msg.data.author.id) {
 					throw IllegalAccessException("you are not allowed to delete others' messages")
@@ -520,7 +521,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 					}
 				}.also { 
 					result(it, false)
-					Log.info { "${msg?.author?.tag} has successfully executed a kotlin script (${msg?.id} in ${msg?.channelId})" }
+					//Log.info { "${msg?.author?.tag} has successfully executed a kotlin script (${msg?.id} in ${msg?.channelId})" }
 				}
 			} catch (e: Throwable) {
 				result(e, false)
