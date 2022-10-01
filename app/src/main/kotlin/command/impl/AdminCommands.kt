@@ -1,15 +1,15 @@
 package flarogus.command.impl
 
 import dev.kord.common.entity.Snowflake
-import dev.kord.core.entity.Message
+import dev.kord.core.entity.*
 import kotlin.math.*
+import flarogus.Vars
 import flarogus.command.*
 import flarogus.command.builder.*
 import flarogus.multiverse.*
 import flarogus.multiverse.entity.*
 import flarogus.multiverse.npc.impl.AmogusNPC
 import flarogus.util.*
-import kotlinx.serialization.json.JsonNull.content
 
 fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 	modOnly()
@@ -332,7 +332,7 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 				Is running:   ${Multiverse.isRunning}
 				History size: ${Multiverse.guilds.size}
 				-----
-				Guilds:           ${Multiverse.guilds.size}
+				Guilds:	   ${Multiverse.guilds.size}
 				Valid guilds:     $validGuilds
 				Invalid guilds:   ${Multiverse.guilds.size - validGuilds}
 				Connected guilds: $connectedGuilds
@@ -346,4 +346,54 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 			""".trimIndent())
 		}
 	}
+
+	subtree("reply", "Do something with the multiversal message you reply to.") {
+		modOnly()
+
+		subcommand<Unit>("warn") {
+			arguments {
+				required<Int>("number", "The number of the rule you want to warn the user for")
+				default<Int>("category", "Rule category to which the rule belongs. 1 (general) by default.") {
+					1
+				}
+			}
+			action {
+				Vars.rootCommand(
+					originalMessage(), 
+					"multiverse admin warn add ${referencedAuthor().id} ${args.arg<Int>("number")} ${args.arg<Int>("category")}"
+				)
+			}
+		}
+
+		subcommand<Unit>("set-tag", "Set the usertag of a user.") {
+			arguments {
+				required<String>("tag", "A new tag. Empty to clear.")
+			}
+			action {
+				Vars.rootCommand("multiverse admin tag set ${referencedAuthor().id} ${args.arg<String>("tag")}")
+			}
+		}
+
+		subaction<Unit>("clear-warnings") {	
+			Vars.rootCommand("multiverse admin warn clear ${referencedAuthor().id}")
+		}
+
+		subaction<Unit>("ban") {	
+			Vars.rootCommand("multiverse admin banlist add ${referencedAuthor().id}")
+		}
+
+		subaction<Unit>("unban") {
+			Vars.rootCommand("multiverse admin banlist remove ${referencedAuthor().id}")
+		}
+	}
+}
+
+suspend fun Callback<*>.referencedAuthor(): User {
+	val reply = originalMessage!!.asMessage().referencedMessage
+		?: fail("You must reply to a multiversal message.")
+	val msg = Multiverse.history.find { reply in it }
+		?: fail("This message wasn't found in the history. perhaps, it was sent too long time ago?")
+
+	val origin = msg.origin?.asMessage() ?: fail("This message doesn't have an origin.")
+	return origin.author ?: fail("This message doesn't have an author user.")
 }
