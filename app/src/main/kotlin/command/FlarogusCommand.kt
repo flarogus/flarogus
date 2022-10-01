@@ -82,9 +82,15 @@ open class FlarogusCommand<R>(name: String) {
 		updateArgumentCount()
 	}
 
-	open suspend operator fun invoke(message: Message?, argsOverride: String, replyResult: Boolean = true): Callback<R> {
+	open suspend operator fun invoke(
+		message: Message?,
+		argsOverride: String, 
+		replyResult: Boolean = true,
+		parentCallback: Callback<*>? = null
+	): Callback<R> {
 		return Callback<R>(this, argsOverride, message).also {
 			it.replyResult = replyResult
+			it.parentCallback = parentCallback
 			useCallback(it)
 		}	
 	}

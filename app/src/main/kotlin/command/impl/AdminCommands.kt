@@ -358,8 +358,7 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 				}
 			}
 			action {
-				Vars.rootCommand(
-					originalMessage(), 
+				invokeCommand(
 					"multiverse admin warn add ${referencedAuthor().id} ${args.arg<Int>("number")} ${args.arg<Int>("category")}"
 				)
 			}
@@ -370,20 +369,20 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 				required<String>("tag", "A new tag. Empty to clear.")
 			}
 			action {
-				Vars.rootCommand(originalMessage(), "multiverse admin tag set ${referencedAuthor().id} ${args.arg<String>("tag")}")
+				invokeCommand("multiverse admin tag set ${referencedAuthor().id} ${args.arg<String>("tag")}")
 			}
 		}
 
 		subaction<Unit>("clear-warnings") {	
-			Vars.rootCommand(originalMessage(), "multiverse admin warn clear ${referencedAuthor().id}")
+			invokeCommand("multiverse admin warn clear ${referencedAuthor().id}")
 		}
 
 		subaction<Unit>("ban") {	
-			Vars.rootCommand(originalMessage(), "multiverse admin banlist add ${referencedAuthor().id}")
+			invokeCommand("multiverse admin banlist add ${referencedAuthor().id}")
 		}
 
 		subaction<Unit>("unban") {
-			Vars.rootCommand(originalMessage(), "multiverse admin banlist remove ${referencedAuthor().id}")
+			invokeCommand("multiverse admin banlist remove ${referencedAuthor().id}")
 		}
 	}
 }

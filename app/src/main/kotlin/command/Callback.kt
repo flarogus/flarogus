@@ -42,6 +42,12 @@ open class Callback<R>(
 	var replyResult: Boolean = true
 	/** Whether this message has sent a response to the original message. */
 	var hasResponded = false
+		set(value) {
+			parentCallback?.let { if (value) it.hasResponded = true }
+			field = value
+		}
+	/** Optional parent callback. Null if the command wasn't invoked by another command. */
+	var parentCallback: Callback<*>? = null
 	
 	/** Asyncronously replies to a message. Does not assign a result. */
 	inline fun reply(
@@ -108,6 +114,11 @@ open class Callback<R>(
 
 	/** Tries to get the original message as a Message, throws a [NullPointerException] if it doesn't exist */
 	open suspend fun originalMessage() = originalMessageOrNull() ?: throw IllegalArgumentException("this message doesn't have an original message")
+
+	/** Invokes another command with the context of the current command. */
+	open suspend fun invokeCommand(command: String) {
+		Vars.rootCommand(originalMessage(), command, replyResult, this)
+	}
 
 	/** 
 	 * Assigns a result and, if [replyResult] and [doReply] are true, replies with the result to the original message.
