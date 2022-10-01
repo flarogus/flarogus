@@ -43,7 +43,7 @@ Every tree command has a `help` command.
 Invoking this command without any arguments shows the list of subcommands the tree command has and their argument signatures.
 Passing the name of a terminal subcommand to the help command shows a full help,
 which includes the arguments/flags the command accepts, their signatures, etc.
-E.g. typing "!flarogus help` shows the list of subcommands of the root command,
+E.g. typing `!flarogus help` shows the list of subcommands of the root command,
 and typing `!flarogus util help userinfo` shows the full help for the `!flarogus util userinfo` command.
 
 ## Command arguments
