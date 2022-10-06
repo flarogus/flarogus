@@ -56,7 +56,7 @@ open class MultiversalUser(
 		if (!canSend()) {
 			event.message.replyWith(when {
 				isForceBanned -> "You are banned from the Multiverse. Contact one of the admins for more info."
-				warningPoints > criticalWarns -> "You have too many warnings. You cannot send messages in the Multiverse."
+				warningPoints >= criticalWarns -> "You have too many warning points. You cannot send messages in the Multiverse."
 				!isValid -> "Your user entry is invalid. This should be fixed automatically."
 				else -> "For an unknown reason, you're not allowed to send mssages in the Multiverse. Contact the admins for more info."
 			})
