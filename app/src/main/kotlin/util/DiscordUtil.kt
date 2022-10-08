@@ -143,6 +143,15 @@ suspend fun MessageCreateBuilder.quoteMessage(message: Message?, toChannel: Snow
 		val author = User(message.data.author, Vars.client) //gotta construct one myself if the default api doesn't allow that
 		val authorName = nameRegex.find(author.username)?.groupValues?.getOrNull(2) ?: "${author.username}#${author.discriminator}"
 
+		// if the author is banned from the multiverse, don't quote the message
+		if (Multiverse.users.find { it.discordId == author.id }?.isForceBanned == true) {
+			embed {
+				title = "$titleText $authorName"
+				description = "<blocked message>"
+			}
+			return
+		}
+
 		// message in the same channel the new message is being sent to
 		val multimessage = Multiverse.history.find { message in it }
 		// first, check if the message is in the same channel as the current one. If it is not, try to find it in the multiverse.
