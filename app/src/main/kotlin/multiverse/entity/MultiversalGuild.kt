@@ -54,8 +54,9 @@ open class MultiversalGuild(
 		crossinline handler: (Message, Webhook) -> Unit = { _, _ -> },
 		crossinline builder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
 	) {
+		if (!isWhitelisted) return
 		update()
-		if (!isWhitelisted || !isValid) return
+		if (!isValid) return
 
 		webhooks.forEach { webhook ->
 			try {
