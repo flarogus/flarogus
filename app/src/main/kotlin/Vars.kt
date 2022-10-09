@@ -73,6 +73,7 @@ object Vars {
 			.filter { "internal" !in it.name && "$" !in it.name }
 			.map { it.name.substringBeforeLast('.') + ".*" }
 			.distinct()
+			.let { it + "ktsinterface.*" }
 			.joinToString(";") { "import $it" }
 	}
 	
