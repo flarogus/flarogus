@@ -26,7 +26,7 @@ abstract class MultiversalEntity {
 				updateImpl()
 			}
 		} catch (e: Exception) {
-			if (e !is KtorRequestException || e.status.code < 500) {
+			if (e !is KtorRequestException || (e.status.code < 500 && e.status.code != 403)) {
 				Log.error { "Error when updating $this: $e" }
 			} else if (e.status.code != 403) {
 				Log.error { "Server error when updating $this: $e" }
