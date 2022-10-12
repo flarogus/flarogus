@@ -28,9 +28,12 @@ abstract class MultiversalEntity {
 		} catch (e: Exception) {
 			if (e !is KtorRequestException || e.status.code < 500) {
 				Log.error { "Error when updating $this: $e" }
-			} else {
+			} else if (e.status.code != 403) {
 				Log.error { "Server error when updating $this: $e" }
 				lastUpdate = System.currentTimeMillis() - 1000 * 60 * 5
+			} else {
+				 // 403 is death
+				 lastUpdate = Long.MAX_VALUE
 			}
 		}
 	}
