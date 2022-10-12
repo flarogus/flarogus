@@ -171,7 +171,7 @@ open class MultiversalUser(
 
 	companion object {
 		val criticalWarns = 5
-		var updateInterval = 1000L * 60 * 8
+		var updateInterval = 1000L * 60 * 30
 		val messageRateLimit = 3000L
 
 		val linkRegex = """https?://([a-zA-Z0-9_\-]+?\.?)+/[a-zA-Z0-9_\-%\./]+""".toRegex()

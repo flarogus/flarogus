@@ -26,20 +26,19 @@ abstract class MultiversalEntity {
 				updateImpl()
 			}
 		} catch (e: Exception) {
-			if (e !is KtorRequestException || e.status.code != 403) {
+			if (e !is KtorRequestException || e.status.code < 500) {
 				Log.error { "Error when updating $this: $e" }
 			} else {
-				// multiversal entities are updated once per 8 minute,
-				// so we put it 1 minute away from next update.
-				lastUpdate = System.currentTimeMillis() - 1000 * 60 * 7
+				Log.error { "Server error when updating $this: $e" }
+				lastUpdate = System.currentTimeMillis() - 1000 * 60 * 5
 			}
 		}
 	}
 
+	// todo misleading name
 	fun invalidate() {
 		lastUpdate = 0L
 	}
-
 	
 	abstract suspend fun updateImpl()
 }

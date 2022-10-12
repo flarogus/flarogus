@@ -327,6 +327,11 @@ object Multiverse {
 					}
 				}
 			}
+
+			// only the content can be modified. if it's intact, this is a false modification.
+			if (newContent == (origin ?: multimessage.retranslated.firstOrNull()?.asMessage())?.content) {
+				return
+			}
 			
 			coroutineScope {
 				for (message in multimessage.retranslated) launch {
