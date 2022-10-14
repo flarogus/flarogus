@@ -319,6 +319,11 @@ object Multiverse {
 			val multimessage = history.find { it.origin?.id == messageId } ?: return
 
 			val origin = multimessage.origin?.asMessage()
+			// only the content can be modified. if it's intact, this is a false modification.
+			if (newMessage.content.value == (origin ?: multimessage.retranslated.firstOrNull()?.asMessage())?.content) {
+				return
+			}
+
 			val newContent = buildString {
 				appendLine(newMessage.content.value ?: origin?.content.orEmpty())
 				origin?.attachments?.forEach { attachment ->
@@ -326,11 +331,6 @@ object Multiverse {
 						appendLine(attachment.url)
 					}
 				}
-			}
-
-			// only the content can be modified. if it's intact, this is a false modification.
-			if (newContent == (origin ?: multimessage.retranslated.firstOrNull()?.asMessage())?.content) {
-				return
 			}
 			
 			coroutineScope {
