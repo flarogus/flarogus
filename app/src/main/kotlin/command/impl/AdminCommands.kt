@@ -193,7 +193,7 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 
 				args.arg<MultiversalUser>("user").let {
 					it.warnFor(rule, true)
-					reply("$it has successffuly been warned for $rule")
+					reply("$it has successfully been warned for $rule")
 				}
 			}
 		}
