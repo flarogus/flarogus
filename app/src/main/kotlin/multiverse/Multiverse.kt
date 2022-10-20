@@ -108,7 +108,7 @@ object Multiverse {
 			&& it !is MessageType.Default 
 			&& it !is MessageType.Reply
 		}) {
-			event.message.replyWith("This message type (${event.message.type}) is not supported by the multiverse.")
+			// event.message.replyWith("This message type (${event.message.type}) is not supported by the multiverse.")
 			return
 		}
 		
