@@ -1,6 +1,7 @@
 package flarogus.multiverse
 
 import dev.kord.common.entity.*
+import dev.kord.common.entity.optional.Optional
 import dev.kord.core.behavior.*
 import dev.kord.core.entity.Message
 import dev.kord.core.entity.channel.TextChannel
@@ -136,6 +137,7 @@ object Multiverse {
 			.filter { isRunning }
 			.filter { event -> !isRetranslatedMessage(event.messageId) }
 			.filter { event -> isMultiversalChannel(event.message.channel.id) }
+			.filter { event -> event.old?.content != null || event.new.content !is Optional.Missing } // discord sends fake update events sometimes
 			.onEach { event ->
 				addAction(ModifyMultimessageAction(event.messageId, event.new))
 			}
