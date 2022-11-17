@@ -2,6 +2,7 @@ package flarogus.multiverse.entity
 
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.entity.User
+import dev.kord.core.entity.Message
 import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.event.message.MessageCreateEvent
 import dev.kord.rest.builder.message.create.*
@@ -56,13 +57,15 @@ open class MultiversalUser(
 		if (!canSend()) {
 			event.message.replyWith(when {
 				isForceBanned -> "You are banned from the Multiverse. Contact one of the admins for more info."
-				warningPoints >= criticalWarns -> "You have too many warning points. You cannot send messages in the Multiverse."
+				warningPoints >= criticalWarns -> "You have too many warning points. You cannot send messages in the Multiverse until some of your warns expire."
 				!isValid -> "Your user entry is invalid. This should be fixed automatically."
 				else -> "For an unknown reason, you're not allowed to send mssages in the Multiverse. Contact the admins for more info."
 			})
 		} else {
-			val delay = lastSent + messageRateLimit - System.currentTimeMillis()
-			lastSent = System.currentTimeMillis()
+			// rate limiting
+			val sentAt = event.message.id.timestamp.toEpochMilliseconds()
+			val delay = lastSent + messageRateLimit - sentAt
+			lastSent = sentAt
 
 			if (delay > 0) {
 				val reply = event.message.replyWith("This message was not retranslated because you were rate limited. Please, wait $messageRateLimit ms.")
@@ -70,7 +73,7 @@ open class MultiversalUser(
 				return
 			} else if (ScamDetector.hasScam(event.message.content)) {
 				event.message.replyWith("[!] your message contains a potential scam. if you're not a bot, remove any links and try again")
-				Log.info { "a potential scam message sent by ${event.message.author?.tag} was blocked: ```${event.message.content.take(200)}```" }
+				Log.info { "a potential scam message sent by $name was blocked: ```${event.message.content.take(200)}```" }
 			}
 
 			val guild = event.guildId?.let { Multiverse.guildOf(it) }
@@ -78,12 +81,23 @@ open class MultiversalUser(
 			if (guild == null) {
 				Log.info { "A user with a non-existent guild has attempted to send a message in the multiverse: `${event.message.content}`" }
 			} else if (!guild.isWhitelisted) {
-				event.message.replyWith("This guild is not whitelisted. Contact the admins (`!flarogus report` or `!flarogus server`) to get whitelisted.")
+				event.message.replyWith("""
+					This guild is not whitelisted.
+					Contact the admins (e.g. by executing `!flarogus report 'pls whitelist my server thx'`) to get whitelisted.
+				""".trimIndent())
 			} else {
-				val links = linkRegex.findAll(event.message.content).map { it.value }.filter { url ->
-					workaroundUrls.any { url.startsWith(it) } && !unsupportedExtensions.any { url.endsWith(it) }
-				}.toList()
+				// notifying the global message filters
+				Multiverse.messageFilters.find { !it.filter(this, event.message) }?.let {
+					if (it.reason != null) {
+						event.message.replyWith("This message was not retranslated. The reason was: ${it.reason}")
+					}
+					if (it.log) {
+						Log.info { "Mwssage sent by $name was filtered out (${it.reason}): ```${event.message.content}```" }
+					}
+					return
+				}
 
+				// retranslating the message
 				val timeBegin = System.currentTimeMillis()
 				val message = send(
 					guild = guild,
@@ -172,11 +186,9 @@ open class MultiversalUser(
 	companion object {
 		val criticalWarns = 5
 		var updateInterval = 1000L * 60 * 30
-		val messageRateLimit = 3000L
+		val messageRateLimit = 3500L
 
 		val linkRegex = """https?://([a-zA-Z0-9_\-]+?\.?)+/[a-zA-Z0-9_\-%\./]+""".toRegex()
-		val workaroundUrls = arrayOf("https://tenor.com/", "https://cdn.discordapp.com/", "https://media.discordapp.net/")
-		val unsupportedExtensions = arrayOf(".mov", ".mp4", ".mp3", ".wav", ".ogg")
 	}
 
 	/** Represents the fact that a user has violated a rule */
@@ -193,4 +205,14 @@ open class MultiversalUser(
 			const val expiration = 1000L * 60 * 60 * 24 * 60
 		}
 	}
+
+	/** Represents a dynamic message filter. */
+	data class MessageFilter(
+		/** When the message is declined, this (if not null) is sent as a reason for it was declined. */
+		val reason: String? = null,
+		/** Whether to send a log message when a message gets declined by this filter. */
+		val log: Boolean = false,
+		/** When this function returns false, the message is declined. */
+		val filter: MultiversalUser.(Message) -> Boolean
+	)
 }

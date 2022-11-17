@@ -44,6 +44,8 @@ object Multiverse {
 	val users = ArrayList<MultiversalUser>(90)
 	val guilds = ArrayList<MultiversalGuild>(30)
 
+	val messageFilters = ArrayList<MultiversalUser.MessageFilter>()
+
 	val rootJob = SupervisorJob()
 	val scope = CoroutineScope(rootJob)
 	val pendingActions = ArrayList<PendingAction<*>>(50)
