@@ -2,8 +2,7 @@ package flarogus.command.parser
 
 import flarogus.Vars
 import flarogus.command.*
-
-val commandSubstitutionRegex = "\\$\\((.+)\\)".toRegex()
+import kotlin.math.*
 
 //TODO: write unit tests
 
@@ -95,19 +94,44 @@ open class CommandArgumentParser(
 		}
 
 		if (performSubstitutions) {
-			var match: MatchResult? = commandSubstitutionRegex.find(arg)
-
 			val msg = callback.originalMessage?.asMessage()
 
-			while (match != null) {
-				var command = match.groupValues[1]
-				if (command.startsWith("!flarogus")) command = command.substring("!flarogus".length)
+			// transform the argument by performing substitutions
+			arg = buildString {
+				var pos = -1
+				while (++pos < arg.length) {
+					// until a "$(" is met, read literallyj
+					if (arg[pos] == '\\') {
+						// append the next char literally
+						if (++pos < arg.length) append(arg[pos])
+					} else if (arg[pos] != '$' || arg.getOrNull(pos + 1) != '(') {
+						append(arg[pos])
+					} else {
+						val begin = pos
+						pos++ // skip the $. the next ++pos will skip the (.
+						// read the substitution, respecting the inner substitutions
+						val command = buildString {
+							var depth = 0
+							while (++pos < arg.length) {
+								if (arg[pos] == ')') {
+									if (depth <= 0) break // the substitution has ended
 
-				val result: Any? = Vars.rootCommand(msg, command, false).result
+									depth = max(depth - 1, 0)
+								} else if (arg[pos] == '$' && arg.getOrNull(pos + 1) == '(') {
+									depth++
+								}
+								append(arg[pos])
+							}
 
-				arg = arg.replaceRange(match.range, result?.toString()?.replace("$(", "$\u0000(") ?: "")
+							if (depth >= 1) {
+								error(")'. If it's not a substitution, put a backslash before '$(", Type.UNTERMINATED_CONSTRUCT, begin, length)
+							}
+						}.removePrefix("!flarogus").trim()
 
-				match = commandSubstitutionRegex.find(arg)
+						val result = Vars.rootCommand(msg, command, false).result
+						append(result?.toString())
+					}
+				}
 			}
 		}
 
