@@ -43,6 +43,7 @@ abstract class AbstractArgumentParser<T: FlarogusCommand<out Any?>>(
 			content[i]
 		}
 	}
+	
 
 	open fun read(): Char {
 		return readOrNone().throwIndexIfNone()

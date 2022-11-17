@@ -92,7 +92,7 @@ open class MultiversalUser(
 						event.message.replyWith("This message was not retranslated. The reason was: ${it.reason}")
 					}
 					if (it.log) {
-						Log.info { "Mwssage sent by $name was filtered out (${it.reason}): ```${event.message.content}```" }
+						Log.info { "Message sent by $name was filtered out (${it.reason}): ```${event.message.content}```" }
 					}
 					return
 				}

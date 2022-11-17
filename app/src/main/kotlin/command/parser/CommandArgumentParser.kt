@@ -97,7 +97,7 @@ open class CommandArgumentParser(
 			val msg = callback.originalMessage?.asMessage()
 
 			// transform the argument by performing substitutions
-			arg = buildString {
+			arg = buildString top@ {
 				var pos = -1
 				while (++pos < arg.length) {
 					// until a "$(" is met, read literallyj
@@ -113,8 +113,10 @@ open class CommandArgumentParser(
 						val command = buildString {
 							var depth = 0
 							while (++pos < arg.length) {
-								if (arg[pos] == ')') {
-									if (depth <= 0) break // the substitution has ended
+								if (arg[pos] == '\\') {
+									if (++pos < arg.length) append(arg[pos])
+								} else if (arg[pos] == ')') {
+									if (depth <= 0) return@buildString // the substitution has ended
 
 									depth = max(depth - 1, 0)
 								} else if (arg[pos] == '$' && arg.getOrNull(pos + 1) == '(') {
@@ -123,13 +125,12 @@ open class CommandArgumentParser(
 								append(arg[pos])
 							}
 
-							if (depth >= 1) {
-								error(")'. If it's not a substitution, put a backslash before '$(", Type.UNTERMINATED_CONSTRUCT, begin, length)
-							}
-						}.removePrefix("!flarogus").trim()
+							error(")'. If it's not a substitution, put a backslash before '$(", Type.UNTERMINATED_CONSTRUCT, begin, length)
+							return@top
+						}.trimStart().removePrefix("!flarogus").trim()
 
 						val result = Vars.rootCommand(msg, command, false).result
-						append(result?.toString())
+						append(result?.toString()?.trim().orEmpty())
 					}
 				}
 			}
