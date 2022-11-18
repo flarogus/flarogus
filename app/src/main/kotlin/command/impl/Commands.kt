@@ -322,13 +322,14 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 			}
 
 			action {
-				val msg = originalMessageOrNull()
-
 				args.arg<String>("code").split("\n")
 					.map { it.trimStart().removePrefix("!flarogus") }
-					.map { Vars.rootCommand(msg, it, false) }
+					.map { invokeCommand(it, false) }
 					.joinToString("") { it.result?.toString().orEmpty() }
-					.let { result(it) }
+					.let {
+						hasResponded = false
+						result(it)
+					}
 			}
 		}
 
