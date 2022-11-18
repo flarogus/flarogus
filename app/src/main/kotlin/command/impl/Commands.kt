@@ -311,6 +311,8 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 
 		subcommand<String>("exec") {
 			performSubstitutions = false
+			errorDeleteDelay = -1
+
 			description = """
 				Executes every command passed to it as an argument.
 				If the argument spans across multiple lines, each line is considered to be a separate command.

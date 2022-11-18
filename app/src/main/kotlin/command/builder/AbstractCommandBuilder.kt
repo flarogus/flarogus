@@ -8,7 +8,8 @@ abstract class AbstractCommandBuilder<R, T: FlarogusCommand<R>>(
 	var description by command::description
 	var hidden by command::hidden
 	var performSubstitutions by command::performSubstitutions
-	
+	var errorDeleteDelay by command::errorDeleteDelay
+
 	abstract fun build(): T
 
 	inline fun arguments(builder: Arguments.() -> Unit) = command.arguments(builder)

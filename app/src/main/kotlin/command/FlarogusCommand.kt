@@ -131,7 +131,7 @@ open class FlarogusCommand<R>(name: String) {
 		} catch (t: Throwable) {
 			if (t is CommandException && t.commandName == null) t.commandName = name
 
-			if (callback.originalMessage == null) throw t
+			if (callback.originalMessage == null || callback.parentCallback != null) throw t
 			replyWithError(callback, t)
 		}
 	}
