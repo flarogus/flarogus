@@ -326,7 +326,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 
 				args.arg<String>("code").split("\n")
 					.map { it.trimStart().removePrefix("!flarogus") }
-					.map { invokeCommand(it, false) }
+					.map { Vars.rootCommand(msg, it, false) }
 					.joinToString("") { it.result?.toString().orEmpty() }
 					.let { result(it) }
 			}
