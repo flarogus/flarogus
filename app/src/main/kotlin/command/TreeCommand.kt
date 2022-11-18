@@ -45,8 +45,8 @@ open class TreeCommand(name: String) : FlarogusCommand<Any?>(name) {
 				} ?: let {
 					val possible = findSimmilar(commandName, 3)
 
-					throw IllegalArgumentException(buildString {
-						append("command '").append(commandName).appendLine("' does not exist")
+					throw NoSuchCommandException(buildString {
+						append("command '").append(commandName).append("' does not exist").append('\n')
 						if (possible.isNotEmpty()) {
 							appendLine("possible matches:")
 							
@@ -79,4 +79,6 @@ open class TreeCommand(name: String) : FlarogusCommand<Any?>(name) {
 			}
 		}.take(min(count, fitting))
 	}
+
+	class NoSuchCommandException(message: String) : IllegalArgumentException(message)
 }

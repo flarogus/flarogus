@@ -94,8 +94,6 @@ open class CommandArgumentParser(
 		}
 
 		if (performSubstitutions) {
-			val msg = callback.originalMessage?.asMessage()
-
 			// transform the argument by performing substitutions
 			arg = buildString top@ {
 				var pos = -1
@@ -129,7 +127,7 @@ open class CommandArgumentParser(
 							return@top
 						}.trimStart().removePrefix("!flarogus").trim()
 
-						val result = Vars.rootCommand(msg, command, false).result
+						val result = callback.invokeCommand(command, false).result
 						append(result?.toString()?.trim().orEmpty())
 					}
 				}

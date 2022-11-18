@@ -16,7 +16,7 @@ import java.awt.image.BufferedImage
 import java.net.URL
 import javax.imageio.ImageIO
 import javax.script.ScriptContext
-import kotlin.math.min
+import kotlin.math.*
 import kotlin.time.DurationUnit
 
 @OptIn(kotlin.time.ExperimentalTime::class)
@@ -302,9 +302,33 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 
 			arguments {
 				default<String>("string", "An arbitrary string.") { "" }
+				flag("no-newline", "Don't put a newline at the end of the result.").alias('n')
 			}
 			action {
-				result(args.arg<String>("string").trim())
+				result(args.arg<String>("string").trim() + (if (args.flag("no-newline")) "" else "\n"))
+			}
+		}
+
+		subcommand<String>("exec") {
+			performSubstitutions = false
+			description = """
+				Executes every command passed to it as an argument.
+				If the argument spans across multiple lines, each line is considered to be a separate command.
+				After executing the commands, their results are concatenated into a string.
+			""".trimIndent()
+
+			arguments {
+				required<String>("code", "The flarsh code to execute")
+			}
+
+			action {
+				val msg = originalMessageOrNull()
+
+				args.arg<String>("code").split("\n")
+					.map { it.trimStart().removePrefix("!flarogus") }
+					.map { invokeCommand(it, false) }
+					.joinToString("") { it.result?.toString().orEmpty() }
+					.let { result(it) }
 			}
 		}
 
@@ -370,6 +394,23 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 				result(originalMessage().referencedMessage!!.data.author.id)
 			}
 		}
+	}
+
+	presetSubtree("op", "Perform simple math operations.") {
+		presetArguments {
+			required<Float>("first", "The first operand.")
+			required<Float>("second", "The second operand.")
+		}
+
+		fun op(name: String, description: String, op: (Float, Float) -> Float) = subaction<Float>(name, description) {
+			result(op(args.arg<Float>("first"), args.arg<Float>("second")))
+		}
+
+		op("+", "addition") { a, b -> a + b }
+		op("-", "substraction") { a, b -> a - b }
+		op("/", "division") { a, b -> a / b }
+		op("*", "multiplication") { a, b -> a * b }
+		op("^", "power") { a, b -> a.pow(b) }
 	}
 
 	subcommand<Long>("sus") {

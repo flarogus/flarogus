@@ -12,7 +12,9 @@ import dev.kord.core.entity.*
 import dev.kord.core.behavior.*
 import flarogus.*
 import flarogus.util.*
+import flarogus.command.TreeCommand.NoSuchCommandException
 import flarogus.command.parser.*
+import flarogus.command.parser.AbstractArgumentParser.ParseException
 
 /**
  * A callback of a command.
@@ -116,8 +118,31 @@ open class Callback<R>(
 	open suspend fun originalMessage() = originalMessageOrNull() ?: throw IllegalArgumentException("this message doesn't have an original message")
 
 	/** Invokes another command with the context of the current command. */
-	open suspend fun invokeCommand(command: String) {
-		Vars.rootCommand(originalMessage(), command, replyResult, this)
+	open suspend fun invokeCommand(
+		command: String,
+		reply: Boolean = replyResult
+	): Callback<Any?> {
+		try {
+			return Vars.rootCommand(originalMessageOrNull(), command, reply, this)
+		} catch (e: Exception) {
+			if (e !is ParseException && e !is NoSuchCommandException) throw e
+
+			// try to find a suitable fallback command
+			val normalizedName = command.trimStart().removePrefix("!flarogus").trim()
+
+			return runCatching {
+				Vars.rootCommand(originalMessageOrNull(), "util $normalizedName", reply, this)
+			}.recover { utilException ->
+				if (utilException !is ParseException && utilException !is NoSuchCommandException) throw utilException
+
+				runCatching {
+					Vars.rootCommand(originalMessageOrNull(), "op $normalizedName", reply, this)
+				}.getOrElse { opException ->
+					// if it's not a valueable exception, throw the original one
+					throw if (opException !is ParseException && opException !is NoSuchCommandException) opException else e
+				}
+			}.getOrThrow()
+		}
 	}
 
 	/** 

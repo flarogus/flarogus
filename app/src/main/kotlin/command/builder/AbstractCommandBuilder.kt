@@ -7,6 +7,7 @@ abstract class AbstractCommandBuilder<R, T: FlarogusCommand<R>>(
 ) {
 	var description by command::description
 	var hidden by command::hidden
+	var performSubstitutions by command::performSubstitutions
 	
 	abstract fun build(): T
 

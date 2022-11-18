@@ -105,14 +105,22 @@ abstract class PositionalArgument<T>(name: String, mandatory: Boolean) : Argumen
 	override fun toString() = if (mandatory) "<$name>" else "[$name]"
 
 	class IntArg(name: String, mandatory: Boolean) : PositionalArgument<Int>(name, mandatory) {
+		override val type get() = "number"
 		override suspend fun construct(from: String) = from.toIntOrNull()
 	}
 	
 	class LongArg(name: String, mandatory: Boolean) : PositionalArgument<Long>(name, mandatory) {
+		override val type get() = "number"
 		override suspend fun construct(from: String) = from.toLongOrNull()
 	}
 
+	class FloatArg(name: String, mandatory: Boolean) : PositionalArgument<Float>(name, mandatory) {
+		override val type get() = "decimal number"
+		override suspend fun construct(from: String) = from.toFloatOrNull()
+	}
+
 	class ULongArg(name: String, mandatory: Boolean) : PositionalArgument<ULong>(name, mandatory) {
+		override val type get() = "unsigned number"
 		override suspend fun construct(from: String) = from.toULongOrNull()
 	}
 
@@ -121,7 +129,7 @@ abstract class PositionalArgument<T>(name: String, mandatory: Boolean) : Argumen
 	}
 
 	open class SnowflakeArg(name: String, mandatory: Boolean) : PositionalArgument<Snowflake>(name, mandatory) {
-		override val type: String get() = "mention"
+		override val type get() = "mention"
 
 		override suspend fun construct(from: String) = from.toSnowflakeOrNull()
 	}
@@ -175,6 +183,7 @@ abstract class PositionalArgument<T>(name: String, mandatory: Boolean) : Argumen
 		val mapping = mutableMapOf<KClass<out Any>, (name: String, mandatory: Boolean) -> PositionalArgument<*>>(
 			Int::class to { n, m -> IntArg(n, m) },
 			Long::class to { n, m -> LongArg(n, m) },
+			Float::class to { n, m -> FloatArg(n, m) },
 			ULong::class to { n, m -> ULongArg(n, m) },
 			String::class to { n, m -> StringArg(n, m) },
 

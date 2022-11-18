@@ -19,6 +19,8 @@ open class FlarogusCommand<R>(name: String) {
 	val checks = ArrayList<CommandCheck>()
 	/** Time in milliseconds after which an invalid invocation of this command gets deleted. Values less than 0 prevent the deletion. */
 	var errorDeleteDelay = 15000L
+	/** Whether to perform substitutions while parsing this command. */
+	var performSubstitutions = true
 
 	/** The parent command tree. May be null if the command is a root command. */
 	var parent: TreeCommand? = null
@@ -116,7 +118,9 @@ open class FlarogusCommand<R>(name: String) {
 			performChecks(callback)
 
 			callback.command = this
-			CommandArgumentParser(callback, this).parse()
+			CommandArgumentParser(callback, this).also {
+				it.performSubstitutions = performSubstitutions
+			}.parse()
 			callback.postprocess()
 			
 			action?.invoke(callback)
