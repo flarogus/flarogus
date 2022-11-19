@@ -47,30 +47,22 @@ suspend fun main(vararg args: String) {
 	Vars.client.events
 		.filterIsInstance<MessageCreateEvent>()
 		.filter { it.message.data.author.id != Vars.botId && it.message.data.webhookId.value == null }
-		.onEach { 
-			try {
-				val isCommand = it.message.content.startsWith(Vars.rootCommand.name)
+		.onEach {
+			Vars.client.launch {
+				try {
+					val isCommand = it.message.content.startsWith(Vars.rootCommand.name)
 
-				if (isCommand) {
-					val cropped = it.message.content.substring(Vars.rootCommand.name.length).trimStart()
-					Vars.rootCommand(it.message, cropped)
+					if (isCommand) {
+						val cropped = it.message.content.substring(Vars.rootCommand.name.length).trimStart()
+						Vars.rootCommand(it.message, cropped)
 
-					Log.debug { "User ${it.message.data.author.username} has executed a command: '$cropped'" }
-				} else if (IS_MULTIVERSE_ENABLED) {
-					Vars.client.async {
-						withTimeout(45.seconds) {
-							Multiverse.messageReceived(it)
-						}
+						Log.debug { "User ${it.message.data.author.username} has executed a command: '$cropped'" }
+					} else if (IS_MULTIVERSE_ENABLED) {
+						Multiverse.messageReceived(it)
 					}
+				} catch (e: Throwable) {
+					Log.error { "an uncaught exception has occurred while processing a message sent by ${it.message.author?.tag}: $e" }
 				}
-			} catch (e: TimeoutCancellationException) {
-				runCatching {
-					it.message.reply {
-						content = "Your message could not be processed within 45 seconds. This can indicate an overload. You can try again."
-					}
-				}
-			} catch (e: Throwable) {
-				Log.error { "an uncaught exception has occurred while processing a message sent by ${it.message.author?.tag}: $e" }
 			}
 		}.launchIn(Vars.client)
 	
