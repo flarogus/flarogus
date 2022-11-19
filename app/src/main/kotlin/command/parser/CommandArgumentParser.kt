@@ -99,10 +99,7 @@ open class CommandArgumentParser(
 				var pos = -1
 				while (++pos < arg.length) {
 					// until a "$(" is met, read literallyj
-					if (arg[pos] == '\\') {
-						// append the next char literally
-						if (++pos < arg.length) append(arg[pos])
-					} else if (arg[pos] != '$' || arg.getOrNull(pos + 1) != '(') {
+					if (arg[pos] != '$' || arg.getOrNull(pos + 1) != '(' || arg.getOrNull(pos - 1) == '\\') {
 						append(arg[pos])
 					} else {
 						val begin = pos
@@ -111,13 +108,11 @@ open class CommandArgumentParser(
 						val command = buildString {
 							var depth = 0
 							while (++pos < arg.length) {
-								if (arg[pos] == '\\') {
-									if (++pos < arg.length) append(arg[pos])
-								} else if (arg[pos] == ')') {
+								if (arg[pos] == ')' && arg[pos - 1] != '\\') {
 									if (depth <= 0) return@buildString // the substitution has ended
 
 									depth = max(depth - 1, 0)
-								} else if (arg[pos] == '$' && arg.getOrNull(pos + 1) == '(') {
+								} else if (arg[pos] == '$' && arg.getOrNull(pos + 1) == '(' && arg[pos - 1] != '\\') {
 									depth++
 								}
 								append(arg[pos])
@@ -148,8 +143,8 @@ open class CommandArgumentParser(
 		var depth = 0
 
 		return current() + readWhile {
-			if (lookbehindOrNone() == '$' && it == '(') depth++
-			if (it == ')') depth--
+			if (lookaheadOrNone(2) != '\\' && lookbehindOrNone() == '$' && it == '(') depth++
+			if (lookbehind() != '\\' && it == ')') depth--
 
 			(it != ' ' && it != '\n') || depth > 0
 		}
