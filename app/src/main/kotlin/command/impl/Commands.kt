@@ -539,7 +539,8 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 			flag("su", "Run as a superuser. Mandatory.").alias('s')
 			flag("imports", "Add default imports").alias('i')
 			flag("trace", "Display stack trace upon an exception").alias('t')
-			flag("delete", "Delete the messages in 30 seconds").alias("d")
+			flag("delete", "Delete the messages in 30 seconds").alias('d')
+			flag("no-delete", "Don't delete the messages even if an exception has occurred or --delete was specified.").alias('n')
 		}
 
 		action {
@@ -565,7 +566,6 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 					}
 				}.also { 
 					result(it, false)
-					//Log.info { "${msg?.author?.tag} has successfully executed a kotlin script (${msg?.id} in ${msg?.channelId})" }
 				}
 			} catch (e: Throwable) {
 				result(e, false)
@@ -577,7 +577,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 			val reply = reply("```\n${result.toString().take(1950)}\n```")
 
 			// schedule the removal
-			if (toDelete) Vars.client.launch {
+			if (toDelete && !args.flag("no-delete")) Vars.client.launch {
 				delay(15000L)
 				reply?.await()?.delete()
 				originalMessageOrNull()?.delete()
