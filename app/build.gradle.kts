@@ -6,8 +6,8 @@ plugins {
 
 repositories {
 	mavenCentral()
-	// maven("https://jitpack.io")
 	maven("https://oss.sonatype.org/content/repositories/snapshots")
+	maven("https://jitpack.io")
 }
 
 dependencies {
@@ -19,9 +19,6 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.6.10")
 	implementation("org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:1.6.10")
 	implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.6.10")
-	//runtimeOnly("org.jetbrains.kotlin:kotlin-main-kts:1.6.10")
-	//runtimeOnly("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.6.10")
-	//implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223-embeddable:1.3.72")
 
 	implementation("dev.kord:kord-core:0.8.0-M10")
 	implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
@@ -30,6 +27,9 @@ dependencies {
 	implementation("org.sejda.webp-imageio:webp-imageio-sejda:0.1.0")
 
 	implementation("info.debatty:java-string-similarity:2.0.0")
+
+	// unused right now, will find some use for it later.
+	implementation("com.github.mnemotechnician:markov-chain:master-SNAPSHOT")
 
 }
 
