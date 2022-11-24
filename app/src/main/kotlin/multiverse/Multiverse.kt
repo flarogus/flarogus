@@ -53,7 +53,7 @@ object Multiverse {
 	/** Sets up the multiverse */
 	suspend fun start() {
 		Log.setup()
-		Settings.updateState()
+		StateManager.updateState()
 		
 		setupEvents()
 		findChannels()
@@ -82,7 +82,7 @@ object Multiverse {
 			//random delay is to ensure that there will never be situations when two instances can't detect each other
 			scope.launch {
 				delay(Random.nextLong(0L, 5000L))
-				Settings.updateState()
+				Settin.updateState()
 			}
 		}
 

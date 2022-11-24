@@ -20,7 +20,7 @@ import java.io.ByteArrayInputStream
 import java.io.InputStream
 import kotlin.system.exitProcess
 
-object Settings {
+object StateManager {
 	val settingsChannel by lazy { Vars.client.unsafe.messageChannel(Channels.settings) }
 	var settingsMessage: Message? = null
 	val fileStorageChannel by lazy { Vars.client.unsafe.messageChannel(Channels.fileStorage) }
@@ -98,7 +98,6 @@ object Settings {
 	
 	/** Opposite of uploadToCdn(): downloads content from the uploaded file */
 	suspend inline fun <reified T> downloadFromCdn(url: String) = Vars.client.resources.httpClient.get<HttpResponse>(url).receive<T>()
-
 }
 
 /** A utility class that stores the most important parts of bot's state. Used for serialization. */

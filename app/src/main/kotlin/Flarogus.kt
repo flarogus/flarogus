@@ -30,14 +30,14 @@ suspend fun main(vararg args: String) {
 	val botToken = args.getOrNull(0)
 	if (botToken == null) {
 		println("[ERROR] no token nor '--test' specified")
-		return
+		exitProcess(1)
 	} else if (botToken.trim() == "--test") {
 		val arg = args.getOrNull(1) ?: throw IllegalArgumentException("no test command specified")
 		require(args.size == 2) { "only two arguments must be specified in this mode" }
 
 		val result = try { Vars.rootCommand(arg) } catch (e: Exception) { e.message }
 		println(result?.toString()?.replace("`", ""))
-		return
+		exitProcess(0)
 	}
 	
 	Vars.client = Kord(botToken) {
