@@ -20,7 +20,7 @@ import java.io.ByteArrayInputStream
 import java.io.InputStream
 import kotlin.system.exitProcess
 
-object Settings {
+object StateManager {
 	val settingsChannel by lazy { Vars.client.unsafe.messageChannel(Channels.settings) }
 	var settingsMessage: Message? = null
 	val fileStorageChannel by lazy { Vars.client.unsafe.messageChannel(Channels.fileStorage) }
@@ -63,7 +63,8 @@ object Settings {
 					if (state.startedAt > Vars.startedAt) {
 						Multiverse.shutdown()
 						Log.info { "multiverse instance ${Vars.ubid} is shutting down (newer state was detected)" }
-						delay(5000L)
+						Vars.commandHandler.shutdown()
+						delay(10000L)
 						Vars.client.shutdown()
 						exitProcess(0) // brutal
 					} else {
@@ -97,8 +98,8 @@ object Settings {
 	}
 	
 	/** Opposite of uploadToCdn(): downloads content from the uploaded file */
-	suspend inline fun <reified T> downloadFromCdn(url: String) = Vars.client.resources.httpClient.get<HttpResponse>(url).receive<T>()
-
+	suspend inline fun <reified T> downloadFromCdn(url: String) =
+		Vars.client.resources.httpClient.get(url).body<T>()
 }
 
 /** A utility class that stores the most important parts of bot's state. Used for serialization. */

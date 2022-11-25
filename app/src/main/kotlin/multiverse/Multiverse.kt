@@ -53,7 +53,7 @@ object Multiverse {
 	/** Sets up the multiverse */
 	suspend fun start() {
 		Log.setup()
-		Settings.updateState()
+		StateManager.updateState()
 		
 		setupEvents()
 		findChannels()
@@ -82,7 +82,7 @@ object Multiverse {
 			//random delay is to ensure that there will never be situations when two instances can't detect each other
 			scope.launch {
 				delay(Random.nextLong(0L, 5000L))
-				Settings.updateState()
+				StateManager.updateState()
 			}
 		}
 
@@ -111,7 +111,6 @@ object Multiverse {
 			&& it !is MessageType.Default 
 			&& it !is MessageType.Reply
 		}) {
-			// event.message.replyWith("This message type (${event.message.type}) is not supported by the multiverse.")
 			return
 		}
 		
@@ -151,7 +150,7 @@ object Multiverse {
 		Vars.client.rest.user.getCurrentUserGuilds().forEach {
 			guildOf(it.id)?.update() //this will add an entry if it didn't exist
 		}
-	};
+	}
 
 	fun addAction(action: PendingAction<*>) {
 		synchronized(pendingActions) {

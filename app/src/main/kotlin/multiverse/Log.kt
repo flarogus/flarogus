@@ -10,11 +10,14 @@ import dev.kord.core.behavior.channel.*
 import flarogus.*
 import flarogus.util.*
 
-/** Logs stuff. Messages are evaluated lazily (only if the message _will_ be sent) */
+/** Logs stuff. Messages are evaluated lazily (only if the message will be sent) */
 @SuppressWarnings("NOTHING_TO_INLINE")
 object Log {
 	var level = LogLevel.INFO
-		set(level: LogLevel) { if (level.level > LogLevel.ERROR.level) throw IllegalArgumentException("illegal log level") else field = level }
+		set(level: LogLevel) {
+			if (level.level > LogLevel.ERROR.level) throw IllegalArgumentException("illegal log level")
+			field = level 
+		}
 	val logChannel by lazy { Vars.client.unsafe.messageChannel(Channels.log) }
 
 	val buffer = ArrayList<String>()
@@ -22,19 +25,15 @@ object Log {
 
 	fun setup() {
 		logTimer = fixedRateTimer(daemon = true, period = 2000L) {
-			while (!buffer.isEmpty()) {
+			while (!buffer.isEmpty()) synchronized(buffer) {
 				val message = buildString {
-					while (length < 1900 && !buffer.isEmpty()) {
+					while (!buffer.isEmpty() && length + buffer.first().length < 2000) {
 						val entry = buffer.removeFirst()
-						if (entry.length + length > 1900) {
-							appendLine(entry.take(1900 - length))
-						} else {
-							appendLine(entry)
-						}
+						appendLine(entry.take(2000))
 					}
 				}
 				
-				Vars.client.launch {
+				runBlocking {
 					logChannel.createMessage {
 						content = message
 						allowedMentions()
@@ -47,15 +46,11 @@ object Log {
 	inline fun sendLog(logLevel: LogLevel, crossinline message: () -> String) {
 		if (logLevel.level < level.level) return
 		
-		Vars.client.launch {
-			try {
-				val prefix = if (logLevel == LogLevel.ERROR) "! ERROR !" else logLevel.toString()
-				
-				buffer.add("**[$prefix]**: ${message()}".stripEveryone().take(1999))
-			} catch (e: Exception) {
-				e.printStackTrace()
-			}
-		};
+		val prefix = if (logLevel == LogLevel.ERROR) "! ERROR !" else logLevel.toString()
+		
+		synchronized(buffer) {
+			buffer.add("**[$prefix]**: ${message()}".stripEveryone().take(1999))
+		}
 	}
 	
 	inline fun lifecycle(crossinline message: () -> String) = sendLog(LogLevel.LIFECYCLE, message);

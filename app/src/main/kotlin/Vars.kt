@@ -1,7 +1,6 @@
 package flarogus
 
 import java.time.format.*
-import java.util.concurrent.*
 import javax.script.*
 import kotlin.random.*
 import kotlinx.coroutines.*
@@ -9,12 +8,13 @@ import dev.kord.common.entity.*
 import dev.kord.core.*
 import dev.kord.core.supplier.*
 import flarogus.util.*
+import flarogus.command.CommandHandler
 import flarogus.command.impl.*
 import java.util.Vector
 
 /** An object declaration that stores variables/constants that are shared across the whole application */
 object Vars {	
-	/** The kord client instance */
+	/** The kord client instance. Must not be accessed until [launch] is called. */
 	lateinit var client: Kord
 	val supplier get() = client.defaultSupplier
 	val restSupplier by lazy { RestEntitySupplier(client) }
@@ -24,7 +24,8 @@ object Vars {
 	/** Whether to enable experimental stuff. May or may not be meaningless at the current moment, */
 	var experimental = false
 
-	val rootCommand = createRootCommand()
+	val rootCommand get() = createRootCommand()
+	val commandHandler by lazy { CommandHandler(client, rootCommand) }
 	
 	/** The unique bot id used for shutdown command */
 	lateinit var ubid: String
@@ -61,7 +62,7 @@ object Vars {
 	/* Global scripting context */
 	val scriptContext = SimpleScriptContext()
 
-	/** Markdown codeblock.  */
+	/** Markdown codeblock regex. */
 	val codeblockRegex = "```([a-z]*)?((?s).*)```".toRegex()
 	/** Default imports. Used with the script engine. */
 	val defaultImports by lazy {
@@ -77,9 +78,20 @@ object Vars {
 			.joinToString(";") { "import $it" }
 	}
 	
-	fun loadState() {
+	/**
+	 * Initialises the kord client and sets up some variables.
+	 */
+	suspend fun launch(token: String) {
+		if (::client.isInitialized) error("the bot has alreary been initialised")
+
+		client = Kord(token) {
+			//requestHandler { KtorRequestHandler(it.httpClient, ParallelRequestRateLimiter(), token = botToken) }
+		}
+
 		ubid = Random.nextInt(0, 1000000000).toString(10 + 26)
 		startedAt = System.currentTimeMillis()
 		flarogusEpoch = startedAt
+
+		commandHandler.launch()
 	}
 }

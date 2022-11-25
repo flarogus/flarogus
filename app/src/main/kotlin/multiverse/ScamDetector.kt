@@ -1,4 +1,4 @@
-package multiverse
+package flarogus.multiverse
 
 object ScamDetector {
 	
@@ -77,14 +77,11 @@ object ScamDetector {
 		var processed = message.lowercase()
 		
 		trustedPatterns.forEach { processed = processed.replace(it, "--TRUSTED--") }
-		
 		scamRegex.forEach {
 			if (it.matches(processed)) {
 				return true
 			}
 		}
-		
 		return false
 	}
-	
 }

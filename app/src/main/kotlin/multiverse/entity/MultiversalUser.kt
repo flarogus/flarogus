@@ -1,6 +1,7 @@
 package flarogus.multiverse.entity
 
 import dev.kord.common.entity.Snowflake
+import dev.kord.core.Kord
 import dev.kord.core.entity.User
 import dev.kord.core.entity.Message
 import dev.kord.core.entity.channel.TextChannel
@@ -8,10 +9,10 @@ import dev.kord.core.event.message.MessageCreateEvent
 import dev.kord.rest.builder.message.create.*
 import flarogus.Vars
 import flarogus.multiverse.*
+import flarogus.multiverse.ScamDetector
 import flarogus.multiverse.state.Multimessage
 import flarogus.util.*
 import kotlinx.serialization.*
-import multiverse.ScamDetector
 import java.net.URL
 import java.time.Instant
 import kotlin.time.ExperimentalTime

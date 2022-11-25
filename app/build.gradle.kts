@@ -1,7 +1,6 @@
 plugins {
-	kotlin("jvm") version "1.6.10"
-	kotlin("plugin.serialization") version "1.6.10"
-	application
+	kotlin("jvm") version "1.7.21"
+	kotlin("plugin.serialization") version "1.7.21"
 }
 
 repositories {
@@ -11,21 +10,18 @@ repositories {
 }
 
 dependencies {
-	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
-	implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.10")
-	
-	implementation("org.jetbrains.kotlin:kotlin-script-runtime:1.6.10")
-	implementation("org.jetbrains.kotlin:kotlin-script-util:1.6.10")
-	implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:1.6.10")
-	implementation("org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:1.6.10")
-	implementation("org.jetbrains.kotlin:kotlin-scripting-jsr223:1.6.10")
-
-	implementation("dev.kord:kord-core:0.8.0-M10")
+	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
 	implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
-	
-	// note for myself: DONT REMOVE THIS DEPENDENCY YOU DUMBFUCK!
-	implementation("org.sejda.webp-imageio:webp-imageio-sejda:0.1.0")
 
+	implementation(kotlin("reflect"))
+	implementation(kotlin("script-runtime"))
+	implementation(kotlin("script-util"))
+	implementation(kotlin("compiler-embeddable"))
+	implementation(kotlin("scripting-compiler-embeddable"))
+	implementation(kotlin("scripting-jsr223"))
+
+	implementation("dev.kord:kord-core:0.8.0-M17")
+	implementation("org.sejda.webp-imageio:webp-imageio-sejda:0.1.0") // webp support for ImageIO
 	implementation("info.debatty:java-string-similarity:2.0.0")
 
 	// unused right now, will find some use for it later.
@@ -35,7 +31,6 @@ dependencies {
 
 tasks.compileKotlin {
 	kotlinOptions.apply {
-		sourceCompatibility = "11"
 		jvmTarget = "11"
 	}
 }
@@ -59,13 +54,4 @@ tasks.register<Copy>("deploy") {
 	doLast {
 		delete("build/libs/app.jar")
 	}
-}
-
-application.apply {
-	mainClass.set("flarogus.FlarogusKt")
-}
-
-//why
-tasks.withType(JavaExec::class.java) {
-	standardInput = System.`in`
 }
