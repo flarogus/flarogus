@@ -1,3 +1,6 @@
+/**
+ * This package is supposed to be used in kotlin scripts and only in them.
+ */
 package ktsinterface
 
 import javax.script.*
@@ -8,14 +11,5 @@ import flarogus.*
 
 inline val Map<String, out Any?>.message get() = this["message"] as Message
 
-inline fun launch(crossinline l: suspend CoroutineScope.() -> Unit) = flarogus.Vars.client.launch { l() };
-inline fun <R> async(crossinline l: suspend CoroutineScope.() -> R) = flarogus.Vars.client.async { l() };
-
-inline fun createMessage(channel: ULong, message: String) = launch {
-	Vars.client.unsafe.messageChannel(Snowflake(channel)).createMessage(message)
-};
-
-inline fun fetchMessage(channel: ULong, message: ULong) = Vars.client.async {
-	Vars.supplier.getMessage(Snowflake(channel), Snowflake(message))
-}
-
+inline fun launch(crossinline l: suspend CoroutineScope.() -> Unit) = flarogus.Vars.client.launch { l() }
+inline fun <R> async(crossinline l: suspend CoroutineScope.() -> R) = flarogus.Vars.client.async { l() }
