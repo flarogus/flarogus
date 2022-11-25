@@ -1,4 +1,4 @@
-package multiverse
+package flarogus.multiverse
 
 object ScamDetector {
 	
