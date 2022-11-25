@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.*;
 import dev.kord.common.entity.*
 import dev.kord.core.*
 import dev.kord.core.entity.channel.TextChannel
+import dev.kord.gateway.*
 import flarogus.util.*;
 import flarogus.command.*;
 import flarogus.command.builder.*
@@ -60,7 +61,7 @@ suspend fun main(vararg args: String) {
 			
 					val script = Vars.codeblockRegex.find(msg.content)?.groupValues?.getOrNull(2) ?: msg.content
 			
-					val res = runCatching {
+					runCatching {
 						Vars.scriptEngine.eval(Vars.defaultImports + "\n" + script, Vars.scriptContext)?.let {
 							if (it is Deferred<*>) it.await() else it
 						}.toString()
@@ -89,7 +90,10 @@ suspend fun main(vararg args: String) {
 		}
 	}
 	
+	@OptIn(PrivilegedIntent::class)
 	Vars.client.login {
+        	intents += Intent.MessageContent
+
 		presence { competing("execute `!flarogus help` to see the list of available commands.") }
 	}
 }
