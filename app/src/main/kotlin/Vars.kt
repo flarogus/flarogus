@@ -25,7 +25,7 @@ object Vars {
 	var experimental = false
 
 	val rootCommand get() = createRootCommand()
-	val commandHandler by lazy { CommandHandler(rootCommand) }
+	val commandHandler by lazy { CommandHandler(client, rootCommand) }
 	
 	/** The unique bot id used for shutdown command */
 	lateinit var ubid: String

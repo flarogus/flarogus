@@ -1,5 +1,6 @@
 package flarogus.command
 
+import dev.kord.core.Kord
 import dev.kord.core.event.message.MessageCreateEvent
 import flarogus.Vars
 import flarogus.multiverse.Multiverse
@@ -11,10 +12,14 @@ import kotlinx.coroutines.flow.*
 /**
  * Handles bot commands.
  */
-open class CommandHandler(val root: FlarogusCommand<Any?>) {
+ @OptIn(ObsoleteCoroutinesApi::class)
+open class CommandHandler(
+	val kord: Kord,
+	val root: FlarogusCommand<Any?>
+) {
 	var job: Job? = null
 	/** Executes commands the received events contain. */
-	val commandExecutor = Vars.client.actor<MessageCreateEvent>(capacity = Channel.UNLIMITED) {
+	val commandExecutor = kord.actor<MessageCreateEvent>(capacity = Channel.UNLIMITED) {
 		for (event in channel) {
 			val cropped = event.message.content.removePrefix(root.name).trim()
 			
@@ -29,7 +34,7 @@ open class CommandHandler(val root: FlarogusCommand<Any?>) {
 		}
 	}
 	/** Passes received events to the multiverse. */
-	val multiverseExecutor = Vars.client.actor<MessageCreateEvent>(capacity = 10) {
+	val multiverseExecutor = kord.actor<MessageCreateEvent>(capacity = 10) {
 		for (message in channel) runCatching {
 			Multiverse.messageReceived(message)
 		}
@@ -42,7 +47,7 @@ open class CommandHandler(val root: FlarogusCommand<Any?>) {
 	fun launch() {
 		if (job?.isActive == true) error("this command handler is already active.")
 
-		job = Vars.client.events
+		job = kord.events
 			.filterIsInstance<MessageCreateEvent>()
 			.filter { it.message.data.author.id != Vars.botId && it.message.data.webhookId.value == null }
 			.onEach {
@@ -52,7 +57,7 @@ open class CommandHandler(val root: FlarogusCommand<Any?>) {
 				} else {
 					multiverseExecutor.send(it)
 				}
-			}.launchIn(Vars.client)
+			}.launchIn(kord)
 	}
 
 	/**
