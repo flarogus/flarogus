@@ -57,8 +57,6 @@ suspend fun main(vararg args: String) {
 				// execute all scripts defined in the autorun channel	
 				Log.info { "executing autorun scripts:" }
 				(Vars.supplier.getChannelOrNull(Channels.autorun) as? TextChannel)?.messages?.toList()?.forEachIndexed { index, msg ->
-					Log.info { "$index:" }
-			
 					val script = Vars.codeblockRegex.find(msg.content)?.groupValues?.getOrNull(2) ?: msg.content
 			
 					runCatching {
@@ -68,7 +66,7 @@ suspend fun main(vararg args: String) {
 					}.recover { e ->
 						e.message ?: e.toString()
 					}.getOrThrow().take(200).let { it ->
-						Log.info { it }
+						Log.info { "$index: $it" }
 					}
 				}
 
