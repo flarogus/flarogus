@@ -33,7 +33,7 @@ object Multiverse {
 	
 	const val webhookName = "MultiverseWebhook"
 	const val systemName = "Multiverse"
-	const val systemAvatar = "https://drive.google.com/uc?export=download&id=1JxmvN2hp4F7pFIOwYj17AO5lXAh7HReo"
+	const val systemAvatar = "https://cdn.discordapp.com/attachments/1045966829882970143/1045967037316481145/multiverse-system-v3.jpg"
 	
 	/** If false, new messages will be ignored */
 	var isRunning = false
