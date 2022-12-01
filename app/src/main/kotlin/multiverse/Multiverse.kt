@@ -127,9 +127,9 @@ object Multiverse {
 		if (success) {
 			npcs.forEach { it.multiversalMessageReceived(event.message) }
 
-			if (event.message.content.trim().count { it == ' ' } > 3) {
-				markov.train(event.message.content)
-			}
+			//if (event.message.content.trim().count { it == ' ' } > 3) {
+			markov.train(event.message.content)
+			//}
 		}
 	};
 
