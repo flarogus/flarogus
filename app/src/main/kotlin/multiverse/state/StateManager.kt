@@ -1,5 +1,6 @@
 package flarogus.multiverse.state
 
+import com.github.mnemotechnician.markov.*
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.channel.createMessage
 import dev.kord.core.behavior.edit
@@ -117,6 +118,7 @@ data class State(
 	var guilds: List<MultiversalGuild> = Multiverse.guilds
 ) {
 	val multiverseLastInfoMessage = Multiverse.lastInfoMessage
+	val serializedMarkov = Multiverse.markov.serializeToString()
 
 	/** Updates the current bot state in accordance with this state */
 	fun loadFromState() {
@@ -136,5 +138,6 @@ data class State(
 		}
 
 		Multiverse.lastInfoMessage = multiverseLastInfoMessage
+		Multiverse.markov = MarkovChain.deserializeFromString(serializedMarkov)
 	}
 }

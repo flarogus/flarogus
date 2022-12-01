@@ -17,7 +17,8 @@ open class CommandHandler(
 	val kord: Kord,
 	val root: FlarogusCommand<Any?>
 ) {
-	var job: Job? = null
+	protected var job: Job? = null
+	
 	/** Executes commands the received events contain. */
 	val commandExecutor = kord.actor<MessageCreateEvent>(capacity = Channel.UNLIMITED) {
 		for (event in channel) {
@@ -44,7 +45,7 @@ open class CommandHandler(
 	 * Launches this handler.
 	 * Throws an exception if it has been launched before and is still running.
 	 */
-	fun launch() {
+	open fun launch() {
 		if (job?.isActive == true) error("this command handler is already active.")
 
 		job = kord.events
@@ -63,7 +64,7 @@ open class CommandHandler(
 	/**
 	 * Stops this command handler.
 	 */
-	fun shutdown() {
+	open fun shutdown() {
 		job?.cancel()
 		job = null
 	}

@@ -1,5 +1,6 @@
 package flarogus.multiverse
 
+import com.github.mnemotechnician.markov.MarkovChain
 import dev.kord.common.entity.*
 import dev.kord.common.entity.optional.Optional
 import dev.kord.core.behavior.*
@@ -39,7 +40,10 @@ object Multiverse {
 	var isRunning = false
 	var lastInfoMessage = 0L
 
-	val npcs: MutableList<NPC> = mutableListOf(AmogusNPC())
+	/** All registered multiversal NPCs. */
+	val npcs = mutableListOf(AmogusNPC())
+	/** A little bit of tomfoolery. */
+	var markov = MarkovChain()
 
 	val users = ArrayList<MultiversalUser>(90)
 	val guilds = ArrayList<MultiversalGuild>(30)
@@ -115,9 +119,18 @@ object Multiverse {
 		}
 		
 		val user = userOf(event.message.data.author.id)
-		user?.onMultiversalMessage(event) ?: event.message.replyWith("No user associated with your user id was found!")
+		val success = user?.onMultiversalMessage(event) ?: run {
+			event.message.replyWith("No user associated with your user id was found!")
+			return
+		}
 
-		npcs.forEach { it.multiversalMessageReceived(event.message) }
+		if (success) {
+			npcs.forEach { it.multiversalMessageReceived(event.message) }
+
+			if (event.message.content.trim().count { it == ' ' } > 3) {
+				markov.train(event.message.content)
+			}
+		}
 	};
 
 	private fun setupEvents() {

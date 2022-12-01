@@ -52,8 +52,13 @@ open class MultiversalUser(
 
 	var lastReward = 0L
 
-	/** Should be called when this user sends a multiversal message. Automatically saves the message to history. */
-	suspend fun onMultiversalMessage(event: MessageCreateEvent) {
+	/**
+	 * Should be called when this user sends a multiversal message.
+	 * Automatically saves the message to history.
+	 *
+	 * @return whether the message was retranslated.
+	 */
+	suspend fun onMultiversalMessage(event: MessageCreateEvent): Boolean {
 		update()
 		if (!canSend()) {
 			event.message.replyWith(when {
@@ -62,6 +67,7 @@ open class MultiversalUser(
 				!isValid -> "Your user entry is invalid. This should be fixed automatically."
 				else -> "For an unknown reason, you're not allowed to send mssages in the Multiverse. Contact the admins for more info."
 			})
+			return false
 		} else {
 			// rate limiting
 			val sentAt = event.message.id.timestamp.toEpochMilliseconds()
@@ -71,10 +77,11 @@ open class MultiversalUser(
 			if (delay > 0) {
 				val reply = event.message.replyWith("This message was not retranslated because you were rate limited. Please, wait $messageRateLimit ms.")
 				scheduleMessageRemoval(10000L, reply, event.message)
-				return
+				return false
 			} else if (ScamDetector.hasScam(event.message.content)) {
 				event.message.replyWith("[!] your message contains a potential scam. if you're not a bot, remove any links and try again")
 				Log.info { "a potential scam message sent by $name was blocked: ```${event.message.content.take(200)}```" }
+				return false
 			}
 
 			val guild = event.guildId?.let { Multiverse.guildOf(it) }
@@ -95,7 +102,7 @@ open class MultiversalUser(
 					if (it.log) {
 						Log.info { "Message sent by $name was filtered out (${it.reason}): ```${event.message.content}```" }
 					}
-					return
+					return false
 				}
 
 				// retranslating the message
@@ -130,7 +137,10 @@ open class MultiversalUser(
 
 				val totalTime = (System.currentTimeMillis() - timeBegin) / 1000f
 				Log.lifecycle { "Message sent by $name was retranslated in $totalTime sec." }
+
+				return true
 			}
+			return false
 		}
 	}
 	
