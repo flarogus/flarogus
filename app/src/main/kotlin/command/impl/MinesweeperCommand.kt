@@ -111,7 +111,10 @@ fun TreeCommandBuilder.addMinesweeperSubcommand() = subcommand<Unit?>("minesweep
 				}
 				append('\n')
 			}
-			if (!isEmpty()) originalMessage!!.channel.createMessage(toString())
+			if (!isEmpty()) {
+				originalMessage!!.channel.createMessage(toString())
+				hasResponded = true
+			}
 		}
 	}
 }
