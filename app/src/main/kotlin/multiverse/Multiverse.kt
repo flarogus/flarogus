@@ -18,7 +18,7 @@ import flarogus.multiverse.state.*
 import flarogus.util.replyWith
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.channel.*
+import kotlin.concurrent.fixedRateTimer
 import kotlin.random.Random
 
 /**
@@ -52,14 +52,7 @@ object Multiverse {
 
 	val rootJob = SupervisorJob()
 	val scope = CoroutineScope(rootJob)
-	/** Executes any actions that do not belong to [messageSender] or [messageModifier]. */
-	val arbitraryExecutor = scope.actor<PendingAction<*>> {
-		channel.forEach(PendingAction::await)
-	}
-	/** Executes [SendMessageAction]s. */
-	val messageSender = createSenderChannel()
-	/** Executes [ModifyMultimessageAction]s and [DeleteMultimessageAction]s. */
-	val messageModifier = createModifierChannel()
+	val pendingActions = ArrayList<PendingAction<*>>(50)
 	
 	/** Sets up the multiverse */
 	suspend fun start() {
@@ -67,40 +60,34 @@ object Multiverse {
 		StateManager.updateState()
 		
 		setupEvents()
-		findChannels()	
+		findChannels()
+		
+		if (lastInfoMessage + 1000L * 60 * 60 * 24 < System.currentTimeMillis()) scope.launch {
+			delay(40000L)
+			val channels = guilds.fold(0) { v, it -> if (!it.isForceBanned) v + it.channels.size else v }
+			broadcastSystem {
+				embed { description = """
+					***This channel is a part of the Multiverse. There's ${channels - 1} other channels.***
+					Some of the available commands: 
+					    - `!flarogus multiverse rules` - see the rules
+					    - `!flarogus report` - report an issue or contact the admins
+					    - `!flarogus multiverse help` - various commands
+				""".trimIndent() }
+			}
+			lastInfoMessage = System.currentTimeMillis()
+		}
 		
 		isRunning = true
 
-		// updating the state everg 100 secomds
-		scope.launch {
-			delay(1000 * 20L)
-
-			// update all multiversal guilds
-			Vars.client.rest.user.getCurrentUserGuilds().forEach {
-				guildOf(it.id)?.update() //this will add an entry if it didn't exist
-			}
-
-			if (lastInfoMessage + 1000L * 60 * 60 * 24 < System.currentTimeMillis()) {
-				val guilds = guilds.count { !it.isForceBanned && it.webhooks.isNotEmpty()}
-				broadcastSystem {
-					embed { description = """
-						***This channel is a part of the Multiverse. There's ${guilds - 1} other servers.***
-						Some of the available commands: 
-						    - `!flarogus multiverse rules` - see the rules
-						    - `!flarogus report` - report an issue or contact the admins
-						    - `!flarogus multiverse help` - various commands
-					""".trimIndent() }
-				}
-				lastInfoMessage = System.currentTimeMillis()
-			}
-			delay(1000L * 80)
+		fixedRateTimer("update state", true, initialDelay = 5 * 1000L, period = 180 * 1000L) {
+			runBlocking { findChannels() }
 		}
-
-		scope.launch {
-			// random delay is to reduce the severity of the race conditiom
-			delay(Random.nextLong(5000L, 10000L))
-			StateManager.updateState()
-			delay(1000L * 20)
+		fixedRateTimer("update settings", true, initialDelay = 5 * 1000L, period = 20 * 1000L) {
+			//random delay is to ensure that there will never be situations when two instances can't detect each other
+			scope.launch {
+				delay(Random.nextLong(0L, 5000L))
+				StateManager.updateState()
+			}
 		}
 
 		scope.launch {
@@ -117,6 +104,7 @@ object Multiverse {
 	/** Shuts the multiverse down, but allows to restart it later. */
 	fun shutdown() {
 		isRunning = false
+		// rootJob.children.forEach { it.cancel() }
 	}
 	
 	suspend fun messageReceived(event: MessageCreateEvent) {
@@ -139,7 +127,9 @@ object Multiverse {
 		if (success) {
 			npcs.forEach { it.multiversalMessageReceived(event.message) }
 
+			//if (event.message.content.trim().count { it == ' ' } > 3) {
 			markov.train(event.message.content)
+			//}
 		}
 	};
 
@@ -167,19 +157,18 @@ object Multiverse {
 			}
 			.launchIn(Vars.client)
 	}
-
-	fun addAction(action: PendingAction<*>) = when (action) {
-		is SendMessageAction -> messageSender.send(action)
-		is ModifyMultimessageAction, is DeleteMultimessageAction -> messageModifier.send(action)
-		else -> arbitraryExecutor.send(action)
+	
+	/** Searches for channels with "multiverse" in their names in all guilds this bot is in */
+	suspend fun findChannels() {
+		Vars.client.rest.user.getCurrentUserGuilds().forEach {
+			guildOf(it.id)?.update() //this will add an entry if it didn't exist
+		}
 	}
 
-	fun createSenderChannel() = actor<SendMessageAction>(capacity = Channel.UNLIMITED) {
-TODO
-	}
-
-	fun createModifierChannel() = actor<ModifyMultimessageAction>(capacity = Channel.UNLIMITED) {
-TODO
+	fun addAction(action: PendingAction<*>) {
+		synchronized(pendingActions) {
+			pendingActions.add(action)
+		}
 	}
 
 	/**
@@ -190,8 +179,8 @@ TODO
 	 * @return The multimessage containing all created messages but no origin.
 	 */
 	fun broadcastAsync(
-		user: String?,
-		avatar: String?,
+		user: String? = null,
+		avatar: String? = null,
 		filter: (TextChannel) -> Boolean = { true },
 		messageBuilder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
 	) = SendMessageAction(user, avatar, filter, messageBuilder).also {
@@ -200,8 +189,8 @@ TODO
 
 	/** Same as [broadcastAsync], except that it awaits for the result. */
 	suspend fun broadcast(
-		user: String?,
-		avatar: String?,
+		user: String? = null,
+		avatar: String? = null,
 		filter: (TextChannel) -> Boolean = { true },
 		messageBuilder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
 	) = broadcastAsync(user, avatar, filter, messageBuilder).await()
@@ -277,7 +266,7 @@ TODO
 
 		/** Awaits the result of executing this action and returns it, throws an exception if there's no result or the result is null. */
 		suspend fun awaitOrThrow(): T
-			= await() ?: throw (lastException ?: RuntimeException("The action had no result and no exception."))
+			= await() ?: throw (lastException ?: RuntimeException("The action had result and no exception."))
 
 		protected abstract suspend fun execute(): T
 
