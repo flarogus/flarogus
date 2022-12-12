@@ -17,8 +17,8 @@ fun TreeCommandBuilder.addMinesweeperSubcommand() = subcommand<Unit?>("minesweep
 	description = "Play minesweeper in discord."
 
 	arguments {
-		default("width", "The width of the field. Defaults to 12. Maximum $maxW.") { 12 }
-		default("height", "The height of the field. Defaults to 8. Maximum $maxH.") { 18 }
+		default("width", "The width of the field. Defaults to 12. Max is $maxW.") { 12 }
+		default("height", "The height of the field. Defaults to 8. Max ia $maxH.") { 18 }
 
 		default("mines", "The number of mines on the field. Defaults to (w * h / 3.3).") {
 			(args.arg<Int>("width") * args.arg<Int>("height") / 3.3f).toInt()
@@ -34,7 +34,8 @@ fun TreeCommandBuilder.addMinesweeperSubcommand() = subcommand<Unit?>("minesweep
 
 		require(w > 3 && w <= maxW) { "Width must be in range of (3; $maxW]" }
 		require(h > 3 && h <= maxH) { "Height must be in range of (3; $maxH]" }
-		require(mines > 0 && mines < mineLimit) { "A ${w}x${h} field can not contain more than $mineLimit mines" }
+		require(mines >= 0) { "A mine field can not contain a negative amount of times." }
+		require(mines <= mineLimit) { "A ${w}x${h} mine field can not contain more than $mineLimit mines" }
 
 		val freeTiles = ArrayList<Int>(25 * 25) //each value represents both x and y component. assuming these components won't exceed 255.
 		val builder = StringBuilder(2000)
