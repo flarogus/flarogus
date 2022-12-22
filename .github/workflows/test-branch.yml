@@ -18,11 +18,11 @@ jobs:
         with:
           ref: ${{ github.event.inputs.branch }}
 
-      - name: Setup jdk 11
+      - name: Setup jdk 17
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
 
       - name: Set experimental and test-mode to true
         run: |
