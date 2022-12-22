@@ -34,12 +34,6 @@ dependencies {
 
 }
 
-tasks.compileKotlin {
-	kotlinOptions.apply {
-		jvmTarget = "11"
-	}
-}
-
 tasks.jar {
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 	
