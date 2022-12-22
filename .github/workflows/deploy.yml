@@ -27,7 +27,7 @@ jobs:
       - name: Compile
         run: |
           chmod +x ./gradlew
-          ./gradlew deploy
+          ./gradlew deploy -Pgithub.token=${{ secrets.PACKAGES_TOKEN }}
       
       - name: Run
         run: java -jar -Dkotlin.script.classpath=./build/app.jar ./build/app.jar ${{ secrets.TOKEN }}

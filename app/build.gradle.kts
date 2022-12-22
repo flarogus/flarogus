@@ -6,7 +6,13 @@ plugins {
 repositories {
 	mavenCentral()
 	maven("https://oss.sonatype.org/content/repositories/snapshots")
-	maven("https://jitpack.io")
+	maven("https://maven.pkg.github.com/mnemotechnician/markov-chain") {
+		credentials {
+			username = "Mnemotechnician"
+			password = findProperty("github.token") as? String ?: System.getenv("GITHUB_TOKEN")
+		}
+	}
+	//maven("https://jitpack.io")
 }
 
 dependencies {
@@ -24,8 +30,7 @@ dependencies {
 	implementation("org.sejda.webp-imageio:webp-imageio-sejda:0.1.0") // webp support for ImageIO
 	implementation("info.debatty:java-string-similarity:2.0.0")
 
-	// unused right now, will find some use for it later.
-	implementation("com.github.mnemotechnician:markov-chain:master-SNAPSHOT")
+	implementation("com.github.mnemotechnician:markov-chain:unspecified")
 
 }
 
