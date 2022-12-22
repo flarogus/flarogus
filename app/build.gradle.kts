@@ -30,7 +30,7 @@ dependencies {
 	implementation("org.sejda.webp-imageio:webp-imageio-sejda:0.1.0") // webp support for ImageIO
 	implementation("info.debatty:java-string-similarity:2.0.0")
 
-	implementation("com.github.mnemotechnician:markov-chain:unspecified")
+	implementation("com.github.mnemotechnician:markov-chain:1.0")
 
 }
 
