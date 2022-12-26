@@ -21,18 +21,17 @@ enum class RuleCategory(val index: Int, val description: String, val rules: List
 		Rule(2, "Addition to r1: racism, fascism, nazism, homophobia, transphobia and other forms of discrimination are forbidden.")
 	)),
 	
-	PUNISHMENT(2, "the following punishments can be applied by the admins", listOf(
+	PUNISHMENT(2, "any of the following punishments can be applied by the admins.", listOf(
 		Rule(-1, "A verbal warning or a message deletion."),
 		Rule(-1, "A physical warning (the amount of warning points depends on the rule)."),
 		Rule(-1, "A temporary ban (applied automatically when the user has 5 warn points)."),
-		Rule(-1, "A permanent ban.")
+		Rule(-1, "A permanent ban."),
+		Rule(-1, "A special punishment based on the actions of the user.")
 	)),
 
 	ADDITIONAL(3, "notes", listOf(
-		Rule(-1, "Multiversal admins are Mnemotechnician#9967, SMOLKEYS#4156, pineapple#7816, real sushi#0001."),
-		Rule(-1, "The fact that 2 of 4 admins are furries __does not__ mean you can post yiff in multiverse!"),
-		Rule(-1, "Personal animosity is not a valid reason for any form of punishment listed in category 2. If an admin does that, report it to owner."),
-		Rule(-1, "If you've been banned for any reason other than spam raiding, you can appeal for an unban by contacting one of the admins.")
+		Rule(-1, "Multiversal admins are Mnemotechnician#9967, SMOLKEYS#4156, pineapple#7816"),
+		Rule(-1, "You can contact the admins, report a violation or ask a question using `!flarogus report`.")
 	));
 
 	init {

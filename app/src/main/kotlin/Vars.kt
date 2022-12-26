@@ -50,8 +50,7 @@ object Vars {
 		797257966973091862UL.toSnowflake()  // pineapple
 	)
 
-	val moderators = mutableSetOf(
-	)
+	val moderators = mutableSetOf<Snowflake>()
 
 	/** Scripting engine */
 	val scriptEngine by lazy {
