@@ -47,12 +47,10 @@ object Vars {
 	val superusers = mutableSetOf(
 		ownerId,
 		691650272166019164UL.toSnowflake(), // smolkeys
-		794686191467233280UL.toSnowflake(), // real sushi
 		797257966973091862UL.toSnowflake()  // pineapple
 	)
 
 	val moderators = mutableSetOf(
-		649306040604557322.toSnowflake() // bluewolf
 	)
 
 	/** Scripting engine */
