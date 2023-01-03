@@ -64,21 +64,14 @@ fun TreeCommandBuilder.addManagementSubtree() = subtree("manage") {
 		}
 	}
 
-	presetSubtree("user") {
+	subtree("user") {
 		description = "Manage a multiversal user."
-
-		presetArguments {
-			default<MultiversalUser>("user", "The user you want to manage. Defaults to the caller.") {
-				val id = originalMessage?.asMessage()?.author?.id
-					?: fail("anonymous caller must specify a user")
-				Multiverse.userOf(id) ?: fail("This user is not valid.")
-			}
-		}
 
 		subcommand<Unit>("nickname",
 			"Set the nickname of a user. Users without moderator (or higher) permissions can only set their own nick name."
 		) {
 			arguments {
+				addUserArgument()
 				default<String>("name", "The name to set this user's nickname to.") { "" }
 			}
 
@@ -93,29 +86,58 @@ fun TreeCommandBuilder.addManagementSubtree() = subtree("manage") {
 			}
 		}
 
-		subaction<Unit>("reset-nickname", "Resst the nickname of a user.") {
-			requireModOrSelf()
-			args.arg<MultiversalUser>("user").nameOverride = null
+		subcommand<Unit>("reset-nickname", "Resst the nickname of a user.") {
+			arguments {
+				addUserArgument()
+			}
+			action {
+				requireModOrSelf()
+				args.arg<MultiversalUser>("user").nameOverride = null
+			}
 		}
 
-		subcommand<Boolean>("command-blacklist", "Blacklist a user from a command or clear the command blacklist of a user..") {
+		subtree("command-blacklist", "Blacklist a user from a command or clear the command blacklist of a user.") {
 			adminOnly()
-
-			arguments {
-				default<String>("command") { "" }
-			}
-
-			action {
-				val command = args.arg<String>("command")
-
-				if (command.isEmpty()) {
-					args.arg<MultiversalUser>("user").commandBlacklist.clear()
-					result(true)
-					return@action
+			
+			subcommand<Unit>("add", "Add an entry to the user's blacklist.") {
+				arguments {
+					required<MultiversalUser>("user", "The user whose command blacklist you want to manage.")
+					required<String>("command", "The full name of the command you want to blacklist the user from.")
 				}
 
-				expect(command.startsWith("!flarogus")) { "command name must start with the prefix." }
-				args.arg<MultiversalUser>("user").commandBlacklist.add(command)
+				action {
+					val command = args.arg<String>("command")
+					val user = args.arg<MultiversalUser>("user")
+
+					expect(command.startsWith("!flarogus")) { "command name must start with the !flarogus prefix." }
+					expect(FlarogusCommand.find(command) != null) { "Command named '$command' does not exist." }
+
+					user.commandBlacklist.add(command)
+				}
+			}
+
+			subcommand<Unit>("clear", "Clear the command blacklist of the user.") {
+				arguments {
+					required<MultiversalUser>("user", "The user whose command blacklist you want to manage.")
+				}
+				
+				action {
+					val user = args.arg<MultiversalUser>("user")
+					val oldEntries = user.commandBlacklist.joinToString("\n") { "`$it`" }
+					user.commandBlacklist.clear()
+					reply("Successfully removed the following entries from the command blacklist of ${user.name}:\n$oldEntries")
+				}
+			}
+
+			subcommand<Unit>("list", "Check which commands the user is blacklisted from.") {
+				arguments {
+					required<MultiversalUser>("user", "The user whose command blacklist you want to manage.")
+				}
+				action {
+					val user = args.arg<MultiversalUser>("user")
+					val commands = user.commandBlacklist.joinToString("\n") { "`$it`" }
+					reply("${user.name} is blacklisted from the following commands:\n$commands")
+				}
 			}
 		}
 	}
@@ -140,4 +162,12 @@ private suspend fun Callback<*>.requireAdmin() {
 
 private suspend fun MultiversalGuild.isAdmin(userId: Snowflake) = channels.any {
 	(it as? TopGuildMessageChannel)?.getEffectivePermissions(userId)?.contains(Permission.Administrator) ?: false
+}
+
+private fun Arguments.addUserArgument() = default<MultiversalUser>(
+	"user", "The user you want to manage. Defaults to the caller."
+) {
+	val id = originalMessage?.asMessage()?.author?.id
+		?: fail("anonymous caller must specify a user")
+	Multiverse.userOf(id) ?: fail("This user is not valid.")
 }

@@ -132,6 +132,7 @@ open class FlarogusCommand<R>(name: String) {
 			if (t is CommandException && t.commandName == null) t.commandName = name
 
 			if (callback.originalMessage == null || callback.parentCallback != null) throw t
+			if (!callback.replyResult) throw t
 			replyWithError(callback, t)
 		}
 	}
@@ -151,7 +152,7 @@ open class FlarogusCommand<R>(name: String) {
 	open suspend fun performChecks(callback: Callback<*>) {
 		var errors = checks.mapNotNull { it(callback.originalMessage as? Message, callback.message) }
 
-		// check if the user is blacklisted from this command. not using userOf as can create a new unneccesary entry
+		// check if the user is blacklisted from this command. not using userOf as it can create a new unneccesary entry
 		(callback.originalMessage as Message?)?.author?.id?.let { id ->
 			val name = getFullName()
 			if (Multiverse.users.find { it.discordId == id }?.commandBlacklist?.contains(name) == true) {

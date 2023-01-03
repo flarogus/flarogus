@@ -570,9 +570,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 			} catch (e: Throwable) {
 				result(e, false)
 				toDelete = true
-				(e.cause ?: e).let {
-					if (args.flag("trace")) it.stackTraceToString() else it.toString()
-				}
+				if (args.flag("trace")) e.stackTraceToString() else e.toString()
 			}
 			val reply = reply("```\n${result.toString().take(1950)}\n```")
 
