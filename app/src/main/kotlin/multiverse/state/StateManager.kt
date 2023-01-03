@@ -22,8 +22,8 @@ import java.io.InputStream
 import kotlin.system.exitProcess
 
 object StateManager {
-	val settingsChannel by lazy { Vars.client.unsafe.messageChannel(Channels.settings) }
-	var settingsMessage: Message? = null
+	val stateChannel by lazy { Vars.client.unsafe.messageChannel(Channels.latestState) }
+	var stateMessage: Message? = null
 	val fileStorageChannel by lazy { Vars.client.unsafe.messageChannel(Channels.fileStorage) }
 	val json = Json {
 		ignoreUnknownKeys = true
@@ -48,13 +48,15 @@ object StateManager {
 	
 	/** Tries to update the state once */
 	suspend fun updateStateAttempt() {
-		settingsMessage = settingsChannel.messages.firstOrNull { (it.content.startsWith("http") || it.content == "placeholder") && it.data.author.id == Vars.botId }
-		
-		if (settingsMessage == null) {
-			settingsMessage = settingsChannel.createMessage("placeholder")
+		stateMessage = stateChannel.messages.firstOrNull {
+			(it.content.startsWith("http") || it.content == "placeholder") && it.data.author.id == Vars.botId
 		}
 		
-		Vars.restSupplier.getMessage(channelId = settingsMessage!!.channelId, messageId = settingsMessage!!.id).let {
+		if (stateMessage == null) {
+			stateMessage = stateChannel.createMessage("placeholder")
+		}
+		
+		Vars.restSupplier.getMessage(channelId = stateMessage!!.channelId, messageId = stateMessage!!.id).let {
 			if (it.content.startsWith("http")) {
 				val stateContent = downloadFromCdn<String>(it.content)
 				val state = json.decodeFromString<State>(stateContent)
@@ -63,8 +65,8 @@ object StateManager {
 					//load if the save is from older instance, shut down this instance if it's from newer, ignore otherwise
 					if (state.startedAt > Vars.startedAt) {
 						Multiverse.shutdown()
-						Log.info { "multiverse instance ${Vars.ubid} is shutting down (newer state was detected)" }
 						Vars.commandHandler.shutdown()
+						Log.info { "multiverse instance ${Vars.ubid} is shutting down (newer state was detected)" }
 						delay(10000L)
 						Vars.client.shutdown()
 						exitProcess(0) // brutal

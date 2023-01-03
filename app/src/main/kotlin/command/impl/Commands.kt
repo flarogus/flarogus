@@ -468,7 +468,6 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 	}
 
 	subcommand<Boolean>("report") {
-		val reportsChannel = Snowflake(944718226649124874UL)
 		val linkRegex = """discord.com/channels/\d+/(\d+)/(\d+)""".toRegex()
 
 		description = "Report an issue related to Flarogus or Multiverse. If you're reporting a violation, please, include a message link!"
@@ -480,7 +479,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 		action {
 			try {
 				val msg = originalMessage?.asMessage()
-				Vars.client.unsafe.messageChannel(reportsChannel).createMessage {
+				Vars.client.unsafe.messageChannel(Channels.reports).createMessage {
 					content = """
 						${msg?.author?.tag} (channel ${msg?.channelId}, guild ${msg?.data?.guildId?.value}) reports:
 
@@ -495,7 +494,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 						result.forEach {
 							quoteMessage(
 								Vars.supplier.getMessage(it.groupValues[1].toSnowflake(), it.groupValues[2].toSnowflake()),
-								reportsChannel,
+								Channels.reports,
 								"linked message by"
 							)
 							embeds.lastOrNull()?.url = "https://" + it.value
