@@ -22,7 +22,7 @@ abstract class MultiversalEntity {
 
 	suspend fun update() {
 		try {
-			withTimeout(30.seconds) {
+			withTimeout(70.seconds) {
 				updateImpl()
 			}
 		} catch (e: Exception) {

@@ -3,6 +3,7 @@ package flarogus.command
 import dev.kord.core.entity.Message
 import flarogus.command.parser.CommandArgumentParser
 import flarogus.multiverse.Multiverse
+import flarogus.multiverse.Log
 import flarogus.util.*
 import kotlinx.coroutines.delay
 import ktsinterface.launch
@@ -133,6 +134,9 @@ open class FlarogusCommand<R>(name: String) {
 
 			if (callback.originalMessage == null || callback.parentCallback != null) throw t
 			if (!callback.replyResult) throw t
+
+			Log.debug { "Exception when executing '${callback.message}': $t" }
+			Log.lifecycle { t.stackTraceToString() }
 			replyWithError(callback, t)
 		}
 	}

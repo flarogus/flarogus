@@ -54,3 +54,4 @@ tasks.register<Copy>("deploy") {
 		delete("build/libs/app.jar")
 	}
 }
+

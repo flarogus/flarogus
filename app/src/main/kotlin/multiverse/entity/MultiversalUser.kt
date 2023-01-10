@@ -136,7 +136,7 @@ open class MultiversalUser(
 				message.origin = event.message
 
 				val totalTime = (System.currentTimeMillis() - timeBegin) / 1000f
-				Log.lifecycle { "Message sent by $name was retranslated in $totalTime sec." }
+				Log.debug { "Message sent by $name was retranslated in $totalTime sec." }
 
 				return true
 			}

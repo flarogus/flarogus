@@ -278,7 +278,7 @@ object Multiverse {
 		val avatar: String? = null,
 		val filter: (TextChannel) -> Boolean = { true },
 		val messageBuilder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
-	) : PendingAction<Multimessage>(45) {
+	) : PendingAction<Multimessage>(100) {
 		override suspend fun execute(): Multimessage {
 			val messages = ArrayList<WebhookMessageBehavior>(guilds.size)
 
@@ -330,7 +330,7 @@ object Multiverse {
 		val messageId: Snowflake,
 		val newMessage: DiscordPartialMessage,
 		val editOrigin: Boolean = false
-	) : PendingAction<Unit>(30) {
+	) : PendingAction<Unit>(45) {
 		override suspend fun execute() {
 			val multimessage = history.find { it.origin?.id == messageId } ?: return
 

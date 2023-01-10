@@ -54,7 +54,7 @@ object Vars {
 
 	/** Scripting engine */
 	val scriptEngine by lazy {
-		ScriptEngineManager(Thread.currentThread().contextClassLoader).getEngineByExtension("kts")!!
+		ScriptEngineManager(Vars::class.java.classLoader).getEngineByExtension("kts")!!
 	}
 	/* Global scripting context */
 	val scriptContext = SimpleScriptContext()

@@ -12,6 +12,7 @@ import flarogus.util.*;
 import flarogus.command.*;
 import flarogus.command.builder.*
 import flarogus.multiverse.*
+import flarogus.multiverse.npc.startFemboyPosting
 import kotlin.system.exitProcess
 
 const val IS_MULTIVERSE_ENABLED = true
@@ -71,6 +72,7 @@ suspend fun main(vararg args: String) {
 				}
 
 				delay(10_000L)
+
 				if (Multiverse.isRunning) {
 					// something is wrong, this happens sometimes
 					if (Multiverse.guilds.filter { it.isValid }.size <= 0) {
@@ -82,6 +84,8 @@ suspend fun main(vararg args: String) {
 						}
 					}
 				}
+
+				Vars.client.launch { startFemboyPosting() }
 			} catch (e: Throwable) {
 				Log.error { "FATAL EXCEPTION HAS OCCURRED DURING MULTIVERSE INTIALIZATION: `$e`" }
 			}
@@ -90,7 +94,7 @@ suspend fun main(vararg args: String) {
 	
 	@OptIn(PrivilegedIntent::class)
 	Vars.client.login {
-        	intents += Intent.MessageContent
+		intents += Intent.MessageContent
 
 		presence { competing("execute `!flarogus help` to see the list of available commands.") }
 	}

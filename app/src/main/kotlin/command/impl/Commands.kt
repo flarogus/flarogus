@@ -419,10 +419,13 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 	subcommand<Long>("sus") {
 		description = "Shows info of the current instance"
 
+		discordOnly()
+
 		action {
 			val msg = reply("sussificating... <a:loading:967451900213624872>")?.await()
 			msg?.edit {
-				val ping = msg.id.timeMark.elapsedNow().toLong(DurationUnit.MILLISECONDS)
+				val originalMessageSendTime = originalMessage().id.timestamp.toEpochMilliseconds()
+				val ping = msg.id.timestamp.toEpochMilliseconds() - originalMessageSendTime
 
 				this@action.result(ping, false)
 				content = """

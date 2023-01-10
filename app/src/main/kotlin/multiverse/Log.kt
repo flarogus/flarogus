@@ -18,29 +18,29 @@ object Log {
 			if (level.level > LogLevel.ERROR.level) throw IllegalArgumentException("illegal log level")
 			field = level 
 		}
-	val logChannel by lazy { Vars.client.unsafe.messageChannel(Channels.log) }
+	// val logChannel by lazy { Vars.client.unsafe.messageChannel(Channels.log) }
 
-	val buffer = ArrayList<String>()
-	lateinit var logTimer: Timer
+	// val buffer = ArrayList<String>()
+	// lateinit var logTimer: Timer
 
 	fun setup() {
-		logTimer = fixedRateTimer(daemon = true, period = 2000L) {
-			while (!buffer.isEmpty()) synchronized(buffer) {
-				val message = buildString {
-					while (!buffer.isEmpty() && length + buffer.first().length < 2000) {
-						val entry = buffer.removeFirst()
-						appendLine(entry.take(2000))
-					}
-				}
-				
-				runBlocking {
-					logChannel.createMessage {
-						content = message
-						allowedMentions()
-					}
-				}
-			}
-		}
+		// logTimer = fixedRateTimer(daemon = true, period = 2000L) {
+		// 	while (!buffer.isEmpty()) synchronized(buffer) {
+		// 		val message = buildString {
+		// 			while (!buffer.isEmpty() && length + buffer.first().length < 2000) {
+		// 				val entry = buffer.removeFirst()
+		// 				appendLine(entry.take(2000))
+		// 			}
+		// 		}
+		// 	
+		// 		runBlocking {
+		// 			logChannel.createMessage {
+		// 				content = message
+		// 				allowedMentions()
+		// 			}
+		// 		}
+		// 	}
+		// }
 	}
 	
 	inline fun sendLog(logLevel: LogLevel, crossinline message: () -> String) {
@@ -48,9 +48,10 @@ object Log {
 		
 		val prefix = if (logLevel == LogLevel.ERROR) "! ERROR !" else logLevel.toString()
 		
-		synchronized(buffer) {
-			buffer.add("**[$prefix]**: ${message()}".stripEveryone().take(1999))
-		}
+		println("[$prefix]: ${message()}")
+		// synchronized(buffer) {
+		// 	buffer.add("**[$prefix]**: ${message()}".stripEveryone().take(1999))
+		// }
 	}
 	
 	inline fun lifecycle(crossinline message: () -> String) = sendLog(LogLevel.LIFECYCLE, message);

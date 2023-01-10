@@ -32,6 +32,8 @@ object StateManager {
 
 	/** Last uploaded state */
 	var lastState: State? = null
+	/** Data storage for temporary scripts. */
+	val arbitraryData = HashMap<String, String>()
 	
 	/** Tries to update the state. Retries up to [attempts - 1] times if an exception was thrown. */
 	suspend fun updateState(attempts: Int = 3) {
@@ -121,6 +123,7 @@ data class State(
 ) {
 	val multiverseLastInfoMessage = Multiverse.lastInfoMessage
 	val serializedMarkov = Multiverse.markov.serializeToString()
+	val arbitraryData = StateManager.arbitraryData
 
 	/** Updates the current bot state in accordance with this state */
 	fun loadFromState() {
@@ -141,5 +144,11 @@ data class State(
 
 		Multiverse.lastInfoMessage = multiverseLastInfoMessage
 		Multiverse.markov = MarkovChain.deserializeFromString(serializedMarkov)
+
+		for ((k, v) in arbitraryData) {
+			if (k !in StateManager.arbitraryData) {
+				StateManager.arbitraryData[k] = v
+			}
+		}
 	}
 }
