@@ -16,15 +16,14 @@ repositories {
 }
 
 dependencies {
+	implementation(kotlin("reflect"))
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
 	implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
 
-	implementation(kotlin("reflect"))
-	implementation(kotlin("script-runtime"))
-	implementation(kotlin("script-util"))
-	implementation(kotlin("compiler-embeddable"))
+	implementation(kotlin("scripting-common"))
+	implementation(kotlin("scripting-jvm"))
+	implementation(kotlin("scripting-jvm-host"))
 	implementation(kotlin("scripting-compiler-embeddable"))
-	implementation(kotlin("scripting-jsr223"))
 
 	implementation("dev.kord:kord-core:0.8.0-M17")
 	implementation("org.sejda.webp-imageio:webp-imageio-sejda:0.1.0") // webp support for ImageIO
@@ -44,14 +43,40 @@ tasks.jar {
 	from(*configurations.runtimeClasspath.files.map { if (it.isDirectory()) it else zipTree(it) }.toTypedArray())
 }
 
-tasks.register<Copy>("deploy") {
+// a simple task that analyzes the generated jar-file and writes all noteworthy packages down into a file.
+val collectDefaultImports by tasks.registering {
 	dependsOn("jar")
-	
-	from("build/libs/app.jar")
-	into("../build/")
-	
+
+	inputs.files(configurations.runtimeClasspath.get().files)
+	outputs.dir("src/main/resources/")
+
 	doLast {
-		delete("build/libs/app.jar")
+		println(File("src/main/resources/classpath.txt").exists())
+		val zip = zipTree("$buildDir/libs/app.jar")
+		val packages = zip
+			.getFiles()
+			.asSequence()
+			.filter { !it.isDirectory && it.name.endsWith(".class") && "$" !in it.name }
+			.map {
+				it.absolutePath.removeSuffix(".class")
+					.substringAfter("$buildDir/tmp/expandedArchives/")
+					.substringAfter("/") // temp archive folder
+					.replace('/', '.')
+					.substringBeforeLast('.') // turining class path into package path
+					.let { it + ".*" }
+			}
+			.distinct()
+			.joinToString("\n")
+
+		File("src/main/resources/").let {
+			it.mkdirs()
+			it.resolve("import-classpath.txt").writeText(packages)
+		}
 	}
+}
+
+tasks.register("deploy") {
+	dependsOn("jar")
+	dependsOn(collectDefaultImports)
 }
 

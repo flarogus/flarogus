@@ -3,9 +3,14 @@ package flarogus
 import java.time.format.*
 import javax.script.*
 import kotlin.random.*
+import kotlin.reflect.full.createType
+import kotlin.script.experimental.api.*
+import kotlin.script.experimental.jvm.*
+import kotlin.script.experimental.jvmhost.*
 import kotlinx.coroutines.*
 import dev.kord.common.entity.*
 import dev.kord.core.*
+import dev.kord.core.entity.Message
 import dev.kord.core.supplier.*
 import flarogus.util.*
 import flarogus.command.CommandHandler
@@ -52,27 +57,25 @@ object Vars {
 
 	val moderators = mutableSetOf<Snowflake>()
 
-	/** Scripting engine */
-	val scriptEngine by lazy {
-		ScriptEngineManager(Vars::class.java.classLoader).getEngineByExtension("kts")!!
+	val scriptCompiler by lazy { JvmScriptCompiler() }
+	val scriptEvaluator by lazy { kotlin.script.experimental.jvm.BasicJvmScriptEvaluator() }
+	val scriptCompileConfig by lazy {
+		ScriptCompilationConfiguration {
+			defaultImports(Vars.defaultImports) // "Vars." is needed because this is defaultImports.invoke(...)
+			providedProperties("message" to Message::class.createType(nullable = true))
+			jvm { dependenciesFromCurrentContext(wholeClasspath = true) }
+		}
 	}
-	/* Global scripting context */
-	val scriptContext = SimpleScriptContext()
 
 	/** Markdown codeblock regex. */
 	val codeblockRegex = "```([a-z]*)?((?s).*)```".toRegex()
 	/** Default imports. Used with the script engine. */
 	val defaultImports by lazy {
-		ClassLoader::class.java.getDeclaredField("classes")
-			.let {
-				it.isAccessible = true
-				it.get(Vars::class.java.classLoader) as Vector<Class<*>>
-			}
-			.filter { "internal" !in it.name && "$" !in it.name }
-			.map { it.name.substringBeforeLast('.') + ".*" }
-			.distinct()
-			.let { it + "ktsinterface.*" }
-			.joinToString(";") { "import $it" }
+		Vars::class.java.getResourceAsStream("/import-classpath.txt")
+			?.bufferedReader()
+			?.use { it.readText() }
+			?.lines()
+			.orEmpty()
 	}
 	
 	/**

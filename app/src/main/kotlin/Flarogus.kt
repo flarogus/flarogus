@@ -56,20 +56,20 @@ suspend fun main(vararg args: String) {
 				Log.info { "mutliverse instance ${Vars.ubid} has started with $errors errors." }
 
 				// execute all scripts defined in the autorun channel	
-				Log.info { "executing autorun scripts:" }
-				(Vars.supplier.getChannelOrNull(Channels.autorun) as? TextChannel)?.messages?.toList()?.forEachIndexed { index, msg ->
-					val script = Vars.codeblockRegex.find(msg.content)?.groupValues?.getOrNull(2) ?: msg.content
-			
-					runCatching {
-						Vars.scriptEngine.eval(Vars.defaultImports + "\n" + script, Vars.scriptContext)?.let {
-							if (it is Deferred<*>) it.await() else it
-						}.toString()
-					}.recover { e ->
-						e.message ?: e.toString()
-					}.getOrThrow().take(200).let { it ->
-						Log.info { "$index: $it" }
-					}
-				}
+				// Log.info { "executing autorun scripts:" }
+				// (Vars.supplier.getChannelOrNull(Channels.autorun) as? TextChannel)?.messages?.toList()?.forEachIndexed { index, msg ->
+				// 	val script = Vars.codeblockRegex.find(msg.content)?.groupValues?.getOrNull(2) ?: msg.content
+				// 		
+				// 	runCatching {
+				// 		Vars.scriptEngine.eval(Vars.defaultImports + "\n" + script, Vars.scriptContext)?.let {
+				// 			if (it is Deferred<*>) it.await() else it
+				// 		}.toString()
+				// 	}.recover { e ->
+				// 		e.message ?: e.toString()
+				// 	}.getOrThrow().take(200).let { it ->
+				// 		Log.info { "$index: $it" }
+				// 	}
+				// }
 
 				delay(10_000L)
 
@@ -77,7 +77,7 @@ suspend fun main(vararg args: String) {
 					// something is wrong, this happens sometimes
 					if (Multiverse.guilds.filter { it.isValid }.size <= 0) {
 						Log.error { "No valid guilds found! Forcibly updating all guilds!" }
-
+				
 						Multiverse.guilds.forEach {
 							it.lastUpdate = 0L
 							it.update()

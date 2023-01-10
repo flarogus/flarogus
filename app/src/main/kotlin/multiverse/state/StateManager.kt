@@ -43,7 +43,11 @@ object StateManager {
 				updateStateAttempt()
 				break
 			} catch (e: Exception) {
-				if (++attempt >= attempts) throw e
+				if (++attempt >= attempts) {
+					Log.error { "Could not update the state after $attempts attempts" }
+					e.printStackTrace()
+					break
+				}
 			}
 		}
 	}

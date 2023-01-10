@@ -12,6 +12,8 @@ import flarogus.multiverse.*
 import flarogus.multiverse.entity.*
 import flarogus.util.*
 import kotlinx.coroutines.*
+import kotlin.script.experimental.api.*
+import kotlin.script.experimental.host.toScriptSource
 import java.awt.image.BufferedImage
 import java.net.URL
 import javax.imageio.ImageIO
@@ -553,14 +555,17 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 			}
 			if (args.flag("imports")) script = "${Vars.defaultImports}\n$script"
 
-			val msg = originalMessage?.asMessage()
-			Vars.scriptEngine.put("message", msg)
-			Vars.scriptContext.setAttribute("message", msg, ScriptContext.ENGINE_SCOPE)
-
+			val msg = originalMessageOrNull()
+			val evalConfig = ScriptEvaluationConfiguration {
+				compilationConfiguration(Vars.scriptCompileConfig)
+				providedProperties(mapOf("message" to msg))
+			}
 			var toDelete = args.flag("delete")
 
 			val result = try {
-				Vars.scriptEngine.eval(script, Vars.scriptContext).let {
+				val compiledScript = Vars.scriptCompiler(script.toScriptSource(), Vars.scriptCompileConfig)
+					.valueOrThrow()
+				Vars.scriptEvaluator(compiledScript, evalConfig).valueOrThrow().returnValue.let {
 					when (it) {
 						is Deferred<*> -> it.await()
 						is Job -> it.join()
