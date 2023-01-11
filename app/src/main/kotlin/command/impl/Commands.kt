@@ -553,7 +553,6 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 			var script = args.arg<String>("script").let {
 				Vars.codeblockRegex.find(it)?.groupValues?.getOrNull(2) ?: it
 			}
-			if (args.flag("imports")) script = "${Vars.defaultImports}\n$script"
 
 			val msg = originalMessageOrNull()
 			val evalConfig = ScriptEvaluationConfiguration {

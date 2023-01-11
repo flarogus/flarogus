@@ -55,6 +55,7 @@ val collectDefaultImports by tasks.registering {
 			.getFiles()
 			.asSequence()
 			.filter { !it.isDirectory && it.name.endsWith(".class") && "$" !in it.name }
+			.filter { !it.name.startsWith("META-INF") }
 			.map {
 				it.absolutePath.removeSuffix(".class")
 					.substringAfter("$buildDir/tmp/expandedArchives/")
