@@ -47,11 +47,9 @@ tasks.jar {
 val collectDefaultImports by tasks.registering {
 	dependsOn("jar")
 
-	inputs.files(configurations.runtimeClasspath.get().files)
-	outputs.dir("src/main/resources/")
+	outputs.dir("$projectDir/src/main/resources/")
 
 	doLast {
-		println(File("src/main/resources/classpath.txt").exists())
 		val zip = zipTree("$buildDir/libs/app.jar")
 		val packages = zip
 			.getFiles()
@@ -68,7 +66,7 @@ val collectDefaultImports by tasks.registering {
 			.distinct()
 			.joinToString("\n")
 
-		File("src/main/resources/").let {
+		File("$projectDir/src/main/resources/").let {
 			it.mkdirs()
 			it.resolve("import-classpath.txt").writeText(packages)
 		}
