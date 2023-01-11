@@ -111,6 +111,7 @@ object StateManager {
 		Vars.client.resources.httpClient.get(url).body<T>()
 }
 
+TODO REWRITE!!!
 /** A utility class that stores the most important parts of bot's state. Used for serialization. */
 @kotlinx.serialization.Serializable
 data class State(
@@ -119,14 +120,8 @@ data class State(
 	var runWhitelist: Set<Snowflake> = Vars.superusers,
 	var epoch: Long = Vars.flarogusEpoch,
 	var logLevel: Int = Log.level.level,
-
-	var history: List<Multimessage> = Multiverse.history.takeLast(150),
-
-	var users: List<MultiversalUser> = Multiverse.users,
-	var guilds: List<MultiversalGuild> = Multiverse.guilds
+	val multiverse: Multiverse
 ) {
-	val multiverseLastInfoMessage = Multiverse.lastInfoMessage
-	val serializedMarkov = Multiverse.markov.serializeToString()
 	val arbitraryData = StateManager.arbitraryData
 
 	/** Updates the current bot state in accordance with this state */
@@ -135,19 +130,7 @@ data class State(
 		Vars.flarogusEpoch = epoch
 		Log.level = Log.LogLevel.of(logLevel)
 
-		Multiverse.history.addAll(history)
-
-		users.forEach { u ->
-			Multiverse.users.removeAll { it.discordId == u.discordId }
-			Multiverse.users.add(u)
-		}
-		guilds.forEach { g ->
-			Multiverse.guilds.removeAll { it.discordId == g.discordId }
-			Multiverse.guilds.add(g)
-		}
-
 		Multiverse.lastInfoMessage = multiverseLastInfoMessage
-		Multiverse.markov = MarkovChain.deserializeFromString(serializedMarkov)
 
 		for ((k, v) in arbitraryData) {
 			if (k !in StateManager.arbitraryData) {
