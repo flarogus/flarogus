@@ -550,36 +550,49 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 		action {
 			require(args.flag("su")) { "This command requires the --su flag to be present." }
 
-			var script = args.arg<String>("script").let {
+			val script = args.arg<String>("script").let {
 				Vars.codeblockRegex.find(it)?.groupValues?.getOrNull(2) ?: it
 			}
-			if (args.flag("imports")) script = "${Vars.defaultImports}\n$script"
 
 			val msg = originalMessageOrNull()
+			val compileConfig = ScriptCompilationConfiguration(Vars.scriptCompileConfig) {
+				if (args.flag("imports")) defaultImports(Vars.defaultImports)
+			}
 			val evalConfig = ScriptEvaluationConfiguration {
-				compilationConfiguration(Vars.scriptCompileConfig)
+				compilationConfiguration(compileConfig)
 				providedProperties(mapOf("message" to msg))
 			}
 			var toDelete = args.flag("delete")
-
-			val result = try {
-				val compiledScript = Vars.scriptCompiler(script.toScriptSource(), Vars.scriptCompileConfig)
+			val compiledScript = Vars.scriptCompiler(script.toScriptSource(), compileConfig)
 					.valueOrThrow()
-				Vars.scriptEvaluator(compiledScript, evalConfig).valueOrThrow().returnValue.let {
-					when (it) {
-						is Deferred<*> -> it.await()
-						is Job -> it.join()
-						else -> it
+			val returnValue = Vars.scriptEvaluator(compiledScript, evalConfig)
+				.valueOrThrow()
+				.returnValue
+
+			var reply: Message? = null
+			when (returnValue) {
+				is ReturnValue.Value -> {
+					val value = when (it.value) {
+						is Deferred<*> -> it.value.await()
+						is Job -> it.value.join()
+						else -> it.value
 					}
-				}.also { 
-					result(it, false)
+					result(result, false)
+					val string = "${returnValue.type}: $value"
+					reply = reply("```\n${string.take(1990).replace("```", "`'`")}\n```")
 				}
-			} catch (e: Throwable) {
-				result(e, false)
-				toDelete = true
-				if (args.flag("trace")) e.stackTraceToString() else e.toString()
+				is ReturnValue.Error -> {
+					val string = if (args.flag("trace")) {
+						returnValue.error.stackTraceToString()
+					} else {
+						returnValue.error.toString()
+					}
+
+					reply = reply("```\n${string.take(1950).replace("```", "`'`")}\n```")
+					toDelete = true
+				}
+				is ReturnValue.Unit, ReturnValue.NotEvaluated -> {}
 			}
-			val reply = reply("```\n${result.toString().take(1950)}\n```")
 
 			// schedule the removal
 			if (toDelete && !args.flag("no-delete")) Vars.client.launch {
