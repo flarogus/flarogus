@@ -26,84 +26,14 @@ import kotlin.random.Random
  * into other channels.
  */
 object MultiverseOld {
-	/** Array containing all messages sent in this instance */
-	val history = ArrayList<Multimessage>(1000)
-	
-	/** Files with size exceeding this limit will be sent in the form of links */
-	const val maxFileSize = 1024 * 1024 * 1
-	
-	const val webhookName = "MultiverseWebhook"
-	const val systemName = "Multiverse"
-	const val systemAvatar = "https://cdn.discordapp.com/attachments/1045966829882970143/1045967037316481145/multiverse-system-v3.jpg"
-	
-	/** If false, new messages will be ignored */
-	var isRunning = false
-	var lastInfoMessage = 0L
 
-	/** All registered multiversal NPCs. */
-	val npcs = mutableListOf(AmogusNPC())
-	/** A little bit of tomfoolery. */
-	var markov = MarkovChain()
-
-	val users = ArrayList<MultiversalUser>(90)
-	val guilds = ArrayList<MultiversalGuild>(30)
-
-	val messageFilters = ArrayList<MultiversalUser.MessageFilter>()
-
-	val rootJob = SupervisorJob()
-	val scope = CoroutineScope(rootJob)
 	val pendingActions = ArrayList<PendingAction<*>>(50)
 	
 	/** Sets up the multiverse */
 	suspend fun start() {
-		StateManager.updateState()
-		
 		setupEvents()
 		findChannels()
 		
-		if (lastInfoMessage + 1000L * 60 * 60 * 24 < System.currentTimeMillis()) scope.launch {
-			delay(40000L)
-			val channels = guilds.fold(0) { v, it -> if (!it.isForceBanned) v + it.channels.size else v }
-			broadcastSystem {
-				embed { description = """
-					***This channel is a part of the Multiverse. There's ${channels - 1} other channels.***
-					Some of the available commands: 
-					    - `!flarogus multiverse rules` - see the rules
-					    - `!flarogus report` - report an issue or contact the admins
-					    - `!flarogus multiverse help` - various commands
-				""".trimIndent() }
-			}
-			lastInfoMessage = System.currentTimeMillis()
-		}
-		
-		isRunning = true
-
-		fixedRateTimer("update state", true, initialDelay = 5 * 1000L, period = 180 * 1000L) {
-			runBlocking { findChannels() }
-		}
-		fixedRateTimer("update settings", true, initialDelay = 5 * 1000L, period = 20 * 1000L) {
-			//random delay is to ensure that there will never be situations when two instances can't detect each other
-			scope.launch {
-				delay(Random.nextLong(0L, 5000L))
-				StateManager.updateState()
-			}
-		}
-
-		scope.launch {
-			while (isActive) {
-				if (pendingActions.isNotEmpty()) {
-					val action = synchronized(pendingActions) { pendingActions.removeFirst() }
-					action().await()
-				}
-				delay(50L) // a little delay to allow to send other messages outside the multiverse
-			}
-		}
-	}
-	
-	/** Shuts the multiverse down, but allows to restart it later. */
-	fun shutdown() {
-		isRunning = false
-		// rootJob.children.forEach { it.cancel() }
 	}
 	
 	suspend fun messageReceived(event: MessageCreateEvent) {
@@ -156,77 +86,6 @@ object MultiverseOld {
 			}
 			.launchIn(Vars.client)
 	}
-	
-	/** Searches for channels with "multiverse" in their names in all guilds this bot is in */
-	suspend fun findChannels() {
-		Vars.client.rest.user.getCurrentUserGuilds().forEach {
-			guildOf(it.id)?.update() //this will add an entry if it didn't exist
-		}
-	}
-
-	fun addAction(action: PendingAction<*>) {
-		synchronized(pendingActions) {
-			pendingActions.add(action)
-		}
-	}
-
-	/**
-	 * Sends a message into every multiversal channel.
-	 * Accepts username and pfp url parameters.
-	 * Automatically adds the multimessage to the history.
-	 *
-	 * @return The multimessage containing all created messages but no origin.
-	 */
-	fun broadcastAsync(
-		user: String? = null,
-		avatar: String? = null,
-		filter: (TextChannel) -> Boolean = { true },
-		messageBuilder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
-	) = SendMessageAction(user, avatar, filter, messageBuilder).also {
-		addAction(it)
-	}
-
-	/** Same as [broadcastAsync], except that it awaits for the result. */
-	suspend fun broadcast(
-		user: String? = null,
-		avatar: String? = null,
-		filter: (TextChannel) -> Boolean = { true },
-		messageBuilder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
-	) = broadcastAsync(user, avatar, filter, messageBuilder).await()
-
-	/** See [broadcastSystemAsync]. */
-	suspend fun broadcastSystem(message: suspend MessageCreateBuilder.(id: Snowflake) -> Unit) = broadcastSystemAsync(message).await()
-
-	/** Same as [broadcastAsync] but uses the system pfp & name */
-	fun broadcastSystemAsync(message: suspend MessageCreateBuilder.(id: Snowflake) -> Unit) = broadcastAsync(systemName, systemAvatar, { true }, message)
-	
-	/** Returns a MultiversalUser with the given id, or null if it does not exist */
-	suspend fun userOf(id: Snowflake): MultiversalUser? = users.find { it.discordId == id } ?: let {
-		MultiversalUser(id).also { it.update() }.let {
-			if (it.isValid) it.also { users.add(it) } else null
-		}
-	}
-
-	/** Returns a MultiversalGuild with the given id, or null if it does not exist */
-	suspend fun guildOf(id: Snowflake): MultiversalGuild? = guilds.find { it.discordId == id } ?: let {
-		MultiversalGuild(id).also { it.update() }.let { 
-			if (it.isValid) it.also { guilds.add(it) } else null
-		}
-	}
-
-	/** Returns whether this message was sent by flarogus */
-	fun isOwnMessage(message: Message): Boolean {
-		return (message.author?.id == Vars.botId) || (message.webhookId != null && isMultiversalWebhook(message.webhookId!!))
-	}
-
-	/** Returns whether this channel belongs to the multiverse. Does not guarantee that it is not banned. */
-	fun isMultiversalChannel(channel: Snowflake) = guilds.any { it.channels.any { it.id == channel } }
-
-	/** Returns whether this webhook belongs to the multiverse. */
-	fun isMultiversalWebhook(webhook: Snowflake) = guilds.any { it.webhooks.any { it.id == webhook } }
-
-	/** Returns whether a message with this id is a retranslated message */
-	fun isRetranslatedMessage(id: Snowflake) = history.any { it.retranslated.any { it.id == id } }
 
 	abstract class PendingAction<T>(timeLimitSeconds: Int) {
 		protected val job = Job(rootJob)
@@ -279,7 +138,6 @@ object MultiverseOld {
 		val messageBuilder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
 	) : PendingAction<Multimessage>(100) {
 		override suspend fun execute(): Multimessage {
-			val messages = ArrayList<WebhookMessageBehavior>(guilds.size)
 
 			coroutineScope {
 				for (guild in guilds) launch {

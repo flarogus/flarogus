@@ -34,8 +34,11 @@ open class MultiversalGuild(
 		get() = if (field == null || field!!.isEmpty()) null else field
 	val name: String get() = nameOverride ?: guild?.name ?: "unknown guild"
 
+	/** Epoch time of the last sent message. */
 	var lastSent = 0L
+	/** The total amount of messages sent by this guild. */
 	var totalSent = 0
+	/** The total amount of messages received by this guild. */
 	var totalUserMessages = 0
 
 	/** Whether this guild is allowed to participate in the multiverse */

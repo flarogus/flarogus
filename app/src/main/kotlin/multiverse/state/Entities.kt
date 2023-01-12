@@ -51,7 +51,7 @@ data class WebhookMessageBehavior(
 @Serializable(with = HistorySerializer::class)
 data class Multimessage(
 	var origin: MessageBehavior? = null,
-	val retranslated: List<WebhookMessageBehavior>
+	val retranslated: MutableList<WebhookMessageBehavior>
 ) {
 	suspend fun delete(deleteOrigin: Boolean) {
 		retranslated.forEach { 

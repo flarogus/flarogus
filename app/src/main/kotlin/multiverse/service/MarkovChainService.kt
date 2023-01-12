@@ -4,7 +4,7 @@ import com.github.mnemotechnician.markov.*
 import flarogus.multiverse.Multiverse.MultiversalService
 
 
-class MarkovChainService {
+class MarkovChainService : MultiversalService() {
 	lateinit val chain: MarkovChain
 	val dataKey = "chain-serialized"
 
