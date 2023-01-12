@@ -29,13 +29,19 @@ data class WebhookMessageBehavior(
 	override val kord: Kord = Vars.client,
 	override val supplier: EntitySupplier = Vars.supplier
 ) : MessageBehavior {
+	private var cachedToken: String? = null
+
 	constructor(webhook: Webhook, message: MessageBehavior) : this(webhook.id, message.channelId, message.id, Vars.client)
 	
-	suspend fun getWebhook() = supplier.getWebhook(webhookId);
+	suspend fun getWebhook() = supplier.getWebhook(webhookId)
+
+	suspend fun getToken() = cachedToken ?: run {
+		getWebhook().token!!.also { cachedToken = it }
+	}
 	
 	suspend inline fun edit(builder: WebhookMessageModifyBuilder.() -> Unit): Message {
 		val webhook = getWebhook()
-		return edit(webhookId = webhook.id, token = webhook.token!!, builder = builder) //have to specify the parameter name in order for kotlinc to understand me
+		return edit(webhookId = webhookId, token = getToken(), builder = builder) //have to specify the parameter name in order for kotlinc to understand me
 	}
 	
 	override suspend fun delete(reason: String?) {

@@ -61,7 +61,7 @@ suspend fun startFemboyPosting() {
 	while (true) {
 		var lastSent = StateManager.arbitraryData.getOrDefault(lastSentTimeKey, null)?.toLongOrNull() ?: 0L
 
-		if (System.currentTimeMillis() - lastSent >= 1000L * 60 * 60 * 4) {
+		if (System.currentTimeMillis() - lastSent >= 1000L * 60 * 60 * 8) {
 			StateManager.arbitraryData[lastSentTimeKey] = System.currentTimeMillis().toString()
 			postFemboyMeme()
 		}
