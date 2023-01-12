@@ -40,13 +40,11 @@ data class WebhookMessageBehavior(
 	}
 	
 	suspend inline fun edit(builder: WebhookMessageModifyBuilder.() -> Unit): Message {
-		val webhook = getWebhook()
 		return edit(webhookId = webhookId, token = getToken(), builder = builder) //have to specify the parameter name in order for kotlinc to understand me
 	}
 	
 	override suspend fun delete(reason: String?) {
-		val webhook = getWebhook()
-		delete(webhook.id, webhook.token!!, null)
+		delete(webhookId, getToken(), null)
 	}
 
 	override fun toString(): String {
