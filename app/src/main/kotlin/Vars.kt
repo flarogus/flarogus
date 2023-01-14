@@ -101,13 +101,14 @@ object Vars {
 			//requestHandler { KtorRequestHandler(it.httpClient, ParallelRequestRateLimiter(), token = botToken) }
 		}
 
+		ubid = Random.nextInt(0, 1000000000).toString(10 + 26)
+		startedAt = System.currentTimeMillis()
+
 		// if possible. load the previous multiverse. Otherwise, create a new one.
 		runCatching { StateManager.loadState() }.getOrNull()?.let {
 			it.loadFromState() // it will load the multiverse as well
 			Log.info { "State loaded successfully." }
 		} ?: run {
-			ubid = Random.nextInt(0, 1000000000).toString(10 + 26)
-			startedAt = System.currentTimeMillis()
 			flarogusEpoch = startedAt
 			multiverse = Multiverse()
 
