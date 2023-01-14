@@ -15,11 +15,11 @@ import java.io.*
 
 @OptIn(ExperimentalSerializationApi::class)
 object StateManager {
-	val flarogusDir = File(System.getProperty("user.home")).resolve("flarogus").ensureDir()
+	val flarogusDir = File(System.getProperty("user.home")).resolve(Config.dataDirectoryName).ensureDir()
 	val backupDirectory = flarogusDir.resolve("backups").ensureDir()
 	val dataFile = flarogusDir.resolve("data.bin").ensureFile()
 
-	val fileStorageChannel by lazy { Vars.client.unsafe.messageChannel(Channels.fileStorage) }
+	val fileStorageChannel by lazy { Vars.client.unsafe.messageChannel(Config.fileStorage) }
 	val json = Json {
 		ignoreUnknownKeys = true
 		encodeDefaults = true

@@ -38,8 +38,12 @@ object Vars {
 	val markovService = MarkovChainService()
 	val femboyRepostService = RedditRepostService(1000L * 60 * 60 * 8, femboySubreddits)
 
-	/** If true, the multiverse works in the test mode. Must be set before compiling. */
-	val testMode = false
+	/** If true, the multiverse works in the test mode. Do not change at runtime. */
+	var testMode = false
+		set(value) {
+			if (::client.isInitialized) error("do not.")
+			field = value
+		}
 	/** Whether to enable experimental stuff. May or may not be meaningless at the current moment, */
 	var experimental = false
 
@@ -57,8 +61,6 @@ object Vars {
 	val botId: Snowflake get() = client.selfId;
 	/** Mnemotechnican#9967 — discord */
 	val ownerId = Snowflake(502871063223336990UL)
-	/** Flarogus-central */
-	val flarogusGuild = Snowflake(932524169034358877UL)
 
 	/** Superusers that are allowed to do most things */
 	val superusers = mutableSetOf(

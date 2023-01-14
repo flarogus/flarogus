@@ -352,7 +352,7 @@ class Multiverse(
 				val guild = modification.candidates.maxBy { it.lastSent }.also(modification.candidates::remove)
 				// find the message corresponding to this guild and edit it
 				modification.multimessage.retranslated.find { msg ->
-					guild.channels.any { it.id == msg.id }
+					guild.channels.any { it.id == msg.channelId }
 				}?.edit {
 					content = newContent
 				}

@@ -3,10 +3,14 @@ package flarogus.multiverse
 import dev.kord.common.entity.*
 import flarogus.*
 
-val Channels get() = if (!Vars.testMode) NormalChannels else TestChannels
+val Config get() = if (!Vars.testMode) NormalConfig else TestConfig
 
-abstract class AbstractChannels(
+abstract class AbstractConfig(
 	val multiverseChannelName: String,
+	val dataDirectoryName: String,
+
+	/** Flarogus-central */
+	val flarogusGuild: Snowflake,
 
 	val latestState: Snowflake,
 	val fileStorage: Snowflake,
@@ -16,8 +20,11 @@ abstract class AbstractChannels(
 	val autorun: Snowflake
 )
 
-object NormalChannels : AbstractChannels(
+object NormalConfig : AbstractConfig(
 	multiverseChannelName = "multiverse",
+	dataDirectoryName = "flarogus",
+
+	flarogusGuild = Snowflake(932524169034358877UL),
 
 	latestState = Snowflake(937781472394358784UL),
 	fileStorage = Snowflake(949667466156572742UL),
@@ -27,8 +34,11 @@ object NormalChannels : AbstractChannels(
 	autorun = Snowflake(962823075357949982UL)
 )
 
-object TestChannels : AbstractChannels(
+object TestConfig : AbstractConfig(
 	multiverseChannelName = "test-multiverse",
+	dataDirectoryName = "flarogus-test",
+
+	flarogusGuild = Snowflake(932524169034358877UL),
 
 	latestState = Snowflake(971766803401433131),
 	fileStorage = Snowflake(971766838381936720),

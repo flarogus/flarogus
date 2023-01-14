@@ -157,7 +157,7 @@ open class MultiversalGuild(
 		suspend fun isValidChannel(channel: TopGuildMessageChannel): Boolean {
 			val perms = channel.getEffectivePermissions(Vars.botId)
 
-			return channel.name.contains(Channels.multiverseChannelName, true)
+			return channel.name.contains(Config.multiverseChannelName, true)
 				&& Permission.ViewChannel in perms
 				&& Permission.SendMessages in perms
 				&& Permission.ManageWebhooks in perms

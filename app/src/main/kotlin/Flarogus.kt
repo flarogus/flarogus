@@ -27,6 +27,10 @@ suspend fun main(vararg args: String) {
 		exitProcess(0)
 	}
 
+	if (args.getOrNull(1)?.lowercase() == "true") {
+		Vars.testMode = true
+	}
+
 	Vars.launch(botToken)
 	
 	Vars.client.launch {

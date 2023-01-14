@@ -502,7 +502,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 		action {
 			try {
 				val msg = originalMessage?.asMessage()
-				Vars.client.unsafe.messageChannel(Channels.reports).createMessage {
+				Vars.client.unsafe.messageChannel(Config.reports).createMessage {
 					content = """
 						${msg?.author?.tag} (channel ${msg?.channelId}, guild ${msg?.data?.guildId?.value}) reports:
 
@@ -517,7 +517,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 						result.forEach {
 							quoteMessage(
 								Vars.supplier.getMessage(it.groupValues[1].toSnowflake(), it.groupValues[2].toSnowflake()),
-								Channels.reports,
+								Config.reports,
 								"linked message by"
 							)
 							embeds.lastOrNull()?.url = "https://" + it.value
