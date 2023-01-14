@@ -31,7 +31,6 @@ class Multiverse(
 	val users: ArrayList<MultiversalUser> = ArrayList(90),
 	val guilds: ArrayList<MultiversalGuild> = ArrayList(30),
 
-	var lastInfoMessage: Long = 0L,
 	var lastBackup: Long = 0L,
 
 	private val serviceData: MutableMap<String, MutableMap<String, String>> = HashMap()
@@ -102,8 +101,8 @@ class Multiverse(
 
 		findChannelsJob = launch {
 			while (true) {
-				findChannels()
 				delay(1000L * 680) // finding channels is a costly operation
+				findChannels()
 			}
 		}
 		saveStateJob = launch {
@@ -149,6 +148,7 @@ class Multiverse(
 	suspend fun findChannels() {
 		try {
 			Vars.client.rest.user.getCurrentUserGuilds().forEach {
+				Log.lifecycle { "updating ${it.id}..." }
 				guildOf(it.id)?.update() //this will add an entry if it didn't exist
 			}
 		} catch (e: Exception) {
@@ -208,7 +208,9 @@ class Multiverse(
 	suspend fun userOf(id: Snowflake): MultiversalUser? = 
 		synchronized(users) { users.find { it.discordId == id } } ?: run {
 			MultiversalUser(id).also { it.update() }.let {
-				if (it.isValid) it.also { users.add(it) } else null
+				if (it.isValid) it.also {
+					synchronized(users) { users.add(it) }
+				} else null
 			}
 		}
 
@@ -216,13 +218,17 @@ class Multiverse(
 	suspend fun guildOf(id: Snowflake): MultiversalGuild? =
 		synchronized(guilds) { guilds.find { it.discordId == id } } ?: let {
 			MultiversalGuild(id).also { it.update() }.let { 
-				if (it.isValid) it.also { guilds.add(it) } else null
+				if (it.isValid) it.also {
+					synchronized(guilds) { guilds.add(it) }
+				} else null
 			}
 		}
 
 	/** Must only be invoked after all guilds have been updated at least once. */
 	fun getConnectedGuilds() =
-		guilds.filter { it.isWhitelisted && it.isValid && !it.isForceBanned }
+		synchronized(guilds) {
+			guilds.filter { it.isWhitelisted && it.isValid && !it.isForceBanned }
+		}
 
 	fun addService(service: MultiversalService) {
 		service.multiverse = this
@@ -270,7 +276,7 @@ class Multiverse(
 
 		// if there are retranslation candidates, retranslate them and return.
 		if (definition != null) {
-			val queue = with(definition!!) {
+			val queue = with(definition) {
 				highPriority.takeIf { it.isNotEmpty() }
 				?: mediumPriority.takeIf { it.isNotEmpty() }
 				?: lowPriority

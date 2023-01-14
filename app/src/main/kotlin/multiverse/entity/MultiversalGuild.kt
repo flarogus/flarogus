@@ -109,14 +109,18 @@ open class MultiversalGuild(
 
 	override suspend fun updateImpl() {
 		if (guild == null || lastUpdate + updateInterval < System.currentTimeMillis()) {
+			Log.lifecycle { "fetching guild" }
 			val newguild = Vars.restSupplier.getGuildOrNull(discordId)
 
 			if (newguild != null) guild = newguild
 
 			// no need to search for channels if it is not whitelisted
 			if (isWhitelisted) {
+				Log.lifecycle { "exists and whitelisted, searching for webhooks" }
 				guild?.channels?.collect {
 					if (it !is TextChannel || !isValidChannel(it)) return@collect
+
+					Log.lifecycle { "found ${it.id}" }
 
 					channels.add(it)
 					
@@ -155,10 +159,10 @@ open class MultiversalGuild(
 
 		/** Checks if this channel is a valid multiversal channel */
 		suspend fun isValidChannel(channel: TopGuildMessageChannel): Boolean {
+			if (!channel.name.contains(Config.multiverseChannelName, true)) return false
+			
 			val perms = channel.getEffectivePermissions(Vars.botId)
-
-			return channel.name.contains(Config.multiverseChannelName, true)
-				&& Permission.ViewChannel in perms
+			return Permission.ViewChannel in perms
 				&& Permission.SendMessages in perms
 				&& Permission.ManageWebhooks in perms
 		}
