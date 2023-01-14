@@ -109,7 +109,7 @@ open class MultiversalGuild(
 
 	override suspend fun updateImpl() {
 		if (guild == null || lastUpdate + updateInterval < System.currentTimeMillis()) {
-			Log.lifecycle { "fetching guild" }
+			Log.lifecycle { "fetching guild $discordId..." }
 			val newguild = Vars.restSupplier.getGuildOrNull(discordId)
 
 			if (newguild != null) guild = newguild

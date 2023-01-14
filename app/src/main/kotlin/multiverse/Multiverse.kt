@@ -148,7 +148,6 @@ class Multiverse(
 	suspend fun findChannels() {
 		try {
 			Vars.client.rest.user.getCurrentUserGuilds().forEach {
-				Log.lifecycle { "updating ${it.id}..." }
 				guildOf(it.id)?.update() //this will add an entry if it didn't exist
 			}
 		} catch (e: Exception) {
