@@ -86,7 +86,7 @@ class Multiverse(
 				deletionQueue += EventDefinition(event, getConnectedGuilds().toMutableList())
 			}
 			.launchIn(this)
-			.let { val deletionInterceptorJob = it }
+			.let { deletionInterceptorJob = it }
 		
 		Vars.client.events
 			.filterIsInstance<MessageUpdateEvent>()
@@ -95,13 +95,10 @@ class Multiverse(
 			.filter { event -> isMultiversalChannel(event.message.channel.id) }
 			.filter { event -> event.old?.content != null || event.new.content !is Optional.Missing } // discord sends fake update events sometimes
 			.onEach { event ->
-				EventDefinition(event, getConnectedGuilds().toMutableList()).let {
-					it.isValidated = false
-					modificationQueue += it
-				}
+				modificationQueue += EventDefinition(event, getConnectedGuilds().toMutableList())
 			}
 			.launchIn(this)
-			.also { val modificationInterceptorJob = it }
+			.also { modificationInterceptorJob = it }
 
 		findChannelsJob = launch {
 			while (true) {
@@ -341,7 +338,8 @@ class Multiverse(
 						modificationQueue.remove(modification)
 						return@let
 					}
-					val oldContent = (multimessage.origin ?: multimessage.retranslated.firstOrNull())?.asMessage()?.content
+					// origin is already modified
+					val oldContent = multimessage.retranslated.firstOrNull()?.asMessage()?.content
 					// only the content can be modified. if it's intact, this is a false modification.
 					if (newContent == oldContent) {
 						modificationQueue.remove(modification)
@@ -437,7 +435,7 @@ class Multiverse(
 	}
 
 	data class EventDefinition<T>(val event: T, val candidates: MutableList<MultiversalGuild>) {
-		var isValidated = true
+		var isValidated = false
 		/** Internal usage only. */
 		lateinit var multimessage: Multimessage
 		val isInitialized get() = isValidated && ::multimessage.isInitialized

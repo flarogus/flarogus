@@ -47,16 +47,18 @@ tasks.jar {
 val collectDefaultImports by tasks.registering {
 	dependsOn("jar")
 
-	inputs.files(configurations.runtimeClasspath.get().files)
-	outputs.dir("src/main/resources/")
+	outputs.file("$projectDir/src/main/resources/import-classpath.txt")
+
+	val suppressedImports = arrayOf(
+		"META-INF", "com.sun", "gnu", "javaslang",
+		"org.jetbrains.kotlin" // compiler backend
+	)
 
 	doLast {
-		println(File("src/main/resources/classpath.txt").exists())
-		val zip = zipTree("$buildDir/libs/app.jar")
-		val packages = zip
+		zipTree("$buildDir/libs/app.jar")
 			.getFiles()
 			.asSequence()
-			.filter { !it.isDirectory && it.name.endsWith(".class") && "$" !in it.name }
+			.filter { !it.isDirectory && it.name.endsWith(".class") }
 			.map {
 				it.absolutePath.removeSuffix(".class")
 					.substringAfter("$buildDir/tmp/expandedArchives/")
@@ -65,18 +67,12 @@ val collectDefaultImports by tasks.registering {
 					.substringBeforeLast('.') // turining class path into package path
 					.let { it + ".*" }
 			}
+			.filter { "internal" !in it && "$" !in it }
+			.filter { import -> 
+				suppressedImports.none { import.startsWith(it) }
+			}
 			.distinct()
 			.joinToString("\n")
-
-		File("src/main/resources/").let {
-			it.mkdirs()
-			it.resolve("import-classpath.txt").writeText(packages)
-		}
+			.let(outputs.files.first()::writeText)
 	}
 }
-
-tasks.register("deploy") {
-	dependsOn("jar")
-	dependsOn(collectDefaultImports)
-}
-

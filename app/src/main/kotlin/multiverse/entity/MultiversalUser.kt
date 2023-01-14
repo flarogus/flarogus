@@ -107,7 +107,6 @@ open class MultiversalUser(
 				}
 
 				// retranslating the message
-				val timeBegin = System.currentTimeMillis()
 				val message = send(
 					guild = guild,
 					filter = { it.id != event.message.channelId }
