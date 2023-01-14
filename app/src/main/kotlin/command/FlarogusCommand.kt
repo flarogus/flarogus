@@ -1,6 +1,7 @@
 package flarogus.command
 
 import dev.kord.core.entity.Message
+import flarogus.Vars
 import flarogus.command.parser.CommandArgumentParser
 import flarogus.multiverse.Multiverse
 import flarogus.multiverse.Log
@@ -136,7 +137,7 @@ open class FlarogusCommand<R>(name: String) {
 			if (!callback.replyResult) throw t
 
 			Log.debug { "Exception when executing '${callback.message}': $t" }
-			Log.lifecycle { t.stackTraceToString() }
+			// Log.lifecycle { t.stackTraceToString() }
 			replyWithError(callback, t)
 		}
 	}
@@ -159,7 +160,7 @@ open class FlarogusCommand<R>(name: String) {
 		// check if the user is blacklisted from this command. not using userOf as it can create a new unneccesary entry
 		(callback.originalMessage as Message?)?.author?.id?.let { id ->
 			val name = getFullName()
-			if (Multiverse.users.find { it.discordId == id }?.commandBlacklist?.contains(name) == true) {
+			if (Vars.multiverse.users.find { it.discordId == id }?.commandBlacklist?.contains(name) == true) {
 				errors += "you're personally blacklisted from this command"
 			}
 		}

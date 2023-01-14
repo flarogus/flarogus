@@ -1,22 +1,24 @@
-package flarogus.multiverse.services
+package flarogus.multiverse.service
 
+import dev.kord.core.event.message.MessageCreateEvent
 import com.github.mnemotechnician.markov.*
 import flarogus.multiverse.Multiverse.MultiversalService
 
 
 class MarkovChainService : MultiversalService() {
-	lateinit val chain: MarkovChain
+	override val name = "markov"
+	lateinit var chain: MarkovChain
 	val dataKey = "chain-serialized"
 
-	override fun onStart() {
+	override suspend fun onStart() {
 		val serializedMarkov = loadData(dataKey) ?: run {
-			markov = MarkovChain()
+			chain = MarkovChain()
 			return
 		}
-		markov = MarkovChain.deserializeFromString(serializedMarkov)
+		chain = MarkovChain.deserializeFromString(serializedMarkov)
 	}
 
-	override fun fun onMessage(event: MessageCreateEvent, retranslated: Boolean) {
+	override suspend fun onMessageReceived(event: MessageCreateEvent, retranslated: Boolean) {
 		if (!retranslated) return
 		chain.train(event.message.content)
 

@@ -18,32 +18,8 @@ object Log {
 			if (level.level > LogLevel.ERROR.level) throw IllegalArgumentException("illegal log level")
 			field = level 
 		}
-	// val logChannel by lazy { Vars.client.unsafe.messageChannel(Channels.log) }
-
-	// val buffer = ArrayList<String>()
-	// lateinit var logTimer: Timer
-
-	fun setup() {
-		// logTimer = fixedRateTimer(daemon = true, period = 2000L) {
-		// 	while (!buffer.isEmpty()) synchronized(buffer) {
-		// 		val message = buildString {
-		// 			while (!buffer.isEmpty() && length + buffer.first().length < 2000) {
-		// 				val entry = buffer.removeFirst()
-		// 				appendLine(entry.take(2000))
-		// 			}
-		// 		}
-		// 	
-		// 		runBlocking {
-		// 			logChannel.createMessage {
-		// 				content = message
-		// 				allowedMentions()
-		// 			}
-		// 		}
-		// 	}
-		// }
-	}
 	
-	inline fun sendLog(logLevel: LogLevel, crossinline message: () -> String) {
+	inline fun log(logLevel: LogLevel, crossinline message: () -> String) {
 		if (logLevel.level < level.level) return
 		
 		val prefix = if (logLevel == LogLevel.ERROR) "! ERROR !" else logLevel.toString()
@@ -54,15 +30,25 @@ object Log {
 		// }
 	}
 	
-	inline fun lifecycle(crossinline message: () -> String) = sendLog(LogLevel.LIFECYCLE, message);
+	inline fun lifecycle(crossinline message: () -> String) = log(LogLevel.LIFECYCLE, message)
 	
-	inline fun debug(crossinline message: () -> String) = sendLog(LogLevel.DEBUG, message);
+	inline fun debug(crossinline message: () -> String) = log(LogLevel.DEBUG, message)
 	
-	inline fun info(crossinline message: () -> String) = sendLog(LogLevel.INFO, message);
+	inline fun info(crossinline message: () -> String) = log(LogLevel.INFO, message)
 	
-	inline fun error(crossinline message: () -> String) = sendLog(LogLevel.ERROR, message);
+	inline fun error(crossinline message: () -> String) = log(LogLevel.ERROR, message)
 
-	inline fun force(crossinline message: () -> String) = sendLog(LogLevel.FORCE, message)
+	inline fun error(throwable: Throwable, crossinline message: () -> String) {
+		log(LogLevel.ERROR) { "${message()}: $throwable"  }
+		printStackTrace(throwable)
+	}
+
+	inline fun force(crossinline message: () -> String) = log(LogLevel.FORCE, message)
+
+	fun printStackTrace(throwable: Throwable) {
+		// todo: print the stacktrace to a file
+		throwable.printStackTrace()
+	}
 	
 	enum class LogLevel(val level: Int) {
 		LIFECYCLE(0), DEBUG(1), INFO(2), ERROR(3), FORCE(4);

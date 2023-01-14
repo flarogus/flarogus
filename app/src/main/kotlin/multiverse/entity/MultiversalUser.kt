@@ -1,11 +1,12 @@
 package flarogus.multiverse.entity
 
-import dev.kord.common.entity.Snowflake
+import dev.kord.common.entity.*
 import dev.kord.core.Kord
 import dev.kord.core.entity.User
 import dev.kord.core.entity.Message
 import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.event.message.MessageCreateEvent
+import dev.kord.rest.Image
 import dev.kord.rest.builder.message.create.*
 import flarogus.Vars
 import flarogus.multiverse.*
@@ -84,7 +85,7 @@ open class MultiversalUser(
 				return false
 			}
 
-			val guild = event.guildId?.let { Multiverse.guildOf(it) }
+			val guild = event.guildId?.let { Vars.multiverse.guildOf(it) }
 
 			if (guild == null) {
 				Log.info { "A user with a non-existent guild has attempted to send a message in the multiverse: `${event.message.content}`" }
@@ -95,7 +96,7 @@ open class MultiversalUser(
 				""".trimIndent())
 			} else {
 				// notifying the global message filters
-				Multiverse.messageFilters.find { !it.filter(this, event.message) }?.let {
+				Vars.multiverse.messageFilters.find { !it.filter(this, event.message) }?.let {
 					if (it.reason != null) {
 						event.message.replyWith("This message was not retranslated. The reason was: ${it.reason}")
 					}
@@ -111,21 +112,13 @@ open class MultiversalUser(
 					guild = guild,
 					filter = { it.id != event.message.channelId }
 				) { channelId ->
-					content = buildString {
-						append(event.message.content.stripEveryone())
-						event.message.attachments.forEach { attachment ->
-							if (!attachment.isImage && attachment.size >= Multiverse.maxFileSize) {
-								append('\n').append(attachment.url)
-							}
-						}
-					}
-
+					content = event.message.toRetranslatableContent()
 					quoteMessage(event.message.referencedMessage, channelId)
 					
 					event.message.attachments.forEach { attachment ->
 						if (attachment.isImage) {
 							embed { image = attachment.url }
-						} else if (attachment.size < Multiverse.maxFileSize) {
+						} else if (attachment.size < maxFileSize) {
 							addFile(attachment.filename, URL(attachment.url).openStream())
 						}
 					}
@@ -134,9 +127,6 @@ open class MultiversalUser(
 				}
 
 				message.origin = event.message
-
-				val totalTime = (System.currentTimeMillis() - timeBegin) / 1000f
-				Log.debug { "Message sent by $name was retranslated in $totalTime sec." }
 
 				return true
 			}
@@ -167,7 +157,7 @@ open class MultiversalUser(
 		warns.add(WarnEntry(rule, System.currentTimeMillis()))
 
 		if (informMultiverse) {
-			Multiverse.broadcastSystemAsync {
+			Vars.multiverse.broadcastSystemAsync {
 				content = "User $name was warned for rule ${rule.category}.${rule.index + 1}: «$rule»"
 			}
 		}
@@ -200,6 +190,11 @@ open class MultiversalUser(
 		val messageRateLimit = 3500L
 
 		val linkRegex = """https?://([a-zA-Z0-9_\-]+?\.?)+/[a-zA-Z0-9_\-%\./]+""".toRegex()
+		/**
+		 * Files with size exceeding this limit will be sent in the form of links.
+		 * Since i'm now hosting it on a device with horrible connection speed, it's set to 0. 
+		 */
+		const val maxFileSize = 1024 * 1024 * 0
 	}
 
 	/** Represents the fact that a user has violated a rule */
@@ -227,3 +222,23 @@ open class MultiversalUser(
 		val filter: MultiversalUser.(Message) -> Boolean
 	)
 }
+
+/** Merges the content of this message with links to its attachments. */
+fun Message.toRetranslatableContent() = buildString {
+	append(content.stripEveryone())
+	attachments.forEach { attachment ->
+		if (!attachment.isImage && attachment.size >= MultiversalUser.maxFileSize) {
+			append('\n').append("[file: ${attachment.filename}](${attachment.url})")
+		}
+	}
+}
+/** Merges the content of this message with links to its attachments. */
+fun DiscordPartialMessage.toRetranslatableContent() = buildString {
+	append(content.value?.stripEveryone().orEmpty())
+	attachments.value?.forEach { attachment ->
+		if (!Image.Format.isSupported(attachment.filename) && attachment.size >= MultiversalUser.maxFileSize) {
+			append('\n').append("[file: ${attachment.filename}](${attachment.url})")
+		}
+	}
+}
+

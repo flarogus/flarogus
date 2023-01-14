@@ -3,7 +3,7 @@ package flarogus.command.impl
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.channel.createMessage
 import dev.kord.core.behavior.edit
-import dev.kord.core.entity.User
+import dev.kord.core.entity.*
 import dev.kord.rest.builder.message.create.embed
 import flarogus.Vars
 import flarogus.command.TreeCommand
@@ -11,9 +11,10 @@ import flarogus.command.builder.createTree
 import flarogus.multiverse.*
 import flarogus.multiverse.entity.*
 import flarogus.util.*
-import kotlinx.coroutines.*
+import kotlin.random.*
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.host.toScriptSource
+import kotlinx.coroutines.*
 import java.awt.image.BufferedImage
 import java.net.URL
 import javax.imageio.ImageIO
@@ -36,7 +37,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 			arguments {
 				default<MultiversalUser>("user", "The user whose warnings you want to see. Defaults to you.") {
 					originalMessage?.asMessage()?.author?.id?.let {
-						Multiverse.userOf(it)
+						Vars.multiverse.userOf(it)
 					} ?: error("anonymous caller must specify the target user")
 				}
 
@@ -52,7 +53,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 							val expires = warn.expires.formatUTC()
 
 							field {
-								value = "$index — expires at $expires. «${warn.rule}»"
+								value = "${index + 1} — expires at $expires. «${warn.rule}»"
 							}
 						}
 					} }
@@ -68,7 +69,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 			}
 
 			action {
-				val users = Multiverse.users.sortedBy { -it.lastSent }.take(args.arg<Int>("max"))
+				val users = Vars.multiverse.users.sortedByDescending { it.lastSent }.take(args.arg<Int>("max"))
 				result(users, false)
 				reply(users.map { "${it.name} — ${it.discordId}" }.joinToString("\n"))
 			}
@@ -100,7 +101,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 				val msg = originalMessage!!.asMessage()
 				val reply = msg.referencedMessage
 					?: fail("you must reply to a multiversal message")
-				val multimessage = Multiverse.history.find { reply.id in it }
+				val multimessage = Vars.multiverse.history.find { reply.id in it }
 					?: fail("This message wasn't found in the history. Perhaps, it was sent too long time ago or is not a multiversal message?")
 				
 				if (!msg.author.isModerator() && multimessage.origin?.asMessage()?.data?.author?.id != msg.data.author.id) {
@@ -125,7 +126,9 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 				}
 				
 				Log.info { "${msg.author?.tag} deleted a multiversal message with id ${multimessage.origin?.id}" }
-				Multiverse.history.remove(multimessage)
+				synchronized(Vars.multiverse.history) {
+					Vars.multiverse.history.remove(multimessage)
+				}
 
 				if (args.flag("origin")) {
 					try {
@@ -153,7 +156,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 			action {
 				val reply = originalMessage!!.asMessage().referencedMessage
 					?: fail("You must reply to a multiversal message")
-				val msg = Multiverse.history.find { reply in it }
+				val msg = Vars.multiverse.history.find { reply in it }
 					?: fail("this message wasn't found in the history. perhaps, it was sent too long time ago?")
 
 				val originMsg = msg.origin?.asMessage() ?: fail("This message doesn't have an origin.")
@@ -181,7 +184,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 
 			arguments {
 				default<Snowflake>("user", "The user you want to flaroficate. Defaults to you if -i is not present.") {
-					originalMessage?.asMessage()?.author?.id ?: Snowflake.NONE
+					originalMessageOrNull()?.author?.id ?: Snowflake.NONE
 				}
 				flag("image").alias('i')
 			}
@@ -192,7 +195,8 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 						it.isImage && it.width!! < 2000 && it.height!! < 2000
 					}?.url ?: fail("no valid image attached")
 				} else {
-					Vars.supplier.getUserOrNull(args.arg<Snowflake>("user"))?.getAvatarUrl() ?: fail("cannot determine user id")
+					Vars.supplier.getUserOrNull(args.arg<Snowflake>("user"))?.getAvatarUrl() 
+						?: fail("cannot determine user id")
 				}
 	
 				val origin = withContext(Dispatchers.IO) {
@@ -270,16 +274,30 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 				"what did you expect", "sorry, your daily reward has been taken by someone else.", "this was a triumph...", "you were killed by the impostor",
 				"you get nothing", "you are sus", "nothing, try again tomorrow","you have mere seconds.", "you ruined the task!",
 				"your parents don't love you", "you are so fat, if you were an impostor, you would get stuck in the vent",
-				"you will never finish your tasks","34 FlarCoin", "two tasks have been added to your list, crewmate!"
+				"you will never finish your tasks", "34 FlarCoin", "two tasks have been added to your list, crewmate!"
+			)
+			val specialDailies = arrayOf<Pair<String, (suspend (MultiversalUser) -> Unit)>> (
+				"you are now amogus." to {
+					it.update()
+					it.nameOverride = "amogus the ${it.usertag}"
+				},
+				"you can claim one more reward!" to { it.lastReward = 0L },
+				"you are so unlucky you got the only special reward that literally does nothihg! congratulations!!!" to {}
 			)
 			
 			action {
-				val user = originalMessage?.asMessage()?.author?.id?.let { Multiverse.userOf(it) }
+				val user = originalMessage?.asMessage()?.author?.id?.let { Vars.multiverse.userOf(it) }
 				require(user != null) { "couldn't find nor acquire a user entry for your account!" }
 
 				if (System.currentTimeMillis() > user.lastReward + 1000L * 60 * 60 * 24) {
 					user.lastReward = System.currentTimeMillis()
-					reply("daily reward: " + dailies.random())
+					if (Random.nextInt(0, 21) > 5) {
+						reply("daily reward: ${dailies.random()}")
+					} else {
+						val specialReward = specialDailies.random()
+						specialReward.second(user)
+						reply("special reward: ${specialReward.first}")
+					}
 				} else {
 					val wait = ((user.lastReward + 1000L * 60 * 60 * 24) - System.currentTimeMillis())
 					reply("you have already claimed your daily reward! wait ${formatTime(wait)}!")
@@ -450,17 +468,17 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 
 		action {
 			if (args.arg<String>("ubid") == Vars.ubid) {
-				Multiverse.shutdown()
+				Vars.multiverse.stop()
 
 				args.ifPresent("purgeCount") { purgeCount: Int ->
-					Multiverse.history.takeLast(min(20, purgeCount)).forEach {
+					Vars.multiverse.history.takeLast(min(20, purgeCount)).forEach {
 						it.retranslated.forEach { it.delete() }
 					}
 				}
 
 				result(true)
 				
-				Multiverse.broadcastSystem {
+				Vars.multiverse.broadcastSystem {
 					content = "A multiverse instance is shutting down... (This is not neccesarily a problem)"
 				}
 
@@ -569,29 +587,29 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 				.valueOrThrow()
 				.returnValue
 
-			var reply: Message? = null
+			var reply: Deferred<Message>? = null
 			when (returnValue) {
-				is ReturnValue.Value -> {
-					val value = when (it.value) {
-						is Deferred<*> -> it.value.await()
-						is Job -> it.value.join()
-						else -> it.value
+				is ResultValue.Value -> {
+					val value = when (val value = returnValue.value) {
+						is Deferred<*> -> value.await()
+						is Job -> value.join()
+						else -> value
 					}
 					result(result, false)
 					val string = "${returnValue.type}: $value"
 					reply = reply("```\n${string.take(1990).replace("```", "`'`")}\n```")
 				}
-				is ReturnValue.Error -> {
+				is ResultValue.Error -> {
 					val string = if (args.flag("trace")) {
 						returnValue.error.stackTraceToString()
 					} else {
 						returnValue.error.toString()
 					}
 
-					reply = reply("```\n${string.take(1950).replace("```", "`'`")}\n```")
+					reply = reply("```\n${string.take(1990).replace("```", "`'`")}\n```")
 					toDelete = true
 				}
-				is ReturnValue.Unit, ReturnValue.NotEvaluated -> {}
+				is ResultValue.Unit, ResultValue.NotEvaluated -> {}
 			}
 
 			// schedule the removal

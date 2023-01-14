@@ -15,7 +15,10 @@ import dev.kord.core.supplier.*
 import flarogus.util.*
 import flarogus.command.CommandHandler
 import flarogus.command.impl.*
-import java.util.Vector
+import flarogus.multiverse.*
+import flarogus.multiverse.npc.impl.*
+import flarogus.multiverse.service.*
+import flarogus.multiverse.state.StateManager
 
 /** An object declaration that stores variables/constants that are shared across the whole application */
 object Vars {	
@@ -24,19 +27,29 @@ object Vars {
 	val supplier get() = client.defaultSupplier
 	val restSupplier by lazy { RestEntitySupplier(client) }
 
+	val npcs = mutableListOf(AmogusNPC())
+	val femboySubreddits = mutableListOf("femboymemes")
+	
+	/** The Multiverse. */
+	lateinit var multiverse: Multiverse
+	val infoMessageService = InfoMessageService()
+	val npcService = NPCService(npcs)
+	val markovService = MarkovChainService()
+	val femboyRepostService = RedditRepostService(1000L * 60 * 60 * 8, femboySubreddits)
+
 	/** If true, the multiverse works in the test mode. Must be set before compiling. */
 	val testMode = false
 	/** Whether to enable experimental stuff. May or may not be meaningless at the current moment, */
 	var experimental = false
 
-	val rootCommand get() = createRootCommand()
+	val rootCommand = createRootCommand()
 	val commandHandler by lazy { CommandHandler(client, rootCommand) }
 	
-	/** The unique bot id used for shutdown command */
+	/** The unique bot id used for shutdown command. */
 	lateinit var ubid: String
-	/** The moment the bot has started */
+	/** The moment this bot instance has started. */
 	var startedAt = -1L
-	/** The start of flarogus epoch, aka the last hard reset */
+	/** The start of flarogus epoch, aka the last hard reset. */
 	var flarogusEpoch = -1L
 	
 	/** Flarogus#0233 — discord */
@@ -46,8 +59,6 @@ object Vars {
 	/** Flarogus-central */
 	val flarogusGuild = Snowflake(932524169034358877UL)
 
-	val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
-	
 	/** Superusers that are allowed to do most things */
 	val superusers = mutableSetOf(
 		ownerId,
@@ -61,7 +72,6 @@ object Vars {
 	val scriptEvaluator by lazy { kotlin.script.experimental.jvm.BasicJvmScriptEvaluator() }
 	val scriptCompileConfig by lazy {
 		ScriptCompilationConfiguration {
-			defaultImports(Vars.defaultImports) // "Vars." is needed because this is defaultImports.invoke(...)
 			providedProperties("message" to Message::class.createType(nullable = true))
 			jvm { dependenciesFromCurrentContext(wholeClasspath = true) }
 		}
@@ -77,9 +87,11 @@ object Vars {
 			?.lines()
 			.orEmpty()
 	}
+
+	val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
 	
 	/**
-	 * Initialises the kord client and sets up some variables.
+	 * Initialises and sets up everything.
 	 */
 	suspend fun launch(token: String) {
 		if (::client.isInitialized) error("the bot has alreary been initialised")
@@ -88,9 +100,31 @@ object Vars {
 			//requestHandler { KtorRequestHandler(it.httpClient, ParallelRequestRateLimiter(), token = botToken) }
 		}
 
-		ubid = Random.nextInt(0, 1000000000).toString(10 + 26)
-		startedAt = System.currentTimeMillis()
-		flarogusEpoch = startedAt
+		// if possible. load the previous multiverse. Otherwise, create a new one.
+		runCatching { StateManager.loadState() }.getOrNull()?.let {
+			it.loadFromState() // it will load the multiverse as well
+		} ?: run {
+			ubid = Random.nextInt(0, 1000000000).toString(10 + 26)
+			startedAt = System.currentTimeMillis()
+			flarogusEpoch = startedAt
+			multiverse = Multiverse()
+		}
+		arrayOf(infoMessageService, npcService, markovService, femboyRepostService)
+			.forEach(multiverse::addService)
+		
+		// try to boot the multiverse up
+		var errors = 0
+		while (!multiverse.isRunning && Vars.client.isActive) {
+			try {
+				multiverse.start()
+			} catch (e: Exception) {
+				errors++
+				Log.error(e) { "Couldn't start the multiverse ($errors)" }
+				Log.printStackTrace(e)
+				delay(3000L)
+			}
+		}
+		Log.info { "Flarogus instance $ubid has started with $errors errors." }
 
 		commandHandler.launch()
 	}

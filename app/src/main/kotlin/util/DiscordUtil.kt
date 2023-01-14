@@ -144,7 +144,7 @@ suspend fun MessageCreateBuilder.quoteMessage(message: Message?, toChannel: Snow
 		val authorName = nameRegex.find(author.username)?.groupValues?.getOrNull(2) ?: "${author.username}#${author.discriminator}"
 
 		// if the author is banned from the multiverse, don't quote the message
-		if (Multiverse.users.find { it.discordId == author.id }?.isForceBanned == true) {
+		if (Vars.multiverse.users.find { it.discordId == author.id }?.isForceBanned == true) {
 			embed {
 				title = "$titleText $authorName"
 				description = "<blocked message>"
@@ -153,7 +153,7 @@ suspend fun MessageCreateBuilder.quoteMessage(message: Message?, toChannel: Snow
 		}
 
 		// message in the same channel the new message is being sent to
-		val multimessage = Multiverse.history.find { message in it }
+		val multimessage = Vars.multiverse.history.find { message in it }
 		// first, check if the message is in the same channel as the current one. If it is not, try to find it in the multiverse.
 		val closest = let {
 			if (toChannel == message.channelId) {

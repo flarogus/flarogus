@@ -38,7 +38,7 @@ fun TreeCommandBuilder.addUserinfoSubcommand() = subcommand<BufferedImage?>("use
 	action {
 		val user = args.arg<User>("user")
 		// we are searching manually because we don't want non-multiversal users there
-		val multiversalUser = Multiverse.users.find { it.discordId == user.id }?.also { it.update() }
+		val multiversalUser = Vars.multiverse.users.find { it.discordId == user.id }?.also { it.update() }
 		
 		val userpfp = withContext(Dispatchers.IO) {
 			ImageIO.read(URL(user.getAvatarUrl()))

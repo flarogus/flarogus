@@ -101,10 +101,10 @@ open class MultiversalGuild(
 
 		lastSent = System.currentTimeMillis()
 
-		return Multiverse.broadcastAsync("${user.name} — $name", user.avatar, filter) {
+		return Vars.multiverse.broadcast("${user.name} — $name", user.avatar, filter) {
 			builder(it)
 			content = content?.stripEveryone()?.revealHypertext()
-		}.awaitOrThrow()
+		}
 	}
 
 	override suspend fun updateImpl() {

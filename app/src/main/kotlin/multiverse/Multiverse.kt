@@ -1,9 +1,19 @@
 package flarogus.multiverse
 
+import dev.kord.common.entity.*
+import dev.kord.common.entity.optional.Optional
+import dev.kord.core.entity.*
+import dev.kord.core.entity.channel.*
+import dev.kord.core.event.message.*
+import dev.kord.rest.builder.message.create.*
+import flarogus.Vars
 import flarogus.multiverse.entity.*
-import flarogus.multiverse.state.Multimessage
+import flarogus.multiverse.state.*
+import flarogus.util.*
+import kotlin.math.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlin.reflect.KClass
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -21,43 +31,94 @@ class Multiverse(
 	val users: ArrayList<MultiversalUser> = ArrayList(90),
 	val guilds: ArrayList<MultiversalGuild> = ArrayList(30),
 
-	/** A little bit of tomfoolery. */
-	val markov: MarkovChain = MarkovChain(),
 	var lastInfoMessage: Long = 0L,
+	var lastBackup: Long = 0L,
 
-	private val serviceData = mutableMapOf<MultiversalService, MutableMap<String, String>>()
-) : CoroutineScope(rootJob) {
+	private val serviceData: MutableMap<String, MutableMap<String, String>> = HashMap()
+) : CoroutineScope {
 	/** If false, new messages will be ignored */
 	@Transient
 	var isRunning = false
 	/** All registered services. */
+	@Transient
 	val services = ArrayList<MultiversalService>()
 	/** All registered message filters. They're used by [MultiversalUser] to check whether a message cwn be sent. */
+	@Transient
 	val messageFilters = ArrayList<MultiversalUser.MessageFilter>()
 
+	@Transient
 	val rootJob = SupervisorJob()
+	@Transient
+	override val coroutineContext = rootJob + Dispatchers.Default
+	@Transient
+	private var modificationInterceptorJob: Job? = null
+	@Transient
+	private var deletionInterceptorJob: Job? = null
+	@Transient
 	private var findChannelsJob: Job? = null
-	private var updateStateJob: Job? = null
+	@Transient
+	private var saveStateJob: Job? = null
+	@Transient
 	private var tickJob: Job? = null
 	
-	private val retranslationQueue = LinkedList<MessageCreateEvent>()
-	private val modificationQueue = LinkedList<EventDefinition<MessageUpdateEvent>>()
-	private val deletionQueue = LinkedList<EventDefinition<MessageDeleteEvent>>()
+	@Transient
+	private val retranslationQueue = ArrayList<MultimessageDefinition>()
+	@Transient
+	private val modificationQueue = ArrayList<EventDefinition<MessageUpdateEvent>>()
+	@Transient
+	private val deletionQueue = ArrayList<EventDefinition<MessageDeleteEvent>>()
+
+	@Transient
+	val supportedMessageTypes = arrayOf(MessageType.Default, MessageType.Reply)
 
 	suspend fun start() {
-		StateManager.updateState()
-		services.forEach(MultiversalService::onStart)
+		services.forEach { it.onStart() }
+
+		findChannels()
+
+		 Vars.client.events
+			.filterIsInstance<MessageDeleteEvent>()
+			.filter { isRunning }
+			.filter { event -> !isRetranslatedMessage(event.messageId) }
+			.filter { event -> isMultiversalChannel(event.channelId) }
+			.filter { event -> event.guildId != null && guildOf(event.guildId!!).let { it != null && !it.isForceBanned } }
+			.onEach { event ->
+				deletionQueue += EventDefinition(event, getConnectedGuilds().toMutableList())
+			}
+			.launchIn(this)
+			.let { val deletionInterceptorJob = it }
+		
+		Vars.client.events
+			.filterIsInstance<MessageUpdateEvent>()
+			.filter { isRunning }
+			.filter { event -> !isRetranslatedMessage(event.messageId) }
+			.filter { event -> isMultiversalChannel(event.message.channel.id) }
+			.filter { event -> event.old?.content != null || event.new.content !is Optional.Missing } // discord sends fake update events sometimes
+			.onEach { event ->
+				EventDefinition(event, getConnectedGuilds().toMutableList()).let {
+					it.isValidated = false
+					modificationQueue += it
+				}
+			}
+			.launchIn(this)
+			.also { val modificationInterceptorJob = it }
 
 		findChannelsJob = launch {
 			while (true) {
 				findChannels()
-				delay(1000L * 180) // finding channels is a costly operation
+				delay(1000L * 680) // finding channels is a costly operation
 			}
 		}
-		updateStateJob = launch {
+		saveStateJob = launch {
 			while (true) {
-				StateManager.updateState()
-				delay(1000L * 45)
+				// 2 backups per day
+				val backup = System.currentTimeMillis() > lastBackup + 1000L * 60 * 60 * 12
+				if (backup) {
+					lastBackup = System.currentTimeMillis()
+				}
+				
+				StateManager.saveState(backup)
+				delay(1000L * 90)
 			}
 		}
 		tickJob = launch {
@@ -67,20 +128,41 @@ class Multiverse(
 			}
 		}
 
-		services.forEach(MultiversalService::onLoad)
+		isRunning = true
+		services.forEach { it.onLoad() }
 	}
 
 	suspend fun stop() {
-		services.forEach(MultiversalService::onStop)
+		isRunning = false
+		services.forEach { it.onStop() }
+
+		modificationInterceptorJob?.cancel()
+		deletionInterceptorJob?.cancel()
 		findChannelsJob?.cancel()
-		updateStateJob?.cancel()
+		saveStateJob?.cancel()
 		tickJob?.cancel()
 	}
 
-	fun findChannels() {
+	/** Updates all guilds and finds all accessible multiversal channels. */
+	suspend fun findChannels() {
 		Vars.client.rest.user.getCurrentUserGuilds().forEach {
 			guildOf(it.id)?.update() //this will add an entry if it didn't exist
 		}
+	}
+
+	/** Called when the multiverse should process a received message, */
+	suspend fun onMessageReceived(event: MessageCreateEvent) {
+		if (!isRunning || isOwnMessage(event.message)) return
+		if (!guilds.any { it.channels.any { it.id == event.message.channel.id } }) return
+		if (event.message.type !in supportedMessageTypes) return
+		
+		val user = userOf(event.message.data.author.id)
+		val success = user?.onMultiversalMessage(event) ?: run {
+			event.message.replyWith("No user associated with your user id was found!")
+			return
+		}
+
+		services.forEach { it.onMessageReceived(event, success) }
 	}
 
 	/**
@@ -93,7 +175,6 @@ class Multiverse(
 		filter: (TextChannel) -> Boolean = { true },
 		messageBuilder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
 	) = MultimessageDefinition(user, avatar, filter, messageBuilder, Multimessage(null, ArrayList(guilds.size))).also { def ->
-		
 		retranslationQueue.add(def)
 		val candidates = guilds.filter { it.isWhitelisted && it.isValid && it.webhooks.isNotEmpty() }
 
@@ -118,22 +199,24 @@ class Multiverse(
 		broadcastAsync(systemName, systemAvatar, { true }, message)
 
 	/** Returns a MultiversalUser with the given id, or null if it does not exist */
-	suspend fun userOf(id: Snowflake): MultiversalUser? = synchronized(users) {
-		users.find { it.discordId == id } ?: run {
+	suspend fun userOf(id: Snowflake): MultiversalUser? = 
+		synchronized(users) { users.find { it.discordId == id } } ?: run {
 			MultiversalUser(id).also { it.update() }.let {
 				if (it.isValid) it.also { users.add(it) } else null
 			}
 		}
-	}
 
 	/** Returns a MultiversalGuild with the given id, or null if it does not exist */
-	suspend fun guildOf(id: Snowflake): MultiversalGuild? = synchronized(guilds) {
-		guilds.find { it.discordId == id } ?: let {
+	suspend fun guildOf(id: Snowflake): MultiversalGuild? =
+		synchronized(guilds) { guilds.find { it.discordId == id } } ?: let {
 			MultiversalGuild(id).also { it.update() }.let { 
 				if (it.isValid) it.also { guilds.add(it) } else null
 			}
 		}
-	}
+
+	/** Must only be invoked after all guilds have been updated at least once. */
+	fun getConnectedGuilds() =
+		guilds.filter { it.isWhitelisted && it.isValid && !it.isForceBanned }
 
 	fun addService(service: MultiversalService) {
 		service.multiverse = this
@@ -141,60 +224,74 @@ class Multiverse(
 	}
 
 	fun addFilter(filter: MultiversalUser.MessageFilter) {
-		filters += filter
+		messageFilters += filter
 	}
 
 	/** Peforms a single tick during which the most important action is determimed and executed. */
 	suspend fun tick() {
 		// firstly, if a message is to be deleted, it's retranslation/modification must be halted.
 		// this shouldn't cause much lags since message deletion is a rare action
-		deletionQueue.forEach {
-			val id = it.messageId
+		deletionQueue.forEach { del ->
+			val id = del.event.messageId
 
-			retranslationQueue.removeAll { it.event.message.id == id }
+			retranslationQueue.removeAll { it.multimessage.origin?.id == id }
 			modificationQueue.removeAll { it.event.messageId == id }
 		}
-		// we also need to remove all completed requests
-		retranslationQueue.removeAll { it.isEmpty() }
-		modificationQueue.removeAll { it.candidates.isEmpty() }
-		deletionQueue.removeAll { it.candidates.isEmpty() }
+		// we also need to remove and log all completed requests
+		retranslationQueue.removeAll {
+			if (it.isEmpty()) {
+				val totalTime = (System.currentTimeMillis() - it.creationTime) / 1000f
+				Log.debug { "Message sent by ${it.user} was retranslated in $totalTime sec." }
+			}
+			it.isEmpty()
+		}
+		modificationQueue.removeAll { def ->
+			def.candidates.isEmpty().also {
+				if (it) Log.debug { "Message ${def.event.messageId} was deleted by edited by its author." }
+			}
+		}
+		deletionQueue.removeAll { def ->
+			def.candidates.isEmpty().also {
+				if (it) Log.debug { "Message ${def.event.messageId} was deleted by deleting the original message." }
+			}
+		}
 
 		// then, try to find a message with the highest priority to retranslate
 		val definition =
-			retranslationQueue.find { it.highPriority.isNotEmpty() } ?:
-			retranslationQueue.find { it.mediumPriority.isNotEmpty() } ?:
-			retranslationQueue.find { it.lowPriority.isNotEmpty() }
+			retranslationQueue.find { it.highPriority.isNotEmpty() }
+			?: retranslationQueue.find { it.mediumPriority.isNotEmpty() }
+			?: retranslationQueue.find { it.lowPriority.isNotEmpty() }
 
 		// if there are retranslation candidates, retranslate them and return.
-		if (candidates != null) {
-			val queue = with(definition) {
-				highPriority.takeIf { it.isNotEmpty() } ?:
-					mediumPriority.takeIf { it.isNotEmpty() } ?:
-					lowPriority
+		if (definition != null) {
+			val queue = with(definition!!) {
+				highPriority.takeIf { it.isNotEmpty() }
+				?: mediumPriority.takeIf { it.isNotEmpty() }
+				?: lowPriority
 			}
 
 			coroutineScope {
-				for (guild in queue) launch {	
+				val messages = definition.multimessage.retranslated
+				
+				for (i in 0 until min(7, queue.size)) launch {
+					val guild = queue[i]
 					try {
-						val messages = definition.multimessage.retranslated
 						guild.send(
-							username = user,
-							avatar = avatar,
-							filter = filter,
+							username = definition.user,
+							avatar = definition.avatar,
+							filter = definition.filter,
 							handler = { m, w -> 
 								synchronized(messages) {
 									messages.add(WebhookMessageBehavior(w, m))
 								}
 							},
-							builder = messageBuilder
+							builder = definition.messageBuilder
 						)
 					} catch (e: Exception) {
-						Log.error { "An exception has occurred while retranslating a message to ${guild.name}: `$e`" }
+						Log.error(e) { "An exception has occurred while retranslating a message to ${guild.name}" }
 					}
 				}
 			}
-
-			def.complete(multimessage)
 
 			return
 		}
@@ -202,12 +299,57 @@ class Multiverse(
 		// edits and deletions can be performed in any order
 		// so we just perform them in each guild in order of recency
 		deletionQueue.maxByOrNull { it.getImportance() }?.let { deletion ->
-			val guild = deletion.candidates.maxBy { it.lastSent() }.also(deletion.candidates::remove)
-			// find the message corresponding to this guild
-			val multimessage = history.find { deletion.messageId in it }
-			val message = multimessage.retranslated.find { it.
+			try {
+				val guild = deletion.candidates.maxBy { it.lastSent }.also(deletion.candidates::remove)
+
+				if (!deletion.isInitialized) {
+					deletion.multimessage = history.find { deletion.event.messageId in it } ?: run {
+						Log.error { "Failed to modify ${deletion.event.messageId}: no corresponding multimessage" }
+						deletionQueue.remove(deletion)
+						return@let
+					}
+					deletion.isValidated = true
+				}
+				deletion.multimessage.retranslated.find { msg ->
+					guild.channels.any { it.id == msg.channelId }
+				}?.delete() ?: run {
+					deletion.multimessage.origin?.delete()
+				}
+			} catch (e: Exception) {
+				Log.error(e) { "Failed to delete ${deletion.event.messageId}" }
+			}
 		}
-		val modification = modificationQueue.maxByOrNull { it.getImportance() }
+		modificationQueue.maxByOrNull { it.getImportance() }?.let { modification ->
+			try {
+				val newContent = modification.event.new.toRetranslatableContent()
+
+				if (modification.isInitialized) {
+					val multimessage = history.find { modification.event.messageId in it } ?: run {
+						Log.error { "Failed to modify ${modification.event.messageId}: no corresponding multimessage" }
+						modificationQueue.remove(modification)
+						return@let
+					}
+					val oldContent = (multimessage.origin ?: multimessage.retranslated.firstOrNull())?.asMessage()?.content
+					// only the content can be modified. if it's intact, this is a false modification.
+					if (newContent == oldContent) {
+						modificationQueue.remove(modification)
+						return
+					}
+					modification.isValidated = true
+					modification.multimessage = multimessage
+				}
+
+				val guild = modification.candidates.maxBy { it.lastSent }.also(modification.candidates::remove)
+				// find the message corresponding to this guild and edit it
+				modification.multimessage.retranslated.find { msg ->
+					guild.channels.any { it.id == msg.id }
+				}?.edit {
+					content = newContent
+				}
+			} catch (e: Exception) {
+				Log.error(e) { "Failed to edit ${modification.event.messageId}" }
+			}
+		}
 	}
 	
 	/** Returns whether this message was sent by flarogus. */
@@ -224,42 +366,42 @@ class Multiverse(
 	/** Returns whether a message with this id is a retranslated message */
 	fun isRetranslatedMessage(id: Snowflake) = history.any { it.retranslated.any { it.id == id } }
 
-	companion object {	
-		/**
-		 * Files with size exceeding this limit will be sent in the form of links.
-		 * Since i'm now hosting it on a device with horrible connection speed, it's set to 0. 
-		 */
-		const val maxFileSize = 1024 * 1024 * 0
-	}
-
 	abstract class MultiversalService {
+		/** Unique name of this service. Used to distinguish different instances. */
+		abstract val name: String
 		/** Initialised when this service is added to the multiverse. */
 		lateinit var multiverse: Multiverse
 
 		/** Called before the multiverse starts up. */
-		suspend fun onStart() {}
+		open suspend fun onStart() {}
 		/** Called after the multiverse starts up. */
-		suspend fun onLoad() {}
+		open suspend fun onLoad() {}
 		/** Called when a multiversal message is received. */
-		suspend fun onMessage(event: MessageCreateEvent, retranslated: Boolean) {}
+		open suspend fun onMessageReceived(event: MessageCreateEvent, retranslated: Boolean) {}
 		/** Called when the multiverse stops. */
-		suspend fun onStop() {}
+		open suspend fun onStop() {}
 		
 		/** Saves data in the multiverse. */
 		suspend fun saveData(key: String, value: String) {
-			serviceData.getOrPut(this) { mutableMapOf() }[key] = value
+			multiverse.serviceData.getOrPut(name) { mutableMapOf() }[key] = value
 		}
 		/** Loads data from the multiverse. */
-		suspend fun loadData(key: String) = serviceData.getOrElse(this, null).getOrElse(key, null)
+		suspend fun loadData(key: String) = run {
+			multiverse.serviceData.getOrElse(name) { null }?.getOrElse(key) { null }
+		}
 	}
 
 	data class MultimessageDefinition(
-		val user: String, 
-		val avatar: String,
+		val user: String?, 
+		val avatar: String?,
 		val filter: (TextChannel) -> Boolean = { true },
 		val messageBuilder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit,
 		val multimessage: Multimessage
-	) : CompletableDeferred<Multimessage>() {
+	) {
+		@Volatile
+		private var isCancelled: Boolean = false
+		val creationTime = System.currentTimeMillis()
+
 		/** Candidate guilds that have sent a message in the past 3 hours. */
 		val highPriority = ArrayList<MultiversalGuild>()
 		/** Candidate guilds that have sent a message in the past 3 days. */
@@ -267,10 +409,27 @@ class Multiverse(
 		/** Candidate guilds thag haven't sent a message in the past 3 days. */
 		val lowPriority = ArrayList<MultiversalGuild>()
 
+		fun cancel() {
+			isCancelled = true
+		}
+
+		suspend fun await(): Multimessage {
+			while (!isEmpty()) {
+				if (isCancelled) throw CancellationException("This multimessage was cancelled")
+				delay(50L)
+			}
+			return multimessage
+		}
+
 		fun isEmpty() = lowPriority.isEmpty() && mediumPriority.isEmpty() && highPriority.isEmpty()
 	}
 
-	data class EventDefinition<T>(val event: T, val candidates: ArrayList<MultiversalGuild>) {
+	data class EventDefinition<T>(val event: T, val candidates: MutableList<MultiversalGuild>) {
+		var isValidated = true
+		/** Internal usage only. */
+		lateinit var multimessage: Multimessage
+		val isInitialized get() = isValidated && ::multimessage.isInitialized
+
 		fun getImportance() = candidates.maxOf { it.lastSent }
 	}
 }
@@ -284,5 +443,5 @@ suspend fun Multiverse.broadcast(
 ) = broadcastAsync(user, avatar, filter, messageBuilder).await()
 
 /** Same as [Multiverse.broadcastSystemAsync], but this method awaits for the result. */
-suspend fun broadcastSystem(message: suspend MessageCreateBuilder.(id: Snowflake) -> Unit) =
+suspend fun Multiverse.broadcastSystem(message: suspend MessageCreateBuilder.(id: Snowflake) -> Unit) =
 	broadcastSystemAsync(message).await()

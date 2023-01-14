@@ -22,13 +22,13 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 		description = "List multiversal guilds."
 		
 		fun Callback<String>.list(predicate: (MultiversalGuild) -> Boolean) {
-			result(Multiverse.guilds.filter(predicate).sortedByDescending { it.discordId.value }.map {
+			result(Vars.multiverse.guilds.filter(predicate).sortedByDescending { it.discordId.value }.map {
 				"${it.discordId} — $it"
 			}.joinToString("\n"))
 		}
 
 		subaction<String>("all") {
-			list { true && it.isValid }
+			list { it.isValid }
 		}
 		subaction<String>("unwhitelisted") { 
 			list { !it.isWhitelisted && it.isValid }
@@ -41,6 +41,9 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 		}
 		subaction<String>("invalid") {
 			list { !it.isValid }
+		}
+		subaction<String>("connected") {
+			list { it.isValid && it.isWhitelisted && !it.isForceBanned && it.channels.isNotEmpty() }
 		}
 	}
 
@@ -116,7 +119,7 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 
 				if (!wasWhitelisted) {
 					reply("$it has been whitelisted.")
-					Multiverse.broadcastSystemAsync { _ ->
+					Vars.multiverse.broadcastSystemAsync { _ ->
 						content = "A new guild has connected: $it."
 					}
 				}
@@ -198,23 +201,11 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 			}
 		}
 
-		val checkCommand by lazy { FlarogusCommand.find("!flarogus multiverse warnings") as FlarogusCommand<Int> }
-
-		subaction<Int>("check", "Check warnings of the user. This command delegates to the 'multiverse warnings' command.") {
-			val arg = args.arg<MultiversalUser>("user").discordId.toString()
-
-			result(if (originalMessage != null) {
-				checkCommand(originalMessage.asMessage(), arg).result
-			} else {
-				checkCommand(arg)
-			})
-		}
-
 		subaction<Unit>("clear", "Clear warnings of the user") {
 			val user = args.arg<MultiversalUser>("user")
 			user.warns.clear()
 
-			Multiverse.broadcastSystem { content = "User $user has just had their warnings cleared." }
+			Vars.multiverse.broadcastSystem { content = "User $user has just had their warnings cleared." }
 		}
 	}
 
@@ -224,7 +215,7 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 		}
 
 		action {
-			Multiverse.broadcastSystem {
+			Vars.multiverse.broadcastSystem {
 				content = args.arg<String>("message").trim()
 			}
 		}
@@ -232,7 +223,7 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 
 	subcommand<Unit>("echo-as", "Send a message in the multiverse as one of the special users.") {
 		val users = mapOf<String, suspend (String, Message?) -> Unit>(
-			"local-amogus" to { msg, ref -> Multiverse.npcs.find { it is AmogusNPC }?.sendMessage(msg, ref) },
+			"local-amogus" to { msg, ref -> Vars.npcs.find { it is AmogusNPC }?.sendMessage(msg, ref) },
 		)
 
 		arguments {
@@ -246,7 +237,10 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 			expect(func != null) { "Invalid alias. Available: ${users.keys.joinToString { "`$it`" }}" }
 
 			val refId = args.opt<Snowflake>("reply")
-			val ref = refId?.let { id -> Multiverse.history.find { id in it } ?: throw RuntimeException("message with id $refId could not be found in the history.") }
+			val ref = refId?.let { id ->
+				Vars.multiverse.history.find { id in it } 
+					?: throw RuntimeException("message with id $refId could not be found in the history.")
+			}
 
 			func(args.arg("message"), (ref?.origin ?: ref?.retranslated?.firstOrNull())?.asMessage())
 		}
@@ -275,7 +269,7 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 
 			var errors = 0
 			var deleted = 0
-			Multiverse.history.takeLast(min(args.arg<Int>("count"), Multiverse.history.size)).forEach {
+			Vars.multiverse.history.takeLast(min(args.arg<Int>("count"), Vars.multiverse.history.size)).forEach {
 				it.retranslated.forEach { 
 					try {
 						it.delete()
@@ -301,7 +295,7 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 	
 	subcommand<Unit>("update", "Invalidate all guilds and forcibly update them.") {
 		action {
-			Multiverse.guilds.forEach {
+			Vars.multiverse.guilds.forEach {
 				it.lastUpdate = 0L
 				it.update()
 			}
@@ -314,7 +308,7 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 			var connectedGuilds = 0
 			var channels = 0
 			var webhooks = 0
-			Multiverse.guilds.forEach {
+			Vars.multiverse.guilds.forEach {
 				if (it.isValid) validGuilds++
 				if (it.webhooks.isNotEmpty()) connectedGuilds++
 				channels += it.channels.size
@@ -323,25 +317,25 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 
 			result("""
 				```
-				Is running:   ${Multiverse.isRunning}
-				History size: ${Multiverse.guilds.size}
+				Is running:   ${Vars.multiverse.isRunning}
+				History size: ${Vars.multiverse.guilds.size}
 				-----
-				Guilds:	   ${Multiverse.guilds.size}
+				Guilds:	          ${Vars.multiverse.guilds.size}
 				Valid guilds:     $validGuilds
-				Invalid guilds:   ${Multiverse.guilds.size - validGuilds}
+				Invalid guilds:   ${Vars.multiverse.guilds.size - validGuilds}
 				Connected guilds: $connectedGuilds
 				-----
 				Webhooks: $webhooks
 				Channels: $channels
 				-----
-				Users:       ${Multiverse.users.size}
-				Valid users: ${Multiverse.users.filter { it.isValid }.size}
+				Users:       ${Vars.multiverse.users.size}
+				Valid users: ${Vars.multiverse.users.count { it.isValid }}
 				```
 			""".trimIndent())
 		}
 	}
 
-	subtree("reply", "Do something with the multiversal message you reply to.") {
+	subtree("reply", "Do something with the message you reply to.") {
 		modOnly()
 
 		subcommand<Unit>("warn") {
@@ -382,10 +376,13 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 }
 
 suspend fun Callback<*>.referencedAuthor(): User {
-	val reply = originalMessage!!.asMessage().referencedMessage
-		?: fail("You must reply to a multiversal message.")
-	val msg = Multiverse.history.find { reply in it }
-		?: fail("This message wasn't found in the history. perhaps, it was sent too long time ago?")
+	val reply = originalMessage().referencedMessage
+		?: fail("You must reply to a message.")
+	val msg = Vars.multiverse.history.find { reply in it }
+		?: run {
+			reply.author?.let { return it } // non-multiversal message
+			fail("This message wasn't found in the history.")
+		}
 
 	val origin = msg.origin?.asMessage() ?: fail("This message doesn't have an origin.")
 	return origin.author ?: fail("This message doesn't have an author user.")

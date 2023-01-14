@@ -20,7 +20,7 @@ fun TreeCommandBuilder.addManagementSubtree() = subtree("manage") {
 		presetArguments {
 			default<MultiversalGuild>("guild", "The guild you want to manage. Defaults to current guild.") {
 				val id = originalMessage?.asMessage()?.data?.guildId?.value ?: fail("Anonymous caller must specify a guild")
-				Multiverse.guildOf(id) ?: fail("This guild is not valid.")
+				Vars.multiverse.guildOf(id) ?: fail("This guild is not valid.")
 			}
 		}
 
@@ -169,5 +169,5 @@ private fun Arguments.addUserArgument() = default<MultiversalUser>(
 ) {
 	val id = originalMessage?.asMessage()?.author?.id
 		?: fail("anonymous caller must specify a user")
-	Multiverse.userOf(id) ?: fail("This user is not valid.")
+	Vars.multiverse.userOf(id) ?: fail("This user is not valid.")
 }

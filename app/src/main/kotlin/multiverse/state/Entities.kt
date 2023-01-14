@@ -114,7 +114,7 @@ class HistorySerializer : KSerializer<Multimessage> {
 		} else {
 			null
 		}
-		Multimessage(message, retranslated!!)
+		Multimessage(message, retranslated!!.toMutableList())
 	}
 }
 

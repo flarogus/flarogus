@@ -37,7 +37,7 @@ open class CommandHandler(
 	/** Passes received events to the multiverse. */
 	val multiverseExecutor = kord.actor<MessageCreateEvent>(capacity = 10) {
 		for (message in channel) runCatching {
-			Multiverse.messageReceived(message)
+			Vars.multiverse.onMessageReceived(message)
 		}
 	}
 
