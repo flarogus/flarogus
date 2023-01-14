@@ -117,8 +117,13 @@ class Multiverse(
 					lastBackup = System.currentTimeMillis()
 				}
 				
-				StateManager.saveState(backup)
-				delay(1000L * 90)
+				try {
+					StateManager.saveState(backup)
+					Log.lifecycle { "State saved" }
+				} catch (e: Exception) {
+					Log.error(e) { "Exception caught while attempting to save the state" }
+				}
+				delay(1000L * 30)
 			}
 		}
 		tickJob = launch {
@@ -143,10 +148,14 @@ class Multiverse(
 		tickJob?.cancel()
 	}
 
-	/** Updates all guilds and finds all accessible multiversal channels. */
+	/** Updates all guilds flarogus is in and finds all accessible multiversal channels. */
 	suspend fun findChannels() {
-		Vars.client.rest.user.getCurrentUserGuilds().forEach {
-			guildOf(it.id)?.update() //this will add an entry if it didn't exist
+		try {
+			Vars.client.rest.user.getCurrentUserGuilds().forEach {
+				guildOf(it.id)?.update() //this will add an entry if it didn't exist
+			}
+		} catch (e: Exception) {
+			Log.error(e) { "findChannels() failed" }
 		}
 	}
 
@@ -292,6 +301,9 @@ class Multiverse(
 					}
 				}
 			}
+			repeat(min(7, queue.size)) {
+				queue.removeFirst()
+			}
 
 			return
 		}
@@ -323,7 +335,7 @@ class Multiverse(
 			try {
 				val newContent = modification.event.new.toRetranslatableContent()
 
-				if (modification.isInitialized) {
+				if (!modification.isInitialized) {
 					val multimessage = history.find { modification.event.messageId in it } ?: run {
 						Log.error { "Failed to modify ${modification.event.messageId}: no corresponding multimessage" }
 						modificationQueue.remove(modification)

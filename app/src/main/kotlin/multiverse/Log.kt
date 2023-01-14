@@ -13,7 +13,7 @@ import flarogus.util.*
 /** Logs stuff. Messages are evaluated lazily (only if the message will be sent) */
 @SuppressWarnings("NOTHING_TO_INLINE")
 object Log {
-	var level = LogLevel.INFO
+	var level = LogLevel.LIFECYCLE
 		set(level: LogLevel) {
 			if (level.level > LogLevel.ERROR.level) throw IllegalArgumentException("illegal log level")
 			field = level 

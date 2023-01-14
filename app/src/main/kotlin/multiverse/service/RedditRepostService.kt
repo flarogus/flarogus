@@ -30,7 +30,7 @@ class RedditRepostService(
 	private val repostedCacheKey = "cache"
 	private var job: Job? = null
 
-	override suspend fun onStart() {
+	override suspend fun onLoad() {
 		job = multiverse.launch {
 			while (true) {
 				var lastSent = loadData(lastSentKey)?.toLongOrNull() ?: 0L

@@ -15,9 +15,9 @@ import java.io.*
 
 @OptIn(ExperimentalSerializationApi::class)
 object StateManager {
-	val flarogusDir = File(System.getProperty("user.home")).ensureDir()
-	val dataFile = flarogusDir.resolve("data.bin")
+	val flarogusDir = File(System.getProperty("user.home")).resolve("flarogus").ensureDir()
 	val backupDirectory = flarogusDir.resolve("backups").ensureDir()
+	val dataFile = flarogusDir.resolve("data.bin").ensureFile()
 
 	val fileStorageChannel by lazy { Vars.client.unsafe.messageChannel(Channels.fileStorage) }
 	val json = Json {
@@ -25,7 +25,7 @@ object StateManager {
 		encodeDefaults = true
 	}
 
-	/** Last saved state */
+	/** Last saved or loaded state */
 	var lastState: StateSnapshot? = null
 	/** Persistent data storage for temporary scripts. */
 	val arbitraryData = HashMap<String, String>()
@@ -46,15 +46,16 @@ object StateManager {
 	 * Normally this is done every 60 seconds.
 	 */
 	suspend fun saveState(createBackup: Boolean = true) {
-		if (createBackup) {
+		if (createBackup && dataFile.exists()) {
 			val instant = Clock.System.now()
-			val backup = backupDirectory.resolve("data-$instant.bin")
+			val backup = backupDirectory.resolve("data-$instant.bin").ensureFile()
 			dataFile.copyTo(backup)
 		}
 
 		val newState = StateSnapshot()
+		lastState = newState
 		dataFile.outputStream().use {
-			Json.encodeToStream(newState, it)
+			json.encodeToStream(newState, it)
 		}
 	}
 	
@@ -73,11 +74,9 @@ object StateManager {
 		Vars.client.resources.httpClient.get(url).body<T>()
 }
 
-/** A utility class that stores the most important parts of bot's state. Used for serialization. */
+/** A utility class that stores the most important parts of the bot's state. Used for serialization. */
 @kotlinx.serialization.Serializable
 data class StateSnapshot(
-	val ubid: String = Vars.ubid,
-	val startedAt: Long = Vars.startedAt,
 	var runWhitelist: Set<Snowflake> = Vars.superusers,
 	var epoch: Long = Vars.flarogusEpoch,
 	var logLevel: Int = Log.level.level,
@@ -104,4 +103,7 @@ data class StateSnapshot(
 private fun File.ensureDir() = also {
 	if (exists() && isDirectory().not()) delete()
 	if (!exists()) mkdirs()
+}
+private fun File.ensureFile() = also {
+	if (exists() && isDirectory()) deleteRecursively()
 }

@@ -21,8 +21,6 @@ class InfoMessageService : MultiversalService() {
 
 	override suspend fun onLoad() {
 		job = multiverse.launch {
-			delay(20000L)
-
 			while (true) {
 				val lastSent = loadData(dataKey)?.toLongOrNull() ?: 0L
 

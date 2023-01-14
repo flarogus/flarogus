@@ -16,6 +16,7 @@ import flarogus.util.*
 import flarogus.command.CommandHandler
 import flarogus.command.impl.*
 import flarogus.multiverse.*
+import flarogus.multiverse.npc.NPC
 import flarogus.multiverse.npc.impl.*
 import flarogus.multiverse.service.*
 import flarogus.multiverse.state.StateManager
@@ -27,7 +28,7 @@ object Vars {
 	val supplier get() = client.defaultSupplier
 	val restSupplier by lazy { RestEntitySupplier(client) }
 
-	val npcs = mutableListOf(AmogusNPC())
+	val npcs = mutableListOf<NPC>(AmogusNPC())
 	val femboySubreddits = mutableListOf("femboymemes")
 	
 	/** The Multiverse. */
@@ -103,11 +104,14 @@ object Vars {
 		// if possible. load the previous multiverse. Otherwise, create a new one.
 		runCatching { StateManager.loadState() }.getOrNull()?.let {
 			it.loadFromState() // it will load the multiverse as well
+			Log.info { "State loaded successfully." }
 		} ?: run {
 			ubid = Random.nextInt(0, 1000000000).toString(10 + 26)
 			startedAt = System.currentTimeMillis()
 			flarogusEpoch = startedAt
 			multiverse = Multiverse()
+
+			Log.info { "Couldn't load the state. Created a new multiverse." }
 		}
 		arrayOf(infoMessageService, npcService, markovService, femboyRepostService)
 			.forEach(multiverse::addService)
