@@ -35,7 +35,7 @@ class RedditRepostService(
 			while (true) {
 				var lastSent = loadData(lastSentKey)?.toLongOrNull() ?: 0L
 
-				if (System.currentTimeMillis() - lastSent >= 1000L * 60 * 60 * 4) {
+				if (System.currentTimeMillis() - lastSent >= interval) {
 					saveData(lastSentKey, System.currentTimeMillis().toString())
 					postPicture()
 					Log.debug { "reddit post sent" }
