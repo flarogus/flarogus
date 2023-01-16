@@ -28,6 +28,7 @@ class RedditRepostService(
 
 	private val lastSentKey = "last-sent"
 	private val repostedCacheKey = "cache"
+	private val subredditIndexKey = "index"
 	private var job: Job? = null
 
 	override suspend fun onLoad() {
@@ -51,7 +52,11 @@ class RedditRepostService(
 
 	/** Load and post a random picture in the multiverse. */
 	suspend fun postPicture() {
-		val (title, url) = loadPicture(subredditNames.random())
+ 		val index = loadData(subredditIndexKey)?.toIntOrNull() ?: 1
+		val subreddit = subredditNames[index % subredditNames.size]
+		val (title, url) = loadPicture(subreddit)
+
+		saveData(subredditIndexKey, (index + 1).toString())
 
 		multiverse.broadcastSystem {
 			content = "Title: [$title]($url)"

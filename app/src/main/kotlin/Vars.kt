@@ -29,14 +29,14 @@ object Vars {
 	val restSupplier by lazy { RestEntitySupplier(client) }
 
 	val npcs = mutableListOf<NPC>(AmogusNPC())
-	val femboySubreddits = mutableListOf("femboymemes", "hopeposting", "unixporn")
+	val subreddits = mutableListOf("femboymemes", "hopeposting", "unixporn")
 	
 	/** The Multiverse. */
 	lateinit var multiverse: Multiverse
 	val infoMessageService = InfoMessageService()
 	val npcService = NPCService(npcs)
 	val markovService = MarkovChainService()
-	val femboyRepostService = RedditRepostService(1000L * 60 * 60 * 8, femboySubreddits)
+	val redditRepostService = RedditRepostService(1000L * 60 * 60 * 8, subreddits)
 
 	/** If true, the multiverse works in the test mode. Do not change at runtime. */
 	var testMode = false
@@ -116,7 +116,7 @@ object Vars {
 
 			Log.info { "Couldn't load the state. Created a new multiverse." }
 		}
-		arrayOf(infoMessageService, npcService, markovService, femboyRepostService)
+		arrayOf(infoMessageService, npcService, markovService, redditRepostService)
 			.forEach(multiverse::addService)
 		
 		// try to boot the multiverse up
