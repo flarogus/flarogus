@@ -45,6 +45,7 @@ object Log {
 		println(": $msg")
 
 		currentLogWriter.println("[$time][$logLevel] $msg")
+		currentLogWriter.flush()
 	}
 	
 	inline fun lifecycle(crossinline message: () -> String) = log(LogLevel.LIFECYCLE, message)
