@@ -29,7 +29,7 @@ object Vars {
 	val restSupplier by lazy { RestEntitySupplier(client) }
 
 	val npcs = mutableListOf<NPC>(AmogusNPC())
-	val femboySubreddits = mutableListOf("femboymemes")
+	val femboySubreddits = mutableListOf("femboymemes", "hopeposting", "unixporn")
 	
 	/** The Multiverse. */
 	lateinit var multiverse: Multiverse
