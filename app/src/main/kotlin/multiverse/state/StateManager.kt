@@ -4,6 +4,7 @@ import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.channel.*
 import flarogus.Vars
 import flarogus.multiverse.*
+import flarogus.util.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
@@ -98,12 +99,4 @@ data class StateSnapshot(
 
 		Vars.multiverse = multiverse
 	}
-}
-
-private fun File.ensureDir() = also {
-	if (exists() && isDirectory().not()) delete()
-	if (!exists()) mkdirs()
-}
-private fun File.ensureFile() = also {
-	if (exists() && isDirectory()) deleteRecursively()
 }

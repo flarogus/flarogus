@@ -7,6 +7,7 @@ import dev.kord.core.entity.channel.*
 import dev.kord.core.event.message.*
 import dev.kord.rest.builder.message.create.*
 import flarogus.Vars
+import flarogus.multiverse.Log.LogLevel.*
 import flarogus.multiverse.entity.*
 import flarogus.multiverse.state.*
 import flarogus.util.*
@@ -245,25 +246,40 @@ class Multiverse(
 		deletionQueue.forEach { del ->
 			val id = del.event.messageId
 
-			retranslationQueue.removeAll { it.multimessage.origin?.id == id }
-			modificationQueue.removeAll { it.event.messageId == id }
+			retranslationQueue.removeAll {
+				(it.multimessage.origin?.id == id).andLog(DEBUG) {
+					"Message sent by ${it.user} was cancelled."
+				}
+			}
+			modificationQueue.removeAll {
+				(it.event.messageId == id).andLog(DEBUG) {
+					val user = it.event.new.author.value?.id?.let { id -> users.find {
+						it.discordId == id
+					} }
+					"Message modification of ${it.event.messageId} performed by $user was cancelled."
+				}
+			}
 		}
 		// we also need to remove and log all completed requests
 		retranslationQueue.removeAll {
-			if (it.isEmpty()) {
+			it.isEmpty().andLog(DEBUG) {
 				val totalTime = (System.currentTimeMillis() - it.creationTime) / 1000f
-				Log.debug { "Message sent by ${it.user} was retranslated in $totalTime sec." }
+				"Message sent by ${it.user} was retranslated in $totalTime sec."
 			}
-			it.isEmpty()
 		}
 		modificationQueue.removeAll { def ->
-			def.candidates.isEmpty().also {
-				if (it) Log.debug { "Message ${def.event.messageId} was deleted by edited by its author." }
+			def.candidates.isEmpty().andLog(DEBUG) {
+				val user = def.event.new.author.value?.id?.let { id -> users.find { it.discordId == id } }
+				"Message ${def.event.messageId} was edited by ($user)."
 			}
 		}
 		deletionQueue.removeAll { def ->
-			def.candidates.isEmpty().also {
-				if (it) Log.debug { "Message ${def.event.messageId} was deleted by deleting the original message." }
+			def.candidates.isEmpty().andLog(DEBUG) {
+				// avoid a possible api call
+				val user = (def.multimessage.origin as? Message)?.author?.id?.let { id ->
+					users.find { it.discordId == id }
+				} ?: "<unknown>"
+				"Message ${def.event.messageId} sent by $user was deleted by deleting the original message."
 			}
 		}
 

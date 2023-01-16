@@ -1,5 +1,6 @@
 package flarogus.util
 
+import java.io.File
 import java.time.*
 import java.time.temporal.*
 import kotlin.math.*
@@ -33,3 +34,10 @@ suspend inline fun delayUntil(limit: Long, period: Long = 50L, condition: () -> 
 	return false
 }
 
+fun File.ensureDir() = also {
+	if (exists() && isDirectory().not()) delete()
+	if (!exists()) mkdirs()
+}
+fun File.ensureFile() = also {
+	if (exists() && isDirectory()) deleteRecursively()
+}
