@@ -279,7 +279,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 			val specialDailies = arrayOf<Pair<String, (suspend (MultiversalUser) -> Unit)>> (
 				"you are now amogus." to {
 					it.update()
-					it.nameOverride = "amogus the ${it.usertag}"
+					it.nameOverride = "amogus the ${it.nameOverride ?: it.user?.username}"
 				},
 				"you can claim one more reward!" to { it.lastReward = 0L },
 				"you are so unlucky you got the only special reward that literally does nothihg! congratulations!!!" to {}
@@ -295,6 +295,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 						reply("daily reward: ${dailies.random()}")
 					} else {
 						val specialReward = specialDailies.random()
+						user.update()
 						specialReward.second(user)
 						reply("special reward: ${specialReward.first}")
 					}
