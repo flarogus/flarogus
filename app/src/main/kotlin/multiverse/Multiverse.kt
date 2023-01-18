@@ -74,9 +74,7 @@ class Multiverse(
 	suspend fun start() {
 		services.forEach { it.onStart() }
 
-		findChannels()
-
-		 Vars.client.events
+		Vars.client.events
 			.filterIsInstance<MessageDeleteEvent>()
 			.filter { isRunning }
 			.filter { event -> !isRetranslatedMessage(event.messageId) }
@@ -100,10 +98,15 @@ class Multiverse(
 			.launchIn(this)
 			.also { modificationInterceptorJob = it }
 
+		isRunning = true // begin collecting message events but do not retranslate them yet
+		findChannels()
+
 		findChannelsJob = launch {
 			while (true) {
 				delay(1000L * 680) // finding channels is a costly operation
-				findChannels()
+				runCatching { findChannels() }.onFailure {
+					Log.error(it) { "Failed to find channels" }
+				}
 			}
 		}
 		saveStateJob = launch {
@@ -114,23 +117,24 @@ class Multiverse(
 					lastBackup = System.currentTimeMillis()
 				}
 				
-				try {
+				runCatching {
 					StateManager.saveState(backup)
 					Log.lifecycle { "State saved" }
-				} catch (e: Exception) {
-					Log.error(e) { "Exception caught while attempting to save the state" }
+				}.onFailure {
+					Log.error(it) { "Exception caught while attempting to save the state" }
 				}
 				delay(1000L * 30)
 			}
 		}
 		tickJob = launch {
 			while (true) {
-				tick()
+				runCatching { tick() }.onFailure {
+					Log.error(it) { "Failed to perform a tick" }
+				}
 				delay(10L)
 			}
 		}
 
-		isRunning = true
 		services.forEach { it.onLoad() }
 	}
 

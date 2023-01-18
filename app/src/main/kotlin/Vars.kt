@@ -82,7 +82,7 @@ object Vars {
 
 	/** Markdown codeblock regex. */
 	val codeblockRegex = "```([a-z]*)?((?s).*)```".toRegex()
-	/** Default imports. Used with the script engine. */
+	/** Default imports. Used with the scripting api. */
 	val defaultImports by lazy {
 		Vars::class.java.getResourceAsStream("/import-classpath.txt")
 			?.bufferedReader()
