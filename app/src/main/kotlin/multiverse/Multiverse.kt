@@ -162,17 +162,19 @@ class Multiverse(
 
 	/** Called when the multiverse should process a received message, */
 	suspend fun onMessageReceived(event: MessageCreateEvent) {
-		if (!isRunning || isOwnMessage(event.message)) return
+		if (isOwnMessage(event.message)) return
 		if (!guilds.any { it.channels.any { it.id == event.message.channel.id } }) return
 		if (event.message.type !in supportedMessageTypes) return
 		
-		val user = userOf(event.message.data.author.id)
-		val success = user?.onMultiversalMessage(event) ?: run {
-			event.message.replyWith("No user associated with your user id was found!")
-			return
-		}
+		executeWhenRunning {
+			val user = userOf(event.message.data.author.id)
+			val success = user?.onMultiversalMessage(event) ?: run {
+				event.message.replyWith("No user associated with your user id was found!")
+				return@executeWhenRunning
+			}
 
-		services.forEach { it.onMessageReceived(event, success) }
+			services.forEach { it.onMessageReceived(event, success) }
+		}
 	}
 
 	/**
@@ -480,3 +482,15 @@ suspend fun Multiverse.broadcast(
 /** Same as [Multiverse.broadcastSystemAsync], but this method awaits for the result. */
 suspend fun Multiverse.broadcastSystem(message: suspend MessageCreateBuilder.(id: Snowflake) -> Unit) =
 	broadcastSystemAsync(message).await()
+
+/** £xecutes the action immediately if the multiverse is running; postpones it otherwise. */
+suspend inline fun Multiverse.executeWhenRunning(
+	crossinline action: suspend Multiverse.() -> Unit
+) {
+	if (isRunning) { 
+		action()
+	} else launch {
+		while (!isRunning) delay(50L)
+		action()
+	}
+}
