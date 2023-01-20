@@ -107,11 +107,11 @@ fun sendImage(origin: MessageBehavior, text: String = "", image: BufferedImage) 
 	}
 }
 
-const val minute = 60L
-const val hour = 60L * minute
-const val day = 24L * hour
-const val month = 30L * day
-const val year = 12L * month
+private const val minute = 60L
+private const val hour = 60L * minute
+private const val day = 24L * hour
+private const val month = 30L * day
+private const val year = 12L * month
 
 fun formatTime(millis: Long): String {
 	val time: Long = millis / 1000L;

@@ -3,8 +3,9 @@ package flarogus.multiverse.npc.impl
 import kotlin.random.*
 import dev.kord.core.*
 import flarogus.multiverse.npc.*
+import flarogus.util.minute
 
-class AmogusNPC : NPC(1000L * 30 * 1) {
+class AmogusNPC : NPC(30.minute) {
 	override val name = "local amogus"
 	override val location = "oblivion settlement"
 	override val avatar = "https://cdn.discordapp.com/attachments/1045966829882970143/1045967037098373151/amogus.png"

@@ -185,7 +185,7 @@ open class MultiversalUser(
 
 	companion object {
 		val criticalWarns = 5
-		var updateInterval = 1000L * 60 * 30
+		val updateInterval = 30.minute
 		val messageRateLimit = 3500L
 
 		val linkRegex = """https?://([a-zA-Z0-9_\-]+?\.?)+/[a-zA-Z0-9_\-%\./]+""".toRegex()
@@ -207,7 +207,7 @@ open class MultiversalUser(
 
 		companion object {
 			/** Time in ms required for a warn to expire. 60 days. */
-			const val expiration = 1000L * 60 * 60 * 24 * 60
+			val expiration = 60.day
 		}
 	}
 

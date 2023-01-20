@@ -103,7 +103,7 @@ class Multiverse(
 
 		findChannelsJob = launch {
 			while (true) {
-				delay(1000L * 680) // finding channels is a costly operation
+				delay(10.minute) // finding channels is a costly operation
 				runCatching { findChannels() }.onFailure {
 					Log.error(it) { "Failed to find channels" }
 				}
@@ -112,7 +112,7 @@ class Multiverse(
 		saveStateJob = launch {
 			while (true) {
 				// 2 backups per day
-				val backup = System.currentTimeMillis() > lastBackup + 1000L * 60 * 60 * 12
+				val backup = System.currentTimeMillis() > lastBackup + 12.hour
 				if (backup) {
 					lastBackup = System.currentTimeMillis()
 				}
@@ -123,7 +123,7 @@ class Multiverse(
 				}.onFailure {
 					Log.error(it) { "Exception caught while attempting to save the state" }
 				}
-				delay(1000L * 30)
+				delay(30.second)
 			}
 		}
 		tickJob = launch {
@@ -192,13 +192,13 @@ class Multiverse(
 
 		val now = System.currentTimeMillis()
 		def.highPriority += candidates.filter {
-			now - it.lastSent < 1000L * 60 * 60 * 3
+			now - it.lastSent < 3.hour
 		}
 		def.mediumPriority += candidates.filter {
-			now - it.lastSent in (1000L * 60 * 60 * 3)..(1000L * 60 * 60 * 24 * 3)
+			now - it.lastSent in (3.hour)..(3.day)
 		}
 		def.lowPriority += candidates.filter {
-			now - it.lastSent > 1000L * 60 * 60 * 24 * 3
+			now - it.lastSent > 3.day
 		}
 
 		synchronized(history) {
@@ -340,7 +340,7 @@ class Multiverse(
 
 				if (!deletion.isInitialized) {
 					deletion.multimessage = history.find { deletion.event.messageId in it } ?: run {
-						Log.error { "Failed to modify ${deletion.event.messageId}: no corresponding multimessage" }
+						Log.error { "Failed to delete ${deletion.event.messageId}: no corresponding multimessage" }
 						deletionQueue.remove(deletion)
 						return@let
 					}

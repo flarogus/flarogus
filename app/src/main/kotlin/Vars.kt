@@ -36,7 +36,7 @@ object Vars {
 	val infoMessageService = InfoMessageService()
 	val npcService = NPCService(npcs)
 	val markovService = MarkovChainService()
-	val redditRepostService = RedditRepostService(1000L * 60 * 60 * 8, subreddits)
+	val redditRepostService = RedditRepostService(8.hour, subreddits)
 
 	/** If true, the multiverse works in the test mode. Do not change at runtime. */
 	var testMode = false
@@ -118,6 +118,8 @@ object Vars {
 		}
 		arrayOf(infoMessageService, npcService, markovService, redditRepostService)
 			.forEach(multiverse::addService)
+
+		commandHandler.launch()
 		
 		// try to boot the multiverse up
 		var errors = 0
@@ -127,12 +129,10 @@ object Vars {
 			} catch (e: Exception) {
 				errors++
 				Log.error(e) { "Couldn't start the multiverse ($errors)" }
-				Log.printStackTrace(e)
+				multiverse.stop()
 				delay(3000L)
 			}
 		}
 		Log.info { "Flarogus instance $ubid has started with $errors errors." }
-
-		commandHandler.launch()
 	}
 }

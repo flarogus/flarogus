@@ -154,7 +154,7 @@ open class MultiversalGuild(
 	override fun toString() = name
 
 	companion object {
-		val updateInterval = 1000L * 60 * 30
+		val updateInterval = 30.minute
 		val webhookName = "MultiverseWebhook"
 
 		/** Checks if this channel is a valid multiversal channel */

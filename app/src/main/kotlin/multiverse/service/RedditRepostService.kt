@@ -3,6 +3,7 @@ package flarogus.multiverse.service
 import flarogus.Vars
 import flarogus.multiverse.*
 import flarogus.multiverse.Multiverse.MultiversalService
+import flarogus.util.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
@@ -12,7 +13,7 @@ import kotlinx.serialization.json.*
 
 /** Reposts a picture from a random provided subreddit every [interval] ms. */
 class RedditRepostService(
-	val interval: Long = 1000L * 60 * 60 * 24,
+	val interval: Long = 1.day,
 	val subredditNames: List<String>
 ) : MultiversalService() {
 	private lateinit var cachedName: String

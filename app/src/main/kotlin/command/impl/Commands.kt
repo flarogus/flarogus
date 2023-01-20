@@ -277,30 +277,53 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 				"you will never finish your tasks", "34 FlarCoin", "two tasks have been added to your list, crewmate!"
 			)
 			val specialDailies = arrayOf<Pair<String, (suspend (MultiversalUser) -> Unit)>> (
-				"you are now amogus." to {
+				// good
+				"you name was made sussy. (tip: you can change it using a command)" to {
 					it.update()
 					it.nameOverride = "amogus the ${it.nameOverride ?: it.user?.username}"
 				},
-				"you can claim one more reward!" to { it.lastReward = 0L },
-				"you are so unlucky you got the only special reward that literally does nothihg! congratulations!!!" to {}
+				"you can claim one more reward!" to { it.lastReward -= 1.day },
+				"you receive a [lucky] usertag." to { it.usertag = "lucky" },
+				"you receive an [impostor] usertag." to { it.usertag = "impostor" },
+				"you were so lucky a new reddit post has dropoed in the multiverse because of you! woah!" to {
+					Vars.redditRepostService.postPicture()
+				},
+				// bad
+				"woah, woah, chill... Your daily reward was postponed by 2 days!" to { it.lastReward += 1.day },
+				"you are so unlucky you got the only special reward that literally does nothihg! Congratulations!!!" to {}
 			)
 			
 			action {
 				val user = originalMessage?.asMessage()?.author?.id?.let { Vars.multiverse.userOf(it) }
 				require(user != null) { "couldn't find nor acquire a user entry for your account!" }
 
-				if (System.currentTimeMillis() > user.lastReward + 1000L * 60 * 60 * 24) {
-					user.lastReward = System.currentTimeMillis()
-					if (Random.nextInt(0, 21) > 5) {
-						reply("daily reward: ${dailies.random()}")
+				val timeDiff = System.currentTimeMillis() - user.lastReward
+				if (timeDiff > 1.day) {
+					// if less than 16 hours is left til the next reward or the next reward is available already, state it
+					val suffix = when {
+						timeDiff > 2.day -> {
+							"\n\nAlso, you have accumulated another reward and can claim it right now."
+						}
+						timeDiff > 1.day + 8.hour -> {
+							val remaining = ((user.lastReward + 2.day) - System.currentTimeMillis())
+							"\n\nAlso, you can claim your next reward in ${formatTime(remaining)}"
+						}
+						else -> ""
+					}
+
+					user.lastReward = max(
+						System.currentTimeMillis() - 1.day, user.lastReward + 1.day)
+
+					if (Random.nextInt(0, 21) > 6) {
+						reply("daily reward: ${dailies.random()}$suffix")
 					} else {
 						val specialReward = specialDailies.random()
 						user.update()
 						specialReward.second(user)
-						reply("special reward: ${specialReward.first}")
+						reply("special reward: ${specialReward.first}$suffix")
 					}
 				} else {
-					val wait = ((user.lastReward + 1000L * 60 * 60 * 24) - System.currentTimeMillis())
+					val wait = ((user.lastReward + 1.day) - System.currentTimeMillis())
 					reply("you have already claimed your daily reward! wait ${formatTime(wait)}!")
 				}
 			}

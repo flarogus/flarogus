@@ -7,6 +7,13 @@ import kotlin.math.*
 import kotlinx.coroutines.*
 import flarogus.*
 
+inline val Int.second get() = this * 1000L
+inline val Int.minute get() = this * 1000L * 60
+inline val Int.hour get() = this * 1000L * 60 * 60
+inline val Int.day get() = this * 1000L * 60 * 60 * 24
+inline val Int.month get() = this * 1000L * 60 * 60 * 24 * 30
+inline val Int.year get() = this * 1000L * 60 * 60 * 24 * 365
+
 fun Any?.isNotNull() = this != null
 
 fun Instant.atUTC(): ZonedDateTime = atZone(ZoneId.of("Z"))
