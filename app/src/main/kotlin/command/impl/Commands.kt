@@ -596,7 +596,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 				Vars.codeblockRegex.find(it)?.groupValues?.getOrNull(2) ?: it
 			}
 			
-			val reply = reply("compiling & executing...")
+			val reply = reply("compiling & executing... <a:loading:967451900213624872>")
 			var toDelete = args.flag("delete")
 
 			val returnValue = try {
@@ -633,11 +633,18 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 						returnValue.error.stackTraceToString()
 					} else {
 						returnValue.error.toString()
-					}.substringAfter("loading modules:") // strip everything before list of modules
-						.substringAfter("]") // strip to the end of the list
-						.trimStart()
+					}.let {
+						// if the compilation has failed, the message contains lots of useless info
+						if (it.contains("Loading modules:", true)) {
+							it.substringAfter("Loading modules:") // strip everything before list of modules
+								.substringAfter("]") // strip to the end of the list
+								.trimStart()
+						} else it
+					}
 
-					reply?.await()?.edit { content = "```\n${string.take(1990).replace("```", "`'`")}\n```" }
+					reply?.await()?.edit { 
+						content = "```\nFailure:\n${string.take(1980).replace("```", "`'`")}\n```" 
+					}
 					toDelete = true
 				}
 				is ResultValue.Unit, ResultValue.NotEvaluated -> {

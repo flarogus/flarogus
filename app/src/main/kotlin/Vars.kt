@@ -1,17 +1,10 @@
 package flarogus
 
-import java.time.format.*
-import javax.script.*
-import kotlin.random.*
-import kotlin.reflect.full.createType
-import kotlin.script.experimental.api.*
-import kotlin.script.experimental.jvm.*
-import kotlin.script.experimental.jvmhost.*
-import kotlinx.coroutines.*
 import dev.kord.common.entity.*
 import dev.kord.core.*
 import dev.kord.core.entity.Message
 import dev.kord.core.supplier.*
+import dev.kord.gateway.*
 import flarogus.util.*
 import flarogus.command.CommandHandler
 import flarogus.command.impl.*
@@ -20,9 +13,20 @@ import flarogus.multiverse.npc.NPC
 import flarogus.multiverse.npc.impl.*
 import flarogus.multiverse.service.*
 import flarogus.multiverse.state.StateManager
+import java.time.format.*
+import javax.script.*
+import kotlin.random.*
+import kotlin.reflect.full.createType
+import kotlin.script.experimental.api.*
+import kotlin.script.experimental.jvm.*
+import kotlin.script.experimental.jvmhost.*
+import kotlinx.coroutines.*
 
 /** An object declaration that stores variables/constants that are shared across the whole application */
-object Vars {	
+object Vars {
+	/** The global coroutine dispatcher. */
+	val dispatcher = newFixedThreadPoolContext(8, "flarogus")
+
 	/** The kord client instance. Must not be accessed until [launch] is called. */
 	lateinit var client: Kord
 	val supplier get() = client.defaultSupplier
@@ -95,12 +99,19 @@ object Vars {
 	
 	/**
 	 * Initialises and sets up everything.
+	 * @login if true, an attempt to log into the account is made.
+	 * @launchMultiverse if true, the multiverse is launched.
 	 */
-	suspend fun launch(token: String) {
+	suspend fun launch(
+		token: String,
+		login: Boolean,
+		launchMultiverse: Boolean
+	) {
 		if (::client.isInitialized) error("the bot has alreary been initialised")
 
 		client = Kord(token) {
-			//requestHandler { KtorRequestHandler(it.httpClient, ParallelRequestRateLimiter(), token = botToken) }
+			stackTraceRecovery = true
+			defaultDispatcher = dispatcher
 		}
 
 		ubid = Random.nextInt(0, 1000000000).toString(10 + 26)
@@ -120,17 +131,28 @@ object Vars {
 			.forEach(multiverse::addService)
 
 		commandHandler.launch()
+
+		// must login before launching the multiverse to receive the gateway events
+		if (login) client.launch {
+			@OptIn(PrivilegedIntent::class)
+			Vars.client.login {
+				intents += Intent.MessageContent
+
+				presence { competing("execute `!flarogus help` to see the list of available commands.") }
+			}
+		}
 		
-		// try to boot the multiverse up
 		var errors = 0
-		while (!multiverse.isRunning && Vars.client.isActive) {
-			try {
-				multiverse.start()
-			} catch (e: Exception) {
-				errors++
-				Log.error(e) { "Couldn't start the multiverse ($errors)" }
-				multiverse.stop()
-				delay(3000L)
+		if (launchMultiverse) {
+			// try to boot the multiverse up
+			while (!multiverse.isRunning && Vars.client.isActive) {
+				try {
+					multiverse.start()
+				} catch (e: Exception) {
+					Log.error(e) { "Couldn't start the multiverse (${++errors})" }
+					multiverse.stop()
+					delay(3000L * errors)
+				}
 			}
 		}
 		Log.info { "Flarogus instance $ubid has started with $errors errors." }
