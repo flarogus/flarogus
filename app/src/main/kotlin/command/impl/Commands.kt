@@ -98,7 +98,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 			}
 
 			action {
-				val msg = originalMessage!!.asMessage()
+				val msg = originalMessage()
 				val reply = msg.referencedMessage
 					?: fail("you must reply to a multiversal message")
 				val multimessage = Vars.multiverse.history.find { reply.id in it }
@@ -111,9 +111,9 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 				var deleted = 0
 				val silent = args.flag("silent")
 
-				if (silent && originalMessage != null) {
+				if (silent) {
 					try {
-						originalMessage.asMessage().delete()
+						msg.delete()
 					} catch (_: Exception) {}
 				}
 
@@ -285,7 +285,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 				"you can claim one more reward!" to { it.lastReward -= 1.day },
 				"you receive a [lucky] usertag." to { it.usertag = "lucky" },
 				"you receive an [impostor] usertag." to { it.usertag = "impostor" },
-				"you were so lucky a new reddit post has dropoed in the multiverse because of you! woah!" to {
+				"you were so lucky that fluctations in your luck field have affected the multiversal plane and made a new reddit post drop immediately! Woah!" to {
 					Vars.redditRepostService.postPicture()
 				},
 				// bad
@@ -320,11 +320,11 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 						val specialReward = specialDailies.random()
 						user.update()
 						specialReward.second(user)
-						reply("special reward: ${specialReward.first}$suffix")
+						reply("Special reward: ${specialReward.first}$suffix")
 					}
 				} else {
 					val wait = ((user.lastReward + 1.day) - System.currentTimeMillis())
-					reply("you have already claimed your daily reward! wait ${formatTime(wait)}!")
+					reply("You have already claimed your daily reward! Wait ${formatTime(wait)}!")
 				}
 			}
 		}
@@ -595,23 +595,28 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 			val script = args.arg<String>("script").let {
 				Vars.codeblockRegex.find(it)?.groupValues?.getOrNull(2) ?: it
 			}
-
-			val msg = originalMessageOrNull()
-			val compileConfig = ScriptCompilationConfiguration(Vars.scriptCompileConfig) {
-				if (args.flag("imports")) defaultImports(Vars.defaultImports)
-			}
-			val evalConfig = ScriptEvaluationConfiguration {
-				compilationConfiguration(compileConfig)
-				providedProperties(mapOf("message" to msg))
-			}
+			
+			val reply = reply("compiling & executing...")
 			var toDelete = args.flag("delete")
-			val compiledScript = Vars.scriptCompiler(script.toScriptSource(), compileConfig)
-					.valueOrThrow()
-			val returnValue = Vars.scriptEvaluator(compiledScript, evalConfig)
-				.valueOrThrow()
-				.returnValue
 
-			var reply: Deferred<Message>? = null
+			val returnValue = try {
+				val msg = originalMessageOrNull()
+				val compileConfig = ScriptCompilationConfiguration(Vars.scriptCompileConfig) {
+					if (args.flag("imports")) defaultImports(Vars.defaultImports)
+				}
+				val evalConfig = ScriptEvaluationConfiguration {
+					compilationConfiguration(compileConfig)
+					providedProperties(mapOf("message" to msg))
+				}
+				val compiledScript = Vars.scriptCompiler(script.toScriptSource(), compileConfig)
+					.valueOrThrow()
+				Vars.scriptEvaluator(compiledScript, evalConfig)
+					.valueOrThrow()
+					.returnValue
+			} catch (e: Exception) {
+				ResultValue.Error(e)
+			}
+
 			when (returnValue) {
 				is ResultValue.Value -> {
 					val value = when (val value = returnValue.value) {
@@ -621,19 +626,23 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 					}
 					result(result, false)
 					val string = "${returnValue.type}: $value"
-					reply = reply("```\n${string.take(1990).replace("```", "`'`")}\n```")
+					reply?.await()?.edit { content = "```\n${string.take(1990).replace("```", "`'`")}\n```" }
 				}
 				is ResultValue.Error -> {
 					val string = if (args.flag("trace")) {
 						returnValue.error.stackTraceToString()
 					} else {
 						returnValue.error.toString()
-					}
+					}.substringAfter("loading modules:") // strip everything before list of modules
+						.substringAfter("]") // strip to the end of the list
+						.trimStart()
 
-					reply = reply("```\n${string.take(1990).replace("```", "`'`")}\n```")
+					reply?.await()?.edit { content = "```\n${string.take(1990).replace("```", "`'`")}\n```" }
 					toDelete = true
 				}
-				is ResultValue.Unit, ResultValue.NotEvaluated -> {}
+				is ResultValue.Unit, ResultValue.NotEvaluated -> {
+					reply?.await()?.edit { content = "no result." }
+				}
 			}
 
 			// schedule the removal
