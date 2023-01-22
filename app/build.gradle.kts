@@ -31,6 +31,10 @@ dependencies {
 	implementation("info.debatty", "java-string-similarity", "2.0.0")
 	implementation("info.picocli", "picocli", "4.7.0")
 
+	implementation("org.jetbrains.exposed", "exposed-core", "0.41.1")
+	implementation("org.jetbrains.exposed", "exposed-dao", "0.41.1")
+	implementation("org.jetbrains.exposed", "exposed-jdbc", "0.41.1")
+
 	implementation("com.github.mnemotechnician", "markov-chain", "1.0")
 
 	kapt("info.picocli", "picocli-codegen", "4.7.0")
