@@ -49,7 +49,11 @@ class Multiverse(
 	@Transient
 	val rootJob = SupervisorJob()
 	@Transient
-	override val coroutineContext = rootJob + Dispatchers.Default
+	val exceptionHandler = CoroutineExceptionHandler { ctx, e ->
+		Log.error(e) { "An exception has occurred in '$ctx' within the multiverse" }
+	}
+	@Transient
+	override val coroutineContext = rootJob + exceptionHandler + Dispatchers.Default
 	@Transient
 	private var modificationInterceptorJob: Job? = null
 	@Transient
@@ -280,7 +284,11 @@ class Multiverse(
 			}
 		}
 		deletionQueue.removeAll { def ->
-			def.candidates.isEmpty().andLog(DEBUG) {
+			(def.isInitialized && def.candidates.isEmpty()).andLog(DEBUG) {
+				// remove from the history
+				synchronized(history) { 
+					history.remove(def.multimessage)
+				}
 				// avoid a possible api call
 				val user = (def.multimessage.origin as? Message)?.author?.id?.let { id ->
 					users.find { it.discordId == id }
@@ -348,7 +356,10 @@ class Multiverse(
 				}
 				deletion.multimessage.retranslated.find { msg ->
 					guild.channels.any { it.id == msg.channelId }
-				}?.delete() ?: run {
+				}?.let {
+					it.delete()
+					deletion.multimessage.retranslated.remove(it)
+				} ?: run {
 					deletion.multimessage.origin?.delete()
 				}
 			} catch (e: Exception) {
@@ -419,11 +430,11 @@ class Multiverse(
 		open suspend fun onStop() {}
 		
 		/** Saves data in the multiverse. */
-		suspend fun saveData(key: String, value: String) {
+		suspend fun saveData(key: String, value: String) = synchronized(multiverse.serviceData) {
 			multiverse.serviceData.getOrPut(name) { mutableMapOf() }[key] = value
 		}
 		/** Loads data from the multiverse. */
-		suspend fun loadData(key: String) = run {
+		suspend fun loadData(key: String) = synchronized(multiverse.serviceData) {
 			multiverse.serviceData.getOrElse(name) { null }?.getOrElse(key) { null }
 		}
 	}

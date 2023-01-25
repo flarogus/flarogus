@@ -247,6 +247,20 @@ net.jcip.annotations.*
 org.intellij.lang.annotations.*
 org.jetbrains.annotations.*
 org.jetbrains.concurrency.*
+org.jetbrains.exposed.dao.*
+org.jetbrains.exposed.dao.exceptions.*
+org.jetbrains.exposed.dao.id.*
+org.jetbrains.exposed.exceptions.*
+org.jetbrains.exposed.jdbc.*
+org.jetbrains.exposed.sql.*
+org.jetbrains.exposed.sql.functions.math.*
+org.jetbrains.exposed.sql.ops.*
+org.jetbrains.exposed.sql.statements.*
+org.jetbrains.exposed.sql.statements.api.*
+org.jetbrains.exposed.sql.statements.jdbc.*
+org.jetbrains.exposed.sql.transactions.*
+org.jetbrains.exposed.sql.transactions.experimental.*
+org.jetbrains.exposed.sql.vendors.*
 org.jetbrains.jps.model.java.impl.*
 org.jetbrains.org.objectweb.asm.*
 org.jetbrains.org.objectweb.asm.commons.*
@@ -258,3 +272,4 @@ org.slf4j.*
 org.slf4j.event.*
 org.slf4j.helpers.*
 org.slf4j.spi.*
+picocli.*

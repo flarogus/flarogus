@@ -19,7 +19,7 @@ import kotlinx.serialization.encoding.*
 import kotlin.reflect.KClass
 
 @OptIn(InternalSerializationApi::class)
-inline fun <T: Any> serializer(clazz: KClass<T>): KSerializer<T> = clazz.serializer()
+fun <T: Any> serializer(clazz: KClass<T>): KSerializer<T> = clazz.serializer()
 
 @Serializable(with = HistoryEntrySerializer::class)
 data class WebhookMessageBehavior(
@@ -62,8 +62,14 @@ data class Multimessage(
 			try { it.delete() } catch (ignored: Exception) { }
 			yield()
 		}
+		synchronized(retranslated) { retranslated.clear() }
+
 		if (deleteOrigin) {
 			try { origin?.delete() } catch (ignored: Exception) { }
+			origin = null
+		}
+		synchronized(Vars.multiverse.history) {
+			Vars.multiverse.history.remove(this)
 		}
 	}
 
