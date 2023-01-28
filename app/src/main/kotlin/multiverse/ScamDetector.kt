@@ -74,14 +74,13 @@ object ScamDetector {
 	).map { it.toRegex() }
 	
 	fun hasScam(message: String): Boolean {
+		// firstly, if none of the regexes match, return false
+		if (scamRegex.none { it.matches(message) }) return false
+
+		// if there is a potential scam, strip away trusted patterns and check again
 		var processed = message.lowercase()
-		
-		trustedPatterns.forEach { processed = processed.replace(it, "--TRUSTED--") }
-		scamRegex.forEach {
-			if (it.matches(processed)) {
-				return true
-			}
-		}
-		return false
+		trustedPatterns.forEach { processed = processed.replace(it, "-;;-") }
+
+		return scamRegex.any { it.matches(processed) }
 	}
 }

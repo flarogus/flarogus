@@ -20,7 +20,6 @@ import kotlin.time.ExperimentalTime
 
 /** 
  * Represents a user that has ever interacted with the Multiverse 
- * Currently unused.
  */
 @Serializable
 @OptIn(ExperimentalTime::class)
@@ -41,16 +40,20 @@ open class MultiversalUser(
 	/** NOT the name of the user! */
 	var usertag: String? = null
 	var nameOverride: String? = null
-		get() = if (field == null || field!!.isEmpty()) null else field
+		get() = field?.takeIf { it.isNotEmpty() }
 
 	/** The name of the user */
-	val name get() = (if (usertag != null) "[$usertag] " else "") + (nameOverride ?: user?.username ?: "null") + "#" + user?.discriminator
+	val name get() =
+		usertag.let { "[$it] " }.orEmpty()
+		+ (nameOverride ?: user?.username ?: "<invalid user>")
+		+ "#" + user?.discriminator
 	/** The avatar of the user */
 	val avatar get() = user?.getAvatarUrl()
 
 	var lastSent = 0L
 	var totalSent = 0
 
+	/** The last time this user received a daily reward. */
 	var lastReward = 0L
 
 	/**
@@ -65,7 +68,7 @@ open class MultiversalUser(
 			event.message.replyWith(when {
 				isForceBanned -> "You are banned from the Multiverse. Contact one of the admins for more info."
 				warningPoints >= criticalWarns -> "You have too many warning points. You cannot send messages in the Multiverse until some of your warns expire."
-				!isValid -> "Your user entry is invalid. This should be fixed automatically."
+				!isValid -> "Your user entry is invalid. This should be fixed automatically after some time."
 				else -> "For an unknown reason, you're not allowed to send mssages in the Multiverse. Contact the admins for more info."
 			})
 			return false
@@ -77,7 +80,7 @@ open class MultiversalUser(
 
 			if (delay > 0) {
 				val reply = event.message.replyWith("This message was not retranslated because you were rate limited. Please, wait $messageRateLimit ms.")
-				scheduleMessageRemoval(10000L, reply, event.message)
+				scheduleMessageRemoval(10.second, reply, event.message)
 				return false
 			} else if (ScamDetector.hasScam(event.message.content)) {
 				event.message.replyWith("[!] your message contains a potential scam. if you're not a bot, remove any links and try again")
@@ -95,11 +98,11 @@ open class MultiversalUser(
 					Contact the admins (e.g. by executing `!flarogus report 'pls whitelist my server thx'`) to get whitelisted.
 				""".trimIndent())
 			} else {
-				// notifying the global message filters
+				// notify the global message filters
 				Vars.multiverse.messageFilters.find { !it.filter(this, event.message) }?.let {
-					if (it.reason != null) {
-						event.message.replyWith("This message was not retranslated. The reason was: ${it.reason}")
-					}
+					val suffix = it.reason?.let { reason -> "The reason was: $reason" }.orEmpty()
+					event.message.replyWith("This message was not retranslated. $suffix")
+
 					if (it.log) {
 						Log.info { "Message sent by $name was filtered out (${it.reason}): ```${event.message.content}```" }
 					}
@@ -227,7 +230,9 @@ fun Message.toRetranslatableContent() = buildString {
 	append(content.stripEveryone())
 	attachments.forEach { attachment ->
 		if (!attachment.isImage && attachment.size >= MultiversalUser.maxFileSize) {
-			append('\n').append("[file: ${attachment.filename}](${attachment.url})")
+			append('\n')
+			append("[file: ${attachment.filename}](${attachment.url})")
+			append("(%.3f MiB)".format(attachment.size / 1024 / 1024f))
 		}
 	}
 }
@@ -236,7 +241,9 @@ fun DiscordPartialMessage.toRetranslatableContent() = buildString {
 	append(content.value?.stripEveryone().orEmpty())
 	attachments.value?.forEach { attachment ->
 		if (!Image.Format.isSupported(attachment.filename) && attachment.size >= MultiversalUser.maxFileSize) {
-			append('\n').append("[file: ${attachment.filename}](${attachment.url})")
+			append('\n')
+			append("[file: ${attachment.filename}](${attachment.url})")
+			append(" (%.3f MiB)".format(attachment.size / 1024 / 1024f))
 		}
 	}
 }

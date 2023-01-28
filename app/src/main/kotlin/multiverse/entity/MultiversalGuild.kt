@@ -31,8 +31,8 @@ open class MultiversalGuild(
 	val webhooks = HashSet<Webhook>()
 
 	var nameOverride: String? = null
-		get() = if (field == null || field!!.isEmpty()) null else field
-	val name: String get() = nameOverride ?: guild?.name ?: "unknown guild"
+		get() = field?.takeIf { it.isNotEmpty() }
+	val name: String get() = nameOverride ?: guild?.name ?: "<invalid guild>"
 
 	/** Epoch time of the last sent message. */
 	var lastSent = 0L
@@ -131,9 +131,10 @@ open class MultiversalGuild(
 						Log.error { "couldn't acquire a webhook for ${it.name} (${it.id}}: $e" }
 						channels.remove(it)
 
-						try { 
-							it.createMessage("Failed to acquire a webhook for this channel. Next attempt in 10 minutes.") 
-						} catch (_: Exception) {}
+						runCatching {
+							val time = updateInterval / 1.minute
+							it.createMessage("Failed to acquire a webhook for this channel. Next attempt in $time minutes.") 
+						}
 					}
 
 					yield()
