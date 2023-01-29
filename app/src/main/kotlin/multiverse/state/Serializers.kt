@@ -33,13 +33,13 @@ class RuleSerializer : KSerializer<Rule> {
 
 class TransactionSerializer : KSerializer<Transaction> {
 	val incomingType = "i"
-	val outcomingType = "o"
+	val outgoingType = "o"
 	override val descriptor = PrimitiveSerialDescriptor("Transaction", PrimitiveKind.STRING)
 
 	override fun serialize(encoder: Encoder, value: Transaction) {
 		val (type, userId) = when (value) {
 			is Transaction.IncomingTransaction -> incomingType to value.sender
-			is Transaction.OutcomingTransaction -> outcomingType to value.receiver
+			is Transaction.OutgoingTransaction -> outgoingType to value.receiver
 		}
 		encoder.encodeString("$type;${value.amount};$userId;${value.timestamp}")
 	}
@@ -49,11 +49,11 @@ class TransactionSerializer : KSerializer<Transaction> {
 
 		val timestamp = runCatching {
 			parts[3].toInstant()
-		}.getOrElse { Instant.ofEpochMilliseconda(0L) }
+		}.getOrElse { Instant.ofEpochMilliseconds(0L) }
 
 		return when (val type = parts[0]) {
 			incomingType -> Transaction.IncomingTransaction(parts[1].toInt(), parts[2].toSnowflake(), timestamp)
-			outcomingType -> Transaction.OutcomingTransaction(parts[1].toInt(), parts[2].toSnowflake(), timestamp)
+			outgoingType -> Transaction.OutgoingTransaction(parts[1].toInt(), parts[2].toSnowflake(), timestamp)
 			else -> error("unresolved transaction type alias: '$type'")
 		}
 	}
