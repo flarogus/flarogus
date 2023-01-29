@@ -12,6 +12,7 @@ import kotlinx.serialization.*
 @Serializable
 @SerialName("virtual")
 class VirtualMultiversalUser(
+	@SerialName("id")
 	override val discordId: Snowflake,
 
 	override val name: String,
@@ -24,18 +25,16 @@ class VirtualMultiversalUser(
 
 	override val warns = ArrayList<WarnEntry>()
 
-	/** Does nothing; always null. */
-	override var usertag: String?
-		get() = null
-		set(value) {}
-	/** Does nothing; always null. */
-	override var nameOverride: String?
-		get() = null
-		set(value) {}
-
+	@SerialName("fb")
 	override val flarcoinBank = BankAccount(discordId, 10)
 	override val showNotifications get() = false
 	
 	/** Does nothing. */
 	override suspend fun updateImpl() {}
 }
+
+fun MultiversalUser.asVirtual(): VirtualMultiversalUser = run {
+	require(this is VirtualMultiversalUser) { "$this is not a real multiversal user." }
+	this
+}
+

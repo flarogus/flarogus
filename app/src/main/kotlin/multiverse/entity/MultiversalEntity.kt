@@ -10,12 +10,14 @@ import kotlinx.serialization.*
 @Serializable
 abstract class MultiversalEntity {
 	/** Whether this entity was forcibly banned */
+	@SerialName("ban")
 	var isForceBanned = false
 
 	@Transient
 	var isValid = false
 		protected set
 	
+	@SerialName("lu")
 	var lastUpdate = 0L
 
 	suspend fun update() {

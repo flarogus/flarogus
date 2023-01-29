@@ -27,6 +27,7 @@ import kotlinx.datetime.*
 @Serializable
 @SerialName("real")
 class RealMultiversalUser(
+	@SerialName("id")
 	override val discordId: Snowflake
 ) : MultiversalUser() {
 	@Transient
@@ -37,8 +38,12 @@ class RealMultiversalUser(
 
 	override val warns = ArrayList<WarnEntry>()
 
-	override var usertag: String? = null
-	override var nameOverride: String? = null
+	/** A prefix before the name. This is NOT the name of the user! */
+	@SerialName("ut")
+	var usertag: String? = null
+	/** Overrides [user.username]. */
+	@SerialName("no")
+	var nameOverride: String? = null
 		get() = field?.takeIf { it.isNotEmpty() }
 
 	override val name get() =
@@ -47,7 +52,9 @@ class RealMultiversalUser(
 		"#" + user?.discriminator
 	override val avatar get() = user?.getAvatarUrl()
 
+	@SerialName("fb")
 	override val flarcoinBank = BankAccount(discordId, 10)
+	@SerialName("sn")
 	override var showNotifications = true
 	/** The last time this user received a daily reward. */
 	@SerialName("lr")
@@ -69,5 +76,10 @@ class RealMultiversalUser(
 
 		isValid = user != null
 	}
+}
+
+fun MultiversalUser.asReal(): RealMultiversalUser = run {
+	require(this is RealMultiversalUser) { "$this is not a real multiversal user." }
+	this
 }
 

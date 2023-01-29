@@ -30,7 +30,7 @@ class InfoMessageService : MultiversalService() {
 
 					val channelCount = multiverse.guilds.sumOf { it.channels.size }
 
-					multiverse.broadcastSystem {
+					multiverse.system.broadcast {
 						embed { description = message.format(channelCount - 1) }
 					}
 					Log.info { "info message sent" }

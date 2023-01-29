@@ -71,7 +71,7 @@ class MultimessageSerializer : KSerializer<Multimessage> {
 			encodeSerializableElement(descriptor, 1, snowflakeSerializer, value.origin!!.channelId)
 		}
 		encodeSerializableElement(descriptor, 2, wmblistSerializer, value.retranslated)
-	};
+	}
 	
 	override fun deserialize(decoder: Decoder): Multimessage = decoder.decodeStructure(descriptor) {
 		var id: Snowflake? = null
@@ -98,32 +98,20 @@ class MultimessageSerializer : KSerializer<Multimessage> {
 class WebhookMessageSerializer : KSerializer<WebhookMessageBehavior> {
 	private val snowflakeSerializer = serializer(Snowflake::class)
 
-	override val descriptor: SerialDescriptor = buildClassSerialDescriptor("flarogus.multiverse.state.WebhookMessageBehavior") {
-		element("wh", snowflakeSerializer.descriptor)
-		element("ch", snowflakeSerializer.descriptor)
-		element("id", snowflakeSerializer.descriptor)
+	override val descriptor = PrimitiveSerialDescriptor("WebhookMessageBehavior", PrimitiveKind.STRING)
+	
+	override fun serialize(encoder: Encoder, value: WebhookMessageBehavior) {
+		encoder.encodeString("${value.webhookId}:${value.channelId}:${value.id}")
 	}
 	
-	override fun serialize(encoder: Encoder, value: WebhookMessageBehavior) = encoder.encodeStructure(descriptor) {
-		encodeSerializableElement(descriptor, 0, snowflakeSerializer, value.webhookId)
-		encodeSerializableElement(descriptor, 1, snowflakeSerializer, value.channelId)
-		encodeSerializableElement(descriptor, 2, snowflakeSerializer, value.id)
-	};
-	
-	override fun deserialize(decoder: Decoder): WebhookMessageBehavior = decoder.decodeStructure(descriptor) {
-		var webhookId: Snowflake? = null
-		var channelId: Snowflake? = null
-		var messageId: Snowflake? = null
-		eachIndex(descriptor) {
-			val snowflake = decodeSerializableElement(descriptor, it, snowflakeSerializer)
-			when (it) {
-				0 -> webhookId = snowflake
-				1 -> channelId = snowflake
-				2 -> messageId = snowflake
-			}
-		}
+	override fun deserialize(decoder: Decoder): WebhookMessageBehavior {
+		val parts = decoder.decodeString().split(':')
 		
-		WebhookMessageBehavior(webhookId!!, channelId!!, messageId!!)
+		return WebhookMessageBehavior(
+			parts[0].toSnowflake(),
+			parts[1].toSnowflake(),
+			parts[2].toSnowflake()
+		)
 	}
 }
 

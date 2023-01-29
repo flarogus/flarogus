@@ -72,7 +72,7 @@ fun TreeCommandBuilder.addManagementSubtree() = subtree("manage") {
 		) {
 			arguments {
 				addUserArgument()
-				default<String>("name", "The name to set this user's nickname to.") { "" }
+				default<String>("name", "The name this user's nickname will be set to.") { "" }
 			}
 
 			action {
@@ -81,7 +81,7 @@ fun TreeCommandBuilder.addManagementSubtree() = subtree("manage") {
 
 				require(name.length <= 30) { "The nickname must not be longer than 30 symbols." }
 
-				args.arg<MultiversalUser>("user").nameOverride = name
+				args.arg<MultiversalUser>("user").asReal().nameOverride = name
 				Log.info { "The name of user ${args.arg<MultiversalUser>("user").discordId} was set to $name" }
 			}
 		}
@@ -92,7 +92,7 @@ fun TreeCommandBuilder.addManagementSubtree() = subtree("manage") {
 			}
 			action {
 				requireModOrSelf()
-				args.arg<MultiversalUser>("user").nameOverride = null
+				args.arg<MultiversalUser>("user").asReal().nameOverride = null
 			}
 		}
 
@@ -107,7 +107,7 @@ fun TreeCommandBuilder.addManagementSubtree() = subtree("manage") {
 
 				action {
 					val command = args.arg<String>("command")
-					val user = args.arg<MultiversalUser>("user")
+					val user = args.arg<MultiversalUser>("user").asReal()
 
 					expect(command.startsWith("!flarogus")) { "command name must start with the !flarogus prefix." }
 					expect(FlarogusCommand.find(command) != null) { "Command named '$command' does not exist." }
@@ -122,7 +122,7 @@ fun TreeCommandBuilder.addManagementSubtree() = subtree("manage") {
 				}
 				
 				action {
-					val user = args.arg<MultiversalUser>("user")
+					val user = args.arg<MultiversalUser>("user").asReal()
 					val oldEntries = user.commandBlacklist.joinToString("\n") { "`$it`" }
 					user.commandBlacklist.clear()
 					reply("Successfully removed the following entries from the command blacklist of ${user.name}:\n$oldEntries")
@@ -134,7 +134,7 @@ fun TreeCommandBuilder.addManagementSubtree() = subtree("manage") {
 					required<MultiversalUser>("user", "The user whose command blacklist you want to manage.")
 				}
 				action {
-					val user = args.arg<MultiversalUser>("user")
+					val user = args.arg<MultiversalUser>("user").asReal()
 					val commands = user.commandBlacklist.joinToString("\n") { "`$it`" }
 					reply("${user.name} is blacklisted from the following commands:\n$commands")
 				}
@@ -145,10 +145,11 @@ fun TreeCommandBuilder.addManagementSubtree() = subtree("manage") {
 
 private suspend fun Callback<*>.requireModOrSelf() {
 	expect(originalMessage != null) { "anonymous caller cannot use this command" }
-	expect(originalMessage().author!!.let {
+	val author = originalMessage().author!!
+	expect(author.let {
 		it.isModerator() || it.id == args.arg<MultiversalUser>("user").discordId
 	}) {
-		"You must either manage yourself or be a multiversal moderator."
+		"You must either manage yourself or be a multiversal moderator. Your user id is ${author.id}."
 	}
 }
 
@@ -171,3 +172,4 @@ private fun Arguments.addUserArgument() = default<MultiversalUser>(
 		?: fail("anonymous caller must specify a user")
 	Vars.multiverse.userOf(id) ?: fail("This user is not valid.")
 }
+

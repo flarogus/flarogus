@@ -157,7 +157,7 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 
 			action {
 				args.arg<MultiversalUser>("user").let {
-					it.usertag = args.arg<String>("tag")
+					it.asReal().usertag = args.arg<String>("tag")
 					reply("Their name is now \"$it\".")
 				}
 			}
@@ -165,13 +165,13 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 
 		subaction<Unit>("clear", "Clear the usertag of the user.") {
 			args.arg<MultiversalUser>("user").let {
-				it.usertag = null
+				it.asReal().usertag = null
 				reply("$it's usertag has been cleared.")
 			}
 		}
 
 		subaction<String>("check", "Fetch the usertag of the user.") {
-			result(args.arg<MultiversalUser>("user").usertag)
+			result(args.arg<MultiversalUser>("user").asReal().usertag)
 		}
 	}
 

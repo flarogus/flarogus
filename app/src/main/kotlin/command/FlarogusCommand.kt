@@ -5,6 +5,7 @@ import flarogus.Vars
 import flarogus.command.parser.CommandArgumentParser
 import flarogus.multiverse.Multiverse
 import flarogus.multiverse.Log
+import flarogus.multiverse.entity.RealMultiversalUser
 import flarogus.util.*
 import kotlinx.coroutines.delay
 import ktsinterface.launch
@@ -160,7 +161,8 @@ open class FlarogusCommand<R>(name: String) {
 		// check if the user is blacklisted from this command. not using userOf as it can create a new unneccesary entry
 		(callback.originalMessage as Message?)?.author?.id?.let { id ->
 			val name = getFullName()
-			if (Vars.multiverse.users.find { it.discordId == id }?.commandBlacklist?.contains(name) == true) {
+			val user = Vars.multiverse.users.find { it.discordId == id } as? RealMultiversalUser ?: return@let
+			if (user.commandBlacklist.contains(name) == true) {
 				errors += "you're personally blacklisted from this command"
 			}
 		}

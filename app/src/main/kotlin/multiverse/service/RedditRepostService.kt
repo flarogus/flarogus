@@ -59,7 +59,7 @@ class RedditRepostService(
 
 		saveData(subredditIndexKey, (index + 1).toString())
 
-		multiverse.broadcastSystem {
+		multiverse.system.broadcast {
 			content = "Title: [$title]($url)"
 		}
 	}

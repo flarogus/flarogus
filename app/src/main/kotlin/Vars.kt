@@ -118,10 +118,12 @@ object Vars {
 		startedAt = System.currentTimeMillis()
 
 		// if possible. load the previous multiverse. Otherwise, create a new one.
-		runCatching { StateManager.loadState() }.getOrNull()?.let {
+		runCatching { StateManager.loadState() }.onSuccess {
 			it.loadFromState() // it will load the multiverse as well
 			Log.info { "State loaded successfully." }
-		} ?: run {
+		}.onFailure {
+			Log.error(it) { "An exception has occurred while loading the state" }
+
 			flarogusEpoch = startedAt
 			multiverse = Multiverse()
 

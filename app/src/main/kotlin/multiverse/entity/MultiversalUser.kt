@@ -22,17 +22,11 @@ import kotlinx.datetime.*
 
 /** Represents a user within the multiverse. */
 @Serializable
-abstract sealed class MultiversalUser : MultiversalEntity() {
+sealed class MultiversalUser : MultiversalEntity() {
 	abstract val discordId: Snowflake
-	@Transient
 	abstract val user: User?
 	abstract val isSuperuser: Boolean
 	abstract val isModerator: Boolean
-	/** A prefix before the name. This is NOT the name of the user! */
-	@SerialName("ut")
-	abstract var usertag: String?
-	@SerialName("no")
-	abstract var nameOverride: String?
 	/** The name of the user */
 	abstract val name: String
 	/** The avatar of the user */
@@ -47,10 +41,8 @@ abstract sealed class MultiversalUser : MultiversalEntity() {
 	var totalSent = 0
 
 	/** The FlarCoin bank account of this user. By default contains 10 FlarCoins. */
-	@SerialName("fb")
 	abstract val flarcoinBank: BankAccount
 	/** If true, the user wants to receive DM notifications about their FlarCoin account. */
-	@SerialName("sn")
 	abstract val showNotifications: Boolean
 	
 	/** Alias for [discordId]. */
@@ -226,8 +218,12 @@ abstract sealed class MultiversalUser : MultiversalEntity() {
 
 	/** Represents a FlarCoin bank account of a user. */
 	@Serializable
-	data class BankAccount(val ownerId: Snowflake, var balance: Int = 0) {
+	data class BankAccount(
+		@SerialName("id") val ownerId: Snowflake, 
+		@SerialName("bal") var balance: Int = 0
+	) {
 		/** All transactions performed by this user. */
+		@SerialName("ts")
 		var transactions: MutableList<Transaction>? = null
 			private set
 
@@ -286,14 +282,13 @@ abstract sealed class MultiversalUser : MultiversalEntity() {
 			}
 		}
 
-		@Serializable
+		@Serializable(with = TransactionSerializer::class)
 		sealed class Transaction(val amount: Int, val timestamp: Instant?) {
 			/** A transaction from another bank account to this bank account. */
-			@Serializable(with = TransactionSerializer::class)
 			class IncomingTransaction(amount: Int, val sender: Snowflake?, timestamp: Instant?) 
 				: Transaction(amount, timestamp)
+
 			/** A transaction from this bank account to another bank account. */
-			@Serializable(with = TransactionSerializer::class)
 			class OutcomingTransaction(amount: Int, val receiver: Snowflake, timestamp: Instant?)
 				: Transaction(amount, timestamp)
 		}
