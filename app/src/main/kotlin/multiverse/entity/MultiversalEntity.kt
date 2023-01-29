@@ -14,7 +14,7 @@ abstract class MultiversalEntity {
 	var isForceBanned = false
 
 	@Transient
-	var isValid = false
+	open var isValid = false
 		protected set
 	
 	@SerialName("lu")

@@ -19,6 +19,10 @@ class VirtualMultiversalUser(
 	override val avatar: String?,
 	override val isSuperuser: Boolean = false
 ) : MultiversalUser() {
+	/** Always true. */
+	override var isValid
+		get() = true
+		set(ignored) {}
 	/** Always null. */
 	override val user get() = null
 	override val isModerator: Boolean get() = isSuperuser
@@ -31,6 +35,8 @@ class VirtualMultiversalUser(
 	
 	/** Does nothing. */
 	override suspend fun updateImpl() {}
+
+	override fun canSend() = true
 }
 
 fun MultiversalUser.asVirtual(): VirtualMultiversalUser = run {

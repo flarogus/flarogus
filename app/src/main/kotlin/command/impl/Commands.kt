@@ -6,7 +6,7 @@ import dev.kord.core.behavior.edit
 import dev.kord.core.entity.*
 import dev.kord.rest.builder.message.create.embed
 import flarogus.Vars
-import flarogus.command.TreeCommand
+import flarogus.command.*
 import flarogus.command.builder.createTree
 import flarogus.multiverse.*
 import flarogus.multiverse.entity.*
@@ -274,19 +274,28 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 				"what did you expect", "sorry, your daily reward has been taken by someone else.", "this was a triumph...", "you were killed by the impostor",
 				"you get nothing", "you are sus", "nothing, try again tomorrow","you have mere seconds.", "you ruined the task!",
 				"your parents don't love you", "you are so fat, if you were an impostor, you would get stuck in the vent",
-				"you will never finish your tasks", "34 FlarCoin", "two tasks have been added to your list, crewmate!"
+				"you will never finish your tasks", "two tasks have been added to your list, crewmate!"
 			)
-			val specialDailies = arrayOf<Pair<String, (suspend (RealMultiversalUser) -> Unit)>> (
-				// good
-				"you name was made sussy. (tip: you can change it using a command)" to {
+			val specialDailies = arrayOf<Pair<String, (suspend Callback<*>.(RealMultiversalUser) -> Unit)>> (
+				// good.
+				"your name was made sussy. (tip: you can change it using a command)" to {
 					it.update()
-					it.nameOverride = "amogus the ${it.nameOverride ?: it.user?.username}"
+					if (it.nameOverride?.startsWith("amogus the ")?.not() ?: true) {
+						it.nameOverride = "amogus the ${it.nameOverride ?: it.user?.username}"
+					}
 				},
 				"you can claim one more reward!" to { it.lastReward -= 1.day },
 				"you receive a [lucky] usertag." to { it.usertag = "lucky" },
 				"you receive an [impostor] usertag." to { it.usertag = "impostor" },
 				"you were so lucky that fluctations in your luck field have affected the multiversal plane and made a new reddit post drop immediately! Woah!" to {
 					Vars.redditRepostService.postPicture()
+				},
+				"a nyamazon package has been delivered to your house! You unboxed it and found some FlarCoins sent to you by the multiversal government!" to {
+					reply {
+						val amount = Random.nextInt(8, 34)
+						Vars.multiverse.government.flarcoinBank
+							.sendMoney(amount, it.flarcoinBank, true)
+					}
 				},
 				// bad
 				"woah, woah, chill... Your daily reward was postponed by 2 days!" to { it.lastReward += 1.day },
@@ -315,12 +324,12 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 					user.lastReward = max(
 						System.currentTimeMillis() - 1.day, user.lastReward + 1.day)
 
-					if (Random.nextInt(0, 21) > 6) {
+					if (Random.nextInt(0, 213) > 75) {
 						reply("daily reward: ${dailies.random()}$suffix")
 					} else {
 						val specialReward = specialDailies.random()
 						user.update()
-						specialReward.second(user)
+						specialReward.second(this, user)
 						reply("Special reward: ${specialReward.first}$suffix")
 					}
 				} else {
