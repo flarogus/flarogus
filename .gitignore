@@ -6,3 +6,6 @@ build
 
 app/build
 /app/out/
+
+# ffs
+/\\

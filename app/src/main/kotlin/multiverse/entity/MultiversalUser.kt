@@ -1,7 +1,7 @@
 package flarogus.multiverse.entity
 
 import dev.kord.common.entity.*
-import dev.kord.core.Kord
+import dev.kord.core.behavior.channel.createMessage
 import dev.kord.core.entity.User
 import dev.kord.core.entity.Message
 import dev.kord.core.entity.channel.TextChannel
@@ -9,52 +9,52 @@ import dev.kord.core.event.message.MessageCreateEvent
 import dev.kord.rest.Image
 import dev.kord.rest.builder.message.create.*
 import flarogus.Vars
+import flarogus.command.impl.describeTransaction
 import flarogus.multiverse.*
 import flarogus.multiverse.ScamDetector
 import flarogus.multiverse.state.Multimessage
+import flarogus.multiverse.state.TransactionSerializer
 import flarogus.util.*
 import kotlinx.serialization.*
 import java.net.URL
-import java.time.Instant
 import kotlin.time.ExperimentalTime
+import kotlinx.datetime.*
 
-/** 
- * Represents a user that has ever interacted with the Multiverse 
- */
+/** Represents a user within the multiverse. */
 @Serializable
-@OptIn(ExperimentalTime::class)
-open class MultiversalUser(
-	val discordId: Snowflake
-) : MultiversalEntity() {
+abstract sealed class MultiversalUser : MultiversalEntity() {
+	abstract val discordId: Snowflake
 	@Transient
-	open var user: User? = null
-
-	val isSuperuser: Boolean get() = discordId in Vars.superusers
-	val isModerator: Boolean get() = discordId in Vars.moderators || isSuperuser
-
-	val warns = ArrayList<WarnEntry>()
-	val warningPoints get() = warns.fold(0) { total: Int, warn -> total + warn.rule.points }
-	/** Commands this user is not allowed to execute. */
-	val commandBlacklist = ArrayList<String>()
-
-	/** NOT the name of the user! */
-	var usertag: String? = null
-	var nameOverride: String? = null
-		get() = field?.takeIf { it.isNotEmpty() }
-
+	abstract val user: User?
+	abstract val isSuperuser: Boolean
+	abstract val isModerator: Boolean
+	/** A prefix before the name. This is NOT the name of the user! */
+	@SerialName("ut")
+	abstract var usertag: String?
+	@SerialName("no")
+	abstract var nameOverride: String?
 	/** The name of the user */
-	val name get() =
-		usertag.let { "[$it] " }.orEmpty()
-		+ (nameOverride ?: user?.username ?: "<invalid user>")
-		+ "#" + user?.discriminator
+	abstract val name: String
 	/** The avatar of the user */
-	val avatar get() = user?.getAvatarUrl()
+	abstract val avatar: String?
 
+	abstract val warns: MutableList<WarnEntry>
+	val warningPoints get() = warns.fold(0) { total: Int, warn -> total + warn.rule.points }
+
+	@SerialName("ls")
 	var lastSent = 0L
+	@SerialName("ts")
 	var totalSent = 0
 
-	/** The last time this user received a daily reward. */
-	var lastReward = 0L
+	/** The FlarCoin bank account of this user. By default contains 10 FlarCoins. */
+	@SerialName("fb")
+	abstract val flarcoinBank: BankAccount
+	/** If true, the user wants to receive DM notifications about their FlarCoin account. */
+	@SerialName("sn")
+	abstract val showNotifications: Boolean
+	
+	/** Alias for [discordId]. */
+	val id get() = discordId
 
 	/**
 	 * Should be called when this user sends a multiversal message.
@@ -62,7 +62,7 @@ open class MultiversalUser(
 	 *
 	 * @return whether the message was retranslated.
 	 */
-	suspend fun onMultiversalMessage(event: MessageCreateEvent): Boolean {
+	suspend open fun onMultiversalMessage(event: MessageCreateEvent): Boolean {
 		update()
 		if (!canSend()) {
 			event.message.replyWith(when {
@@ -153,36 +153,45 @@ open class MultiversalUser(
 		}.also { totalSent++ }
 	}
 
+	/** Broadcast into the multiverse using this user's username and avatar. */
+	suspend inline fun broadcastAsync(
+		noinline filter: (TextChannel) -> Boolean = { true },
+		crossinline builder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
+	): Multiverse.MultimessageDefinition {
+		update()
+		return Vars.multiverse.broadcastAsync(name, avatar, filter) {
+			builder(it)
+			content = content?.explicitMentions()
+		}.also { totalSent++ }
+	}
+	
+	/** Same as [broadcastAsync] but awaits for the result. */
+	suspend inline fun broadcast(
+		noinline filter: (TextChannel) -> Boolean = { true },
+		crossinline builder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
+	) = broadcastAsync(filter, builder).await()
+
 	/** Warns this user for a rule. */
-	open fun warnFor(rule: Rule, informMultiverse: Boolean) {
+	open suspend fun warnFor(rule: Rule, informMultiverse: Boolean) {
 		if (rule.points <= 0) return;
 		warns.add(WarnEntry(rule, System.currentTimeMillis()))
 
 		if (informMultiverse) {
-			Vars.multiverse.broadcastSystemAsync {
+			Vars.multiverse.system.broadcastAsync {
 				content = "User $name was warned for rule ${rule.category}.${rule.index + 1}: «$rule»"
 			}
 		}
-	}
-	
-	/** Updates this user */
-	override suspend fun updateImpl() {
-		warns.removeAll { !it.isValid() }
-
-		if (user == null || lastUpdate + updateInterval < System.currentTimeMillis()) {
-			val newuser = Vars.restSupplier.getUserOrNull(discordId)
-			if (newuser != null) user = newuser
-
-			lastUpdate = System.currentTimeMillis()
-		}
-
-		isValid = user != null
 	}
 	
 	/** Whether this user can send multiversal messages */
 	open fun canSend(): Boolean {
 		return !isForceBanned && warningPoints < criticalWarns && isValid
 	}
+
+	/** Try to open a DM channel with this user. Return null on failure. */
+	suspend open fun getDmChannel() = runCatching {
+		user?.getDmChannel()
+	}.getOrNull()
 
 	override fun toString() = name
 
@@ -201,16 +210,92 @@ open class MultiversalUser(
 
 	/** Represents the fact that a user has violated a rule */
 	@Serializable
+	@OptIn(ExperimentalTime::class)
 	data class WarnEntry(val rule: Rule, val received: Long = System.currentTimeMillis()) {
-		val instant: Instant get() = Instant.ofEpochMilli(received)
+		val instant: Instant get() = Instant.fromEpochMilliseconds(received)
 
-		val expires: Instant get() = Instant.ofEpochMilli(received + expiration)
+		val expires: Instant get() = Instant.fromEpochMilliseconds(received + expiration)
 		
 		fun isValid() = received + expiration > System.currentTimeMillis()
 
 		companion object {
 			/** Time in ms required for a warn to expire. 60 days. */
 			val expiration = 60.day
+		}
+	}
+
+	/** Represents a FlarCoin bank account of a user. */
+	@Serializable
+	data class BankAccount(val ownerId: Snowflake, var balance: Int = 0) {
+		/** All transactions performed by this user. */
+		var transactions: MutableList<Transaction>? = null
+			private set
+
+		/** Returns the list of transactions, creating it if neccesary. */
+		fun getTransactionsList() = transactions ?: ArrayList<Transaction>().also { transactions = it }
+
+		/** Add/substract [amount] FlarCoins to/from this account and record the transaction. */
+		fun addMoney(amount: Int, sender: Snowflake? = null, timestamp: Instant = Clock.System.now()) = let {
+			balance += amount
+			Transaction.IncomingTransaction(amount, sender, timestamp)
+				.also(getTransactionsList()::add)
+		}
+
+		/** 
+		 * Send FlarCoins from this bank account to another bank account and record the transaction.
+		 * Unless [forcibly] is true, throws an [IllegalArgumentException] if [balance] is lower than [amount].
+		 *
+		 * @param sendNotification if true, an attempt to find the target user and send a notification will be made.
+		 */
+		suspend fun sendMoney(
+			amount: Int, 
+			receiver: BankAccount, 
+			forcibly: Boolean = false,
+			sendNotification: Boolean = true
+		): Transaction.OutcomingTransaction {		
+			if (!forcibly && amount > balance) {
+				error("The amount of money on the $ownerId bank account is insufficient to perform the transaction.")
+			}
+			balance -= amount
+
+			Transaction.OutcomingTransaction(
+				amount = amount,
+				receiver = receiver.ownerId,
+				timestamp = Clock.System.now()
+			).also { transaction ->
+				getTransactionsList().add(transaction)
+				val incomingTransaction = receiver.addMoney(amount, ownerId, transaction.timestamp!!)
+
+				if (sendNotification) {
+					val target = Vars.multiverse.userOf(receiver.ownerId)
+
+					if (target != null && target.showNotifications) runCatching {
+						target.getDmChannel()?.createMessage {
+							describeTransaction(incomingTransaction, target, true)
+							// add a "you can stop seeing such messages..." footer
+							embeds.last().footer {
+								text = "You can stop getting such DM messages by typing `!flarogus bank notifications off`."
+							}
+						}
+					}.onFailure {
+						Log.error(it) { "Failed to notify $target about an incoming transaction" }
+					}
+				}
+
+				return transaction
+			}
+		}
+
+		@Serializable
+		sealed class Transaction(val amount: Int, val timestamp: Instant?) {
+			/** A transaction from another bank account to this bank account. */
+			@Serializable(with = TransactionSerializer::class)
+			class IncomingTransaction(amount: Int, val sender: Snowflake?, timestamp: Instant?) 
+				: Transaction(amount, timestamp)
+			/** A transaction from this bank account to another bank account. */
+			@Serializable(with = TransactionSerializer::class)
+			class OutcomingTransaction(amount: Int, val receiver: Snowflake, timestamp: Instant?)
+				: Transaction(amount, timestamp)
 		}
 	}
 

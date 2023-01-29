@@ -24,17 +24,26 @@ import kotlinx.serialization.Transient
  */
 @Serializable
 class Multiverse(
-	val webhookName: String = "MultiverseWebhook",
-	val systemName: String = "Multiverse",
-	val systemAvatar: String = "https://cdn.discordapp.com/attachments/1045966829882970143/1045967037316481145/multiverse-system-v3.jpg",
+	/** A virtual system account. */
+	val system: MultiversalUser = VirtualMultiversalUser(
+		Snowflake(100UL), "Multiverse",
+		"https://cdn.discordapp.com/attachments/1045966829882970143/1045967037316481145/multiverse-system-v3.jpg",
+	),
+	/** A virtual government account. Has a default flarcoin balance of 10000. */
+	val government: MultiversalUser = VirtualMultiversalUser(
+		Snowflake(101UL), "Multiversal Government", 
+		"" //TODO
+	).also { it.flarcoinBank.balance = 10000 },
 	
 	val history: ArrayList<Multimessage> = ArrayList(1000),
 	val users: ArrayList<MultiversalUser> = ArrayList(90),
 	val guilds: ArrayList<MultiversalGuild> = ArrayList(30),
 
+	/** The last moment a backup was created. */
 	var lastBackup: Long = 0L,
 
-	private val serviceData: MutableMap<String, MutableMap<String, String>> = HashMap()
+	/** A 2D map services use to store their data. */
+	private val serviceData: MutableMap<String, MutableMap<String, String>> = HashMap(),
 ) : CoroutineScope {
 	/** If false, new messages will be ignored */
 	@Transient
@@ -78,6 +87,9 @@ class Multiverse(
 	suspend fun start() {
 		services.forEach { it.onStart() }
 
+		if (system !in users) users += system
+		if (government !in users) users += government
+
 		Vars.client.events
 			.filterIsInstance<MessageDeleteEvent>()
 			.filter { isRunning }
@@ -115,8 +127,8 @@ class Multiverse(
 		}
 		saveStateJob = launch {
 			while (true) {
-				// 2 backups per day
-				val backup = System.currentTimeMillis() > lastBackup + 12.hour
+				// 3 backups per day
+				val backup = System.currentTimeMillis() > lastBackup + 8.hour
 				if (backup) {
 					lastBackup = System.currentTimeMillis()
 				}
@@ -210,14 +222,10 @@ class Multiverse(
 		}
 	}
 
-	/** Same as [broadcastAsync] but uses the system pfp & name */
-	fun broadcastSystemAsync(message: suspend MessageCreateBuilder.(id: Snowflake) -> Unit) =
-		broadcastAsync(systemName, systemAvatar, { true }, message)
-
 	/** Returns a MultiversalUser with the given id, or null if it does not exist */
 	suspend fun userOf(id: Snowflake): MultiversalUser? = 
 		synchronized(users) { users.find { it.discordId == id } } ?: run {
-			MultiversalUser(id).also { it.update() }.let {
+			RealMultiversalUser(id).also { it.update() }.let {
 				if (it.isValid) it.also {
 					synchronized(users) { users.add(it) }
 				} else null
@@ -489,10 +497,6 @@ suspend fun Multiverse.broadcast(
 	filter: (TextChannel) -> Boolean = { true },
 	messageBuilder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
 ) = broadcastAsync(user, avatar, filter, messageBuilder).await()
-
-/** Same as [Multiverse.broadcastSystemAsync], but this method awaits for the result. */
-suspend fun Multiverse.broadcastSystem(message: suspend MessageCreateBuilder.(id: Snowflake) -> Unit) =
-	broadcastSystemAsync(message).await()
 
 /** £xecutes the action immediately if the multiverse is running; postpones it otherwise. */
 suspend inline fun Multiverse.executeWhenRunning(

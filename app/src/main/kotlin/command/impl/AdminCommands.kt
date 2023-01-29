@@ -119,7 +119,7 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 
 				if (!wasWhitelisted) {
 					reply("$it has been whitelisted.")
-					Vars.multiverse.broadcastSystemAsync { _ ->
+					Vars.multiverse.system.broadcastAsync { _ ->
 						content = "A new guild has connected: $it."
 					}
 				}
@@ -205,18 +205,32 @@ fun TreeCommandBuilder.addAdminSubtree() = subtree("admin") {
 			val user = args.arg<MultiversalUser>("user")
 			user.warns.clear()
 
-			Vars.multiverse.broadcastSystem { content = "User $user has just had their warnings cleared." }
+			Vars.multiverse.system.broadcast { content = "User $user has just had their warnings cleared." }
 		}
 	}
 
-	subcommand<Unit>("echo", "Send a system message in the multiverse") {
+	subcommand<Unit>("echo", "Broadcast a message into the multiverse") {
 		arguments {
 			required<String>("message", "Content of the system message. Trimmed.")
+			default<MultiversalUser>("user", "A virtual user to broadcast as. Defaults to the system.") {
+				Vars.multiverse.system
+			}
+			optional<Snowflake>("referenced-message", "ID of the multiversal message to reply to.")
 		}
 
 		action {
-			Vars.multiverse.broadcastSystem {
+			val user = args.arg<MultiversalUser>("user")
+			require(user is VirtualMultiversalUser) { "The echo command can not be used to mock real users." }
+
+			val referencedMessage = args.ifPresent("referenced-message") { id: Snowflake ->
+				Vars.multiverse.history.find { id in it }?.let { it.retranslated.firstOrNull() ?: it.origin }
+					?: fail("couldn't find a message with id $id in the multiverse.")
+			}?.asMessage()
+
+			user.broadcast { channelId ->
 				content = args.arg<String>("message").trim()
+
+				referencedMessage?.let { quoteMessage(referencedMessage, channelId) }
 			}
 		}
 	}

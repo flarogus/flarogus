@@ -1,9 +1,7 @@
 package flarogus.multiverse
 
+import flarogus.multiverse.state.RuleSerializer
 import kotlinx.serialization.*
-import kotlinx.serialization.json.*
-import kotlinx.serialization.descriptors.*
-import kotlinx.serialization.encoding.*
 
 /**
  * Contains all the multiversal rules.
@@ -55,7 +53,7 @@ enum class RuleCategory(val index: Int, val description: String, val rules: List
 	}
 }
 
-@Serializable(with = RuleSerializer::class)
+@Serializable(with = flarogus.multiverse.state.RuleSerializer::class)
 data class Rule(val points: Int = -1, val description: String) {
 	//these two are initialised right after creation
 	var category = -1
@@ -69,18 +67,5 @@ data class Rule(val points: Int = -1, val description: String) {
 	
 	companion object {
 		val UNKNOWN = Rule(-1, "unknown rule")
-	}
-}
-
-class RuleSerializer : KSerializer<Rule> {
-	override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("RuleSerializer", PrimitiveKind.STRING)
-	
-	override fun serialize(encoder: Encoder, value: Rule) {
-		encoder.encodeString("${value.category}:${value.index}")
-	}
-	
-	override fun deserialize(decoder: Decoder): Rule {
-		val parts = decoder.decodeString().split(':')
-		return RuleCategory.of(parts[0].toInt(), parts[1].toInt()) ?: Rule.UNKNOWN
 	}
 }

@@ -1,6 +1,7 @@
 package flarogus.multiverse.entity
 
 import flarogus.multiverse.*
+import flarogus.util.*
 import dev.kord.rest.request.KtorRequestException
 import kotlin.time.*
 import kotlinx.coroutines.*

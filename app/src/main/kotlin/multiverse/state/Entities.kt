@@ -10,18 +10,12 @@ import dev.kord.core.supplier.EntitySupplier
 import dev.kord.rest.builder.message.modify.MessageModifyBuilder
 import dev.kord.rest.builder.message.modify.WebhookMessageModifyBuilder
 import flarogus.Vars
+import flarogus.multiverse.state.MultimessageSerializer
+import flarogus.multiverse.state.WebhookMessageSerializer
 import kotlinx.coroutines.yield
 import kotlinx.serialization.*
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.descriptors.buildClassSerialDescriptor
-import kotlinx.serialization.encoding.*
-import kotlin.reflect.KClass
 
-@OptIn(InternalSerializationApi::class)
-fun <T: Any> serializer(clazz: KClass<T>): KSerializer<T> = clazz.serializer()
-
-@Serializable(with = HistoryEntrySerializer::class)
+@Serializable(with = WebhookMessageSerializer::class)
 data class WebhookMessageBehavior(
 	val webhookId: Snowflake,
 	override val channelId: Snowflake,
@@ -52,7 +46,7 @@ data class WebhookMessageBehavior(
 	}
 }
 
-@Serializable(with = HistorySerializer::class)
+@Serializable(with = MultimessageSerializer::class)
 data class Multimessage(
 	var origin: MessageBehavior? = null,
 	val retranslated: MutableList<WebhookMessageBehavior>
@@ -88,85 +82,3 @@ data class Multimessage(
 	operator fun contains(other: Snowflake) = origin?.id == other || retranslated.any { other == it.id };
 }
 
-class HistorySerializer : KSerializer<Multimessage> {
-	private val snowflakeSerializer = serializer(Snowflake::class)
-	private val wmblistSerializer = ListSerializer(serializer(WebhookMessageBehavior::class))
-
-	override val descriptor: SerialDescriptor = buildClassSerialDescriptor("flarogus.multiverse.state.Multimessage") {
-		element("id", snowflakeSerializer.descriptor)
-		element("ch", snowflakeSerializer.descriptor)
-		element("ret", wmblistSerializer.descriptor)
-	}
-	
-	override fun serialize(encoder: Encoder, value: Multimessage) = encoder.encodeStructure(descriptor) {
-		if (value.origin != null) {
-			encodeSerializableElement(descriptor, 0, snowflakeSerializer, value.origin!!.id)
-			encodeSerializableElement(descriptor, 1, snowflakeSerializer, value.origin!!.channelId)
-		}
-		encodeSerializableElement(descriptor, 2, wmblistSerializer, value.retranslated)
-	};
-	
-	override fun deserialize(decoder: Decoder): Multimessage = decoder.decodeStructure(descriptor) {
-		var id: Snowflake? = null
-		var channelId: Snowflake? = null
-		var retranslated: List<WebhookMessageBehavior>? = null
-
-		eachIndex(descriptor) {
-			when (it) {
-				0 -> id = decodeSerializableElement(descriptor, 0, snowflakeSerializer)
-				1 -> channelId = decodeSerializableElement(descriptor, 1, snowflakeSerializer)
-				2 -> retranslated = decodeSerializableElement(descriptor, 2, wmblistSerializer)
-			}
-		}
-
-		val message = if (channelId != null && id != null) {
-			MessageBehavior(channelId = channelId!!, messageId = id!!, kord = Vars.client)
-		} else {
-			null
-		}
-		Multimessage(message, retranslated!!.toMutableList())
-	}
-}
-
-class HistoryEntrySerializer : KSerializer<WebhookMessageBehavior> {
-	private val snowflakeSerializer = serializer(Snowflake::class)
-
-	override val descriptor: SerialDescriptor = buildClassSerialDescriptor("flarogus.multiverse.state.WebhookMessageBehavior") {
-		element("wh", snowflakeSerializer.descriptor)
-		element("ch", snowflakeSerializer.descriptor)
-		element("id", snowflakeSerializer.descriptor)
-	}
-	
-	override fun serialize(encoder: Encoder, value: WebhookMessageBehavior) = encoder.encodeStructure(descriptor) {
-		encodeSerializableElement(descriptor, 0, snowflakeSerializer, value.webhookId)
-		encodeSerializableElement(descriptor, 1, snowflakeSerializer, value.channelId)
-		encodeSerializableElement(descriptor, 2, snowflakeSerializer, value.id)
-	};
-	
-	override fun deserialize(decoder: Decoder): WebhookMessageBehavior = decoder.decodeStructure(descriptor) {
-		var webhookId: Snowflake? = null
-		var channelId: Snowflake? = null
-		var messageId: Snowflake? = null
-		eachIndex(descriptor) {
-			val snowflake = decodeSerializableElement(descriptor, it, snowflakeSerializer)
-			when (it) {
-				0 -> webhookId = snowflake
-				1 -> channelId = snowflake
-				2 -> messageId = snowflake
-			}
-		}
-		
-		WebhookMessageBehavior(webhookId!!, channelId!!, messageId!!)
-	}
-}
-
-fun CompositeDecoder.eachIndex(descriptor: SerialDescriptor, handler: (index: Int) -> Unit) {
-	while (true) {
-		val index = decodeElementIndex(descriptor)
-		when {
-			index >= 0 -> handler(index)
-			index == CompositeDecoder.DECODE_DONE -> break
-			else -> throw IllegalStateException("Unexpected index: $index")
-		}
-	}
-}

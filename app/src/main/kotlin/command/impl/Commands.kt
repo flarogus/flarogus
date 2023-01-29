@@ -276,7 +276,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 				"your parents don't love you", "you are so fat, if you were an impostor, you would get stuck in the vent",
 				"you will never finish your tasks", "34 FlarCoin", "two tasks have been added to your list, crewmate!"
 			)
-			val specialDailies = arrayOf<Pair<String, (suspend (MultiversalUser) -> Unit)>> (
+			val specialDailies = arrayOf<Pair<String, (suspend (RealMultiversalUser) -> Unit)>> (
 				// good
 				"you name was made sussy. (tip: you can change it using a command)" to {
 					it.update()
@@ -294,8 +294,9 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 			)
 			
 			action {
-				val user = originalMessage?.asMessage()?.author?.id?.let { Vars.multiverse.userOf(it) }
+				val user = originalMessageOrNull()?.author?.id?.let { Vars.multiverse.userOf(it) }
 				require(user != null) { "couldn't find nor acquire a user entry for your account!" }
+				require(user is RealMultiversalUser) { "you are fake." }
 
 				val timeDiff = System.currentTimeMillis() - user.lastReward
 				if (timeDiff > 1.day) {
@@ -443,6 +444,8 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 		}
 	}
 
+	addBankSubtree()
+
 	presetSubtree("op", "Perform simple math operations.") {
 		presetArguments {
 			required<Float>("first", "The first operand.")
@@ -502,7 +505,7 @@ fun createRootCommand(): TreeCommand = createTree("!flarogus") {
 
 				result(true)
 				
-				Vars.multiverse.broadcastSystem {
+				Vars.multiverse.system.broadcast {
 					content = "A multiverse instance is shutting down... (This is not neccesarily a problem)"
 				}
 

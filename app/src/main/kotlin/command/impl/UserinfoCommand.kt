@@ -1,5 +1,6 @@
 package flarogus.command.impl
 
+import dev.kord.common.entity.*
 import dev.kord.core.entity.User
 import flarogus.Vars
 import flarogus.command.builder.TreeCommandBuilder
@@ -30,29 +31,36 @@ fun TreeCommandBuilder.addUserinfoSubcommand() = subcommand<BufferedImage?>("use
 	description = "Display info of the providen user or bot."
 
 	arguments {
-		default<User>("user", "The user whose info you want to get. Can be an id or a mention. If not present, uses the caller instead.") {
-			originalMessage?.asMessage()?.author?.asUser() ?: error("Anonymous caller can not call this command without a user id.")
+		default<Snowflake>("user", "The user whose info you want to get. Can be an id or a mention. If not present, uses the caller instead.") {
+			originalMessageOrNull()?.author?.id ?: error("Anonymous caller can not call this command without a user id.")
 		}
 	}
 
 	action {
-		val user = args.arg<User>("user")
-		// we are searching manually because we don't want non-multiversal users there
-		val multiversalUser = Vars.multiverse.users.find { it.discordId == user.id }?.also { it.update() }
+		val id = args.arg<Snowflake>("user")
+		val user = Vars.supplier.getUserOrNull(id)
+		// we are searching manually because we don't want to create entries for non-multiversal users there
+		val multiversalUser = Vars.multiverse.users.find { it.discordId == id }?.also { it.update() }
+
+		require(user != null || multiversalUser != null) { "User with id $id does not exist." }
 		
 		val userpfp = withContext(Dispatchers.IO) {
-			ImageIO.read(URL(user.getAvatarUrl()))
+			ImageIO.read(URL(multiversalUser?.avatar ?: user!!.getAvatarUrl()))
 		}
 		val cropped = ImageUtil.multiply(avatarFrame, userpfp)
 
 		val lines = ArrayList<String>(20).apply {
-			add((if (user.isBot) "Bot" else "User") + " info")
-			add(user.tag)
-			add("Impostor: " + if (user.discriminator.toInt() % 7 == 0) "yes" else "no")
-			add("User id: ${user.id}")
+			if (user != null) {
+				add((if (user.isBot) "Bot" else "User") + " info")
+				add(user.tag)
+				add("Impostor: " + if (user.discriminator.toInt() % 7 == 0) "yes" else "no")
+				add("User id: ${user.id}")
 
-			add("Age: ${formatTime(user.id.timeMark.elapsedNow().toLong(DurationUnit.MILLISECONDS))}")
-			add("Registered at ${Vars.dateFormatter.format(user.id.timestamp.toJavaInstant().atZone(timezone))} UTC")
+				add("Age: ${formatTime(user.id.timeMark.elapsedNow().toLong(DurationUnit.MILLISECONDS))}")
+				add("Registered at ${Vars.dateFormatter.format(user.id.timestamp.toJavaInstant().atZone(timezone))} UTC")
+			} else {
+				add("This user only exists within the multiverse.")
+			}
 
 			add("-".repeat(maxOf { it.length }))
 
@@ -60,11 +68,12 @@ fun TreeCommandBuilder.addUserinfoSubcommand() = subcommand<BufferedImage?>("use
 				add("Multiversal name: ${multiversalUser.name}")
 				add("Messages in the multiverse: ${multiversalUser.totalSent}")
 				add("Warning points: ${multiversalUser.warningPoints}")
+				add("FlarCoin bank balance: ${multiversalUser.flarcoinBank.balance}")
 				add("Is banned: ${if (multiversalUser.canSend()) "no" else "yes"}")
 
 				if (multiversalUser.isModerator) add("Is a privileged user")
 			} else {
-				add("This user hasn't been in the multiverse yet.")
+				add("This user hasn't interacted with the multiverse yet.")
 			}
 		}
 		

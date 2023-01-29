@@ -5,6 +5,7 @@ import java.time.*
 import java.time.temporal.*
 import kotlin.math.*
 import kotlinx.coroutines.*
+import kotlinx.datetime.toJavaInstant
 import flarogus.*
 
 inline val Int.second get() = this * 1000L
@@ -19,6 +20,8 @@ fun Any?.isNotNull() = this != null
 fun Instant.atUTC(): ZonedDateTime = atZone(ZoneId.of("Z"))
 fun TemporalAccessor.format(): String = Vars.dateFormatter.format(this)
 fun Instant.formatUTC(): String = atUTC().format()
+
+fun kotlinx.datetime.Instant.formatUTC() = toJavaInstant().formatUTC()
 
 fun String.truncate(maxLength: Int, ellipsis: String = "..."): String {
 	return if (length <= maxLength) {
