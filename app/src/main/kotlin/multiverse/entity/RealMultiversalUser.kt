@@ -47,7 +47,7 @@ class RealMultiversalUser(
 		get() = field?.takeIf { it.isNotEmpty() }
 
 	override val name get() =
-		usertag.let { "[$it] " }.orEmpty() +
+		usertag?.let { "[$it] " }.orEmpty() +
 		(nameOverride ?: user?.username ?: "<invalid user>") +
 		"#" + user?.discriminator
 	override val avatar get() = user?.getAvatarUrl()
