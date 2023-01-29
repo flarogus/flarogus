@@ -158,7 +158,7 @@ suspend fun MessageCreateBuilder.describeTransaction(
 
 	when (transaction) {
 		is IncomingTransaction -> {
-			user = owner ?: transaction.sender?.let { Vars.multiverse.userOf(it) }
+			user = transaction.sender?.let { Vars.multiverse.userOf(it) }
 
 			title = "Incoming FlarCoin transaction"
 			description = when {
@@ -180,7 +180,7 @@ suspend fun MessageCreateBuilder.describeTransaction(
 		}
 	}
 
-	thumbnail { url = user?.avatar.orEmpty() }
+	thumbnail { url = owner?.avatar.orEmpty() }
 
 	author {
 		name = user?.name ?: "<invalid user>"
