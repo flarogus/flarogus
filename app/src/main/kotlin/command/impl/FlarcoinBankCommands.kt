@@ -60,8 +60,8 @@ fun TreeCommandBuilder.addBankSubtree() = subtree("bank") {
 				return@action
 			}
 			
-			val page = args.arg<Int>("page").let { if (it < 0) list.size + it else it - 1 }
 			val pagesInList = ceil(list.size.toFloat() / perPage).toInt()
+			val page = args.arg<Int>("page").let { if (it < 0) pagesInList + it else it - 1 }
 			require(page in 0 until pagesInList) { "'page' argument must be in range of [1, $pagesInList] or [-$pagesInList, -1]" }
 
 			val slice = list.subList(perPage * page, min(perPage * (page + 1), list.size) - 1)

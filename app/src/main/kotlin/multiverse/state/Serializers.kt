@@ -49,7 +49,7 @@ class TransactionSerializer : KSerializer<Transaction> {
 
 		val timestamp = runCatching {
 			parts[3].toInstant()
-		}.getOrElse { Instant.ofEpochMilliseconds(0L) }
+		}.getOrElse { Instant.fromEpochMilliseconds(0L) }
 
 		return when (val type = parts[0]) {
 			incomingType -> Transaction.IncomingTransaction(parts[1].toInt(), parts[2].toSnowflake(), timestamp)
