@@ -82,7 +82,7 @@ fun TreeCommandBuilder.addBankSubtree() = subtree("bank") {
 					}
 					val user = Vars.multiverse.userOf(when(transaction) {
 						is IncomingTransaction -> transaction.sender ?: Vars.multiverse.system.discordId
-						is OutcomingTransaction -> transaction.receiver
+						is OutgoingTransaction -> transaction.receiver
 					})?.name ?: "<invalid user>"
 
 					field("id: $index. ${event.first} $amount FlarCoins") {
@@ -168,10 +168,10 @@ suspend fun MessageCreateBuilder.describeTransaction(
 			}
 			color = Color(0x69e269)
 		}
-		is OutcomingTransaction -> {
+		is OutgoingTransaction -> {
 			user = transaction.receiver?.let { Vars.multiverse.userOf(it) }
 
-			title = "Outcoming FlarCoin transaction."
+			title = "Outgoing FlarCoin transaction."
 			description = when {
 				amount >= 0 -> "$amount FlarCoins were transferred from your account to that of $user."
 				else -> "$amount FlarCoins were deducted from the account of $user and added to yours."

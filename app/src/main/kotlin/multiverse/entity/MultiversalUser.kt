@@ -248,13 +248,13 @@ sealed class MultiversalUser : MultiversalEntity() {
 			receiver: BankAccount, 
 			forcibly: Boolean = false,
 			sendNotification: Boolean = true
-		): Transaction.OutcomingTransaction {		
+		): Transaction.OutgoingTransaction {		
 			if (!forcibly && amount > balance) {
 				error("The amount of money on the $ownerId bank account is insufficient to perform the transaction.")
 			}
 			balance -= amount
 
-			Transaction.OutcomingTransaction(
+			Transaction.OutgoingTransaction(
 				amount = amount,
 				receiver = receiver.ownerId,
 				timestamp = Clock.System.now()
@@ -289,7 +289,7 @@ sealed class MultiversalUser : MultiversalEntity() {
 				: Transaction(amount, timestamp)
 
 			/** A transaction from this bank account to another bank account. */
-			class OutcomingTransaction(amount: Int, val receiver: Snowflake, timestamp: Instant?)
+			class OutgoingTransaction(amount: Int, val receiver: Snowflake, timestamp: Instant?)
 				: Transaction(amount, timestamp)
 		}
 	}
