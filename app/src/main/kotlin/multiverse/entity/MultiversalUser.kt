@@ -312,7 +312,7 @@ fun Message.toRetranslatableContent() = buildString {
 		if (!attachment.isImage && attachment.size >= MultiversalUser.maxFileSize) {
 			append('\n')
 			append("[file: ${attachment.filename}](${attachment.url})")
-			append("(%.3f MiB)".format(attachment.size / 1024 / 1024f))
+			append(" (%.3f MiB)".format(attachment.size / 1024 / 1024f))
 		}
 	}
 }
