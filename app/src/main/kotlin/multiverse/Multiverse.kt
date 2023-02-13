@@ -203,7 +203,6 @@ class Multiverse(
 		filter: (TextChannel) -> Boolean = { true },
 		messageBuilder: suspend MessageCreateBuilder.(id: Snowflake) -> Unit
 	) = MultimessageDefinition(user, avatar, filter, messageBuilder, Multimessage(null, ArrayList(guilds.size))).also { def ->
-		retranslationQueue.add(def)
 		val candidates = guilds.filter { it.isWhitelisted && it.isValid && it.webhooks.isNotEmpty() }
 
 		val now = System.currentTimeMillis()
@@ -219,6 +218,9 @@ class Multiverse(
 
 		synchronized(history) {
 			history.add(def.multimessage)
+		}
+		synchronized(retranslationQueue) {
+			retranslationQueue.add(def)
 		}
 	}
 
