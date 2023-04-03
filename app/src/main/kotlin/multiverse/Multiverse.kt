@@ -85,6 +85,17 @@ class Multiverse(
 	val supportedMessageTypes = arrayOf(MessageType.Default, MessageType.Reply)
 
 	suspend fun start() {
+		//
+		// The multiverse is no more.
+		// Thanks everyone for participating.
+		//
+		// If you want to host an instance of multiverse yourself,
+		// remove the below "return" statement before launching flarogus
+		//
+		return
+		
+		
+		
 		services.forEach { it.onStart() }
 
 		if (system !in users) users += system
